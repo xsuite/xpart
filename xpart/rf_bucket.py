@@ -6,8 +6,7 @@ from scipy.optimize import newton
 from scipy.integrate import dblquad
 from functools import partial, wraps
 
-from PyHEADTAIL.cobra_functions.curve_tools import (
-    zero_crossings as cvt_zero_crossings)
+from .curve_tools import zero_crossings as cvt_zero_crossings
 
 from functools import reduce
 
@@ -28,7 +27,7 @@ def attach_clean_buckets(rf_parameter_changing_method, rfsystems_instance):
     return cleaned_rf_parameter_changing_method
 
 
-class RFBucket(Printing):
+class RFBucket:
     """Holds a blueprint of the current RF bucket configuration.
     Should be requested via RFSystems.get_bucket(gamma).
 
