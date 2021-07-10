@@ -366,8 +366,8 @@ class RFBucket:
     #        harmonics = (self.make_singleharmonic_force(V, h, dphi)(z)
     #                     for V, h, dphi in zip(self.V, self.h, self.dphi))
     #        return (sum(harmonics) + sum(f(z) for f in self._add_forces
-                                         if not ignore_add_forces))
-        return total_force
+    #                                     if not ignore_add_forces))
+    #    return total_force
 
     #@deprecated('--> Replace with "total_force" as soon as possible.\n')
     #def acc_force(self, z, ignore_add_forces=False):
