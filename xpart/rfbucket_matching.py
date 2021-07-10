@@ -3,9 +3,6 @@
 @date 16.06.2017
 @brief module for matching longitudinal particle distributions to an RFBucket instance
 '''
-
-
-
 import numpy as np
 from scipy.optimize import brentq, newton
 from scipy.integrate import fixed_quad
@@ -13,11 +10,9 @@ from scipy.constants import e, c
 from functools import partial
 from abc import abstractmethod
 
-from PyHEADTAIL.cobra_functions import pdf_integrators_2d as integr
-from PyHEADTAIL.general.element import Printing
+from . import pdf_integrators_2d as integr
 
-
-class RFBucketMatcher(Printing):
+class RFBucketMatcher:
 
     integrationmethod = ['quad', 'cumtrapz'][0]
     def get_moment_integrators(self):
