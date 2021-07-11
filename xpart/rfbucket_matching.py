@@ -75,7 +75,7 @@ class RFBucketMatcher:
                        'Using (maximum) full bucket emittance ' +
                        str(epsn_max*0.99) + 'eV s instead.')
             epsn_z = epsn_max*0.99
-        self.prints('*** Maximum RMS emittance ' + str(epsn_max) + 'eV s.')
+        print('*** Maximum RMS emittance ' + str(epsn_max) + 'eV s.')
 
         def error_from_target_epsn(ec):
             self.psi_object.H0 = self.rfbucket.guess_H0(
@@ -84,7 +84,7 @@ class RFBucketMatcher:
 
             if np.isnan(emittance): raise ValueError
 
-            self.prints('... distance to target emittance: ' +
+            print('... distance to target emittance: ' +
                         '{:.2e}'.format(emittance-epsn_z))
 
             return emittance-epsn_z
@@ -101,9 +101,9 @@ class RFBucketMatcher:
         self.psi_object.H0 = self.rfbucket.guess_H0(
             ec_bar, from_variable='epsn')
         emittance = self._compute_emittance(self.rfbucket, self.psi)
-        self.prints('--> Emittance: ' + str(emittance))
+        print('--> Emittance: ' + str(emittance))
         sigma = self._compute_sigma(self.rfbucket, self.psi)
-        self.prints('--> Bunch length: ' + str(sigma))
+        print('--> Bunch length: ' + str(sigma))
 
     def psi_for_bunchlength_newton_method(self, sigma):
         # Maximum bunch length
@@ -115,7 +115,7 @@ class RFBucketMatcher:
                        'Using (maximum) full bucket RMS bunch length ' +
                        str(sigma_max*0.99) + 'm instead.')
             sigma = sigma_max*0.99
-        self.prints('*** Maximum RMS bunch length ' + str(sigma_max) + 'm.')
+        print('*** Maximum RMS bunch length ' + str(sigma_max) + 'm.')
 
         def error_from_target_sigma(sc):
             '''Width for bunch length'''
@@ -125,7 +125,7 @@ class RFBucketMatcher:
 
             if np.isnan(length): raise ValueError
 
-            self.prints('... distance to target bunch length: ' +
+            print('... distance to target bunch length: ' +
                         '{:.4e}'.format(length-sigma))
 
             return length-sigma
@@ -142,9 +142,9 @@ class RFBucketMatcher:
         self.psi_object.H0 = self.rfbucket.guess_H0(
             sc_bar, from_variable='sigma')
         sigma = self._compute_sigma(self.rfbucket, self.psi)
-        self.prints('--> Bunch length: ' + str(sigma))
+        print('--> Bunch length: ' + str(sigma))
         emittance = self._compute_emittance(self.rfbucket, self.psi)
-        self.prints('--> Emittance: ' + str(emittance))
+        print('--> Emittance: ' + str(emittance))
 
     def linedensity(self, xx, quad_type=fixed_quad):
         L = []
@@ -201,7 +201,7 @@ class RFBucketMatcher:
                 s[masked_out], u[masked_out], v[masked_out]
             )
             if self.verbose_regeneration:
-                self.prints(
+                print(
                     'Thou shalt not give up! :-) '
                     'Regenerating {0} macro-particles...'.format(n_gen))
 
