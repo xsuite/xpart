@@ -19,12 +19,11 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     ):
 
     # TODO: how is the pahse defined with respect to the MAD-X lag?
-
     rfbucket = RFBucket(circumference=circumference,
                            gamma=particle_on_co.gamma0,
                            mass_kg=particle_on_co.mass0/(clight**2)*qe,
                            charge_coulomb=particle_on_co.q0*qe,
-                           alpha_array=np.atleast_1d(total_intensity_particles),
+                           alpha_array=np.atleast_1d(alpha_momentum_compaction),
                            harmonic_list=np.atleast_1d(rf_harmonic),
                            voltage_list=np.atleast_1d(rf_voltage),
                            phi_offset_list=np.atleast_1d(rf_phase),
