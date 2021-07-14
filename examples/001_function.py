@@ -20,15 +20,13 @@ with open(line_file, 'r') as fid:
 RR = np.array(ddd['RR_madx'])
 part_on_co = xp.Particles.from_dict(ddd['particle_on_madx_co'])
 
-rfbucket = xp.RFBucket(circumference=6911., gamma=27.6433,
-                       mass_kg=m_p, charge_coulomb=qe, alpha_array=[0.003077672469],
-                       harmonic_list=[4620], voltage_list=[3e6],
-                       p_increment=0, phi_offset_list=[0.])
 
 part = xp.generate_matched_gaussian_bunch(
          num_particles=n_part, total_intensity_particles=bunch_intensity,
          nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-         particle_on_co=part_on_co, R_matrix=RR, rfbucket=rfbucket)
+         particle_on_co=part_on_co, R_matrix=RR,
+         circumference=6911., alpha_momentum_compaction=0.0030777,
+         rf_harmonic=4620, rf_voltage=3e6, rf_phase=0)
 
 # CHECKS
 

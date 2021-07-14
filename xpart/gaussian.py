@@ -1,17 +1,34 @@
 import numpy as np
+from scipy.constants import c as clight
+from scipy.constants import e as qe
 
 from .rfbucket_matching import RFBucketMatcher
 from .rfbucket_matching import ThermalDistribution
+from .rf_bucket import RFBucket
 import pymask as pm # TODO: Temporary...
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     nemitt_x, nemitt_y, sigma_z,
-                                    particle_on_co, R_matrix, rfbucket=None):
+                                    particle_on_co, R_matrix,
+                                    circumference,
+                                    alpha_momentum_compaction,
+                                    rf_harmonic,
+                                    rf_voltage,
+                                    rf_phase,
+                                    p_increment=0.
+                                    ):
 
-    if rfbucket is None:
-        raise NotImplementedError
-        # We could just go for the linear matching
+    # TODO: how is the pahse defined with respect to the MAD-X lag?
 
+    rfbucket = RFBucket(circumference=circumference,
+                           gamma=particle_on_co.gamma0,
+                           mass_kg=particle_on_co.mass0/(clight**2)*qe,
+                           charge_coulomb=particle_on_co.q0*qe,
+                           alpha_array=np.atleast_1d(total_intensity_particles),
+                           harmonic_list=np.atleast_1d(rf_harmonic),
+                           voltage_list=np.atleast_1d(rf_voltage),
+                           phi_offset_list=np.atleast_1d(rf_phase),
+                           p_increment=p_increment)
 
     # Generate longitudinal coordinates
     matcher = RFBucketMatcher(rfbucket=rfbucket,
