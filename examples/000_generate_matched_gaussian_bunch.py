@@ -6,7 +6,6 @@ from scipy.constants import m_p
 from scipy.constants import c as clight
 
 import pymask as pm
-import xline as xl
 import xpart as xp
 
 sigma_z = 22.5e-2
@@ -31,7 +30,7 @@ line_file = ('../../xtrack/test_data/sps_w_spacecharge/'
 with open(line_file, 'r') as fid:
     ddd = json.load(fid)
 RR = np.array(ddd['RR_madx'])
-part_on_co = xl.Particles.from_dict(ddd['particle_on_madx_co'])
+part_on_co = xp.Particles.from_dict(ddd['particle_on_madx_co'])
 
 WW, WWinv, Rot = pm.compute_linear_normal_form(RR)
 
@@ -72,6 +71,7 @@ part.y += XX[2, :]
 part.py += XX[3, :]
 part.zeta += XX[4, :]
 part.delta += XX[5, :]
+part.partid = np.arange(0, num_particles, dtype=np.int64)
 
 y_rms = np.std(part.y)
 py_rms = np.std(part.py)
