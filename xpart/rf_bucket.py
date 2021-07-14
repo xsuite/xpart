@@ -45,14 +45,14 @@ class RFBucket:
     """Sampling points to find zero crossings."""
     sampling_points = 1000
 
-    def __init__(self, circumference, gamma, mass,
+    def __init__(self, circumference, gamma, mass_kg,
                  charge_coulomb, alpha_array, p_increment,
                  harmonic_list, voltage_list, phi_offset_list,
                  z_offset=None, *args, **kwargs):
         '''Implements only the leading order momentum compaction factor.
 
         Arguments:
-        - mass is the mass of the particle type in the beam
+        - mass_kg is the mass of the particle type in the beam
         - charge_coulomb is the charge of the particle type in the beam
         - z_offset determines the centre for the bucket interval
         over which the root finding (of the electric force field to
@@ -62,11 +62,11 @@ class RFBucket:
         '''
 
         self.charge_coulomb = charge_coulomb
-        self.mass = mass
+        self.mass_kg = mass_kg
 
         self._gamma = gamma
         self._beta = np.sqrt(1 - gamma**-2)
-        self._p0 = np.sqrt(gamma**2 - 1) * mass * c
+        self._p0 = np.sqrt(gamma**2 - 1) * mass_kg * c
 
         self.alpha0 = alpha_array[0]
         self.p_increment = p_increment

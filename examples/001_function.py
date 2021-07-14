@@ -21,7 +21,7 @@ RR = np.array(ddd['RR_madx'])
 part_on_co = xp.Particles.from_dict(ddd['particle_on_madx_co'])
 
 rfbucket = xp.RFBucket(circumference=6911., gamma=27.6433,
-                       mass=m_p, charge_coulomb=qe, alpha_array=[0.003077672469],
+                       mass_kg=m_p, charge_coulomb=qe, alpha_array=[0.003077672469],
                        harmonic_list=[4620], voltage_list=[3e6],
                        p_increment=0, phi_offset_list=[0.])
 
