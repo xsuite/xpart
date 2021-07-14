@@ -228,7 +228,7 @@ class RFBucketMatcher:
             rfbucket.separatrix, z_left, z_right)
 
         return (np.sqrt(var_x*var_y - cov_xy**2) *
-                4*np.pi*rfbucket.p0/np.abs(rfbucket.charge))
+                4*np.pi*rfbucket.p0/np.abs(rfbucket.charge_coulomb))
 
 
 class StationaryDistribution(object):

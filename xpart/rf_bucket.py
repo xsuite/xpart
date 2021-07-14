@@ -46,14 +46,14 @@ class RFBucket:
     sampling_points = 1000
 
     def __init__(self, circumference, gamma, mass,
-                 charge, alpha_array, p_increment,
+                 charge_coulomb, alpha_array, p_increment,
                  harmonic_list, voltage_list, phi_offset_list,
                  z_offset=None, *args, **kwargs):
         '''Implements only the leading order momentum compaction factor.
 
         Arguments:
         - mass is the mass of the particle type in the beam
-        - charge is the charge of the particle type in the beam
+        - charge_coulomb is the charge of the particle type in the beam
         - z_offset determines the centre for the bucket interval
         over which the root finding (of the electric force field to
         calibrate the separatrix Hamiltonian value to zero) is done.
@@ -61,7 +61,7 @@ class RFBucket:
         closest to z == 0.
         '''
 
-        self.charge = charge
+        self.charge_coulomb = charge_coulomb
         self.mass = mass
 
         self._gamma = gamma
@@ -108,7 +108,7 @@ class RFBucket:
                 domain_to_find_bucket_centre)
             convex_pot0 = (
                 np.array(self.total_potential(z0, acceleration=False)) *
-                np.sign(self.eta0) / self.charge)  # charge for numerical reasons
+                np.sign(self.eta0) / self.charge_coulomb)  # charge for numerical reasons
             outer_separatrix_pot0 = np.min(convex_pot0)
             outer_separatrix_z0 = z0[np.isclose(convex_pot0,
                                                 outer_separatrix_pot0)]
@@ -271,7 +271,7 @@ class RFBucket:
         # if hV == 0:
         #     ix = np.argmax(self.V)
         #     hV = self.h[ix] * self.V[ix]
-        return np.sqrt(np.abs(self.charge)*np.abs(self.eta0)*hV /
+        return np.sqrt(np.abs(self.charge_coulomb)*np.abs(self.eta0)*hV /
                        (2*np.pi*self.p0*self.beta*c))
 
     def add_fields(self, add_forces, add_potentials):
@@ -309,7 +309,7 @@ class RFBucket:
     # =================================================================
     def rf_force(self, V, h, dphi, p_increment, acceleration=True):
         def f(z):
-            coefficient = np.abs(self.charge)/self.circumference
+            coefficient = np.abs(self.charge_coulomb)/self.circumference
             focusing_field = reduce(lambda x, y: x+y, [
                 V_i * np.sin(h_i*z/self.R + dphi_i)
                 for V_i, h_i, dphi_i in zip(V, h, dphi)])
@@ -342,7 +342,7 @@ class RFBucket:
     #    RF element as a function of z in units of Coul*Volt/metre.
     #    '''
     #    def force(z):
-    #        return (np.abs(self.charge) * V / self.circumference *
+    #        return (np.abs(self.charge_coulomb) * V / self.circumference *
     #                np.sin(h * z / self.R + dphi))
     #    return force
 
@@ -399,7 +399,7 @@ class RFBucket:
               the separatrix of the RF bucket (default=True).
         '''
         def vf(z):
-            coefficient = np.abs(self.charge)/self.circumference
+            coefficient = np.abs(self.charge_coulomb)/self.circumference
             focusing_potential = reduce(lambda x, y: x+y, [
                 self.R/h[i] * V[i] * np.cos(h[i]*z/self.R + dphi[i])
                 for i in range(len(V))])
@@ -460,7 +460,7 @@ class RFBucket:
     #    RF element as a function of z in units of Coul*Volt.
     #    '''
     #    def potential(z):
-    #        return (np.abs(self.charge) * V / (2 * np.pi * h) *
+    #        return (np.abs(self.charge_coulomb) * V / (2 * np.pi * h) *
     #                np.cos(h * z / self.R + dphi))
     #    return potential
 
@@ -686,7 +686,7 @@ class RFBucket:
         Q, error = dblquad(lambda y, x: 1, zl, zr,
                            lambda x: 0, f)
 
-        return Q * 2*self.p0/np.abs(self.charge)
+        return Q * 2*self.p0/np.abs(self.charge_coulomb)
 
     def bunchlength_single_particle(self, epsn_z, verbose=False):
         """The corresponding RMS bunch length computed from the single
@@ -716,7 +716,7 @@ class RFBucket:
         if hV == 0:
             ix = np.argmax(self.V)
             hV = self.h[ix] * self.V[ix]
-        Qs = np.sqrt(np.abs(self.charge)*np.abs(self.eta0)*hV /
+        Qs = np.sqrt(np.abs(self.charge_coulomb)*np.abs(self.eta0)*hV /
                      (2*np.pi*self.p0*self.beta*c))
         beta_z = np.abs(self.eta0 * self.R / Qs)
 
@@ -724,7 +724,7 @@ class RFBucket:
         if from_variable == 'epsn':
             epsn = var
             z0 = np.sqrt(epsn/(4.*np.pi) * beta_z *
-                         np.abs(self.charge)/self.p0)  # gauss approx.
+                         np.abs(self.charge_coulomb)/self.p0)  # gauss approx.
         elif from_variable == 'sigma':
             z0 = var
 
