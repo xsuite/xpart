@@ -5,7 +5,10 @@ from scipy.constants import e as qe
 from .rfbucket_matching import RFBucketMatcher
 from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
-import pymask as pm # TODO: Temporary...
+try:
+    import pymask as pm # TODO: Temporary...
+except Exception:
+    print('pymask not available')
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     nemitt_x, nemitt_y, sigma_z,
