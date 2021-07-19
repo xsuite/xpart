@@ -13,9 +13,9 @@ n_part = int(5e6)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
-line_file = ('../../xtrack/test_data/sps_w_spacecharge/'
+filename = ('../../xtrack/test_data/sps_w_spacecharge/'
              'optics_and_co_at_start_ring.json')
-with open(line_file, 'r') as fid:
+with open(filename, 'r') as fid:
     ddd = json.load(fid)
 RR = np.array(ddd['RR_madx'])
 part_on_co = xp.Particles.from_dict(ddd['particle_on_madx_co'])

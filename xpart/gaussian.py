@@ -73,7 +73,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
     part.py += XX[3, :]
     part.zeta += XX[4, :]
     part.delta += XX[5, :]
-    part.partid = np.arange(0, num_particles, dtype=np.int64)
+    part.particle_id = np.arange(0, num_particles, dtype=np.int64)
     part.weight = total_intensity_particles/num_particles
 
     return part
