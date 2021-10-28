@@ -1,12 +1,9 @@
 import numpy as np
 
 from .longitudinal import generate_longitudinal_coordinates
+from .linear_normal_form import compute_linear_normal_form
 
 
-try:
-    import pymask as pm # TODO: Temporary...
-except Exception:
-    print('pymask not available')
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     nemitt_x, nemitt_y, sigma_z,
@@ -33,7 +30,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
             p_increment=p_increment,
             sigma_z=sigma_z)
 
-    WW, WWinv, Rot = pm.compute_linear_normal_form(R_matrix)
+    WW, WWinv, Rot = compute_linear_normal_form(R_matrix)
 
     assert len(z_particles) == len(delta_particles) == num_particles
 
