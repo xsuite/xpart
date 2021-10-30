@@ -1,8 +1,10 @@
 import numpy as np
 
+import xtrack as xt
+
 from .longitudinal import generate_longitudinal_coordinates
 from .linear_normal_form import compute_linear_normal_form
-
+from .assemble_particles import assemble_particles
 
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
@@ -13,10 +15,12 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     rf_harmonic,
                                     rf_voltage,
                                     rf_phase,
-                                    p_increment=0.
+                                    p_increment=0.,
+                                    particle_class=xt.Particles,
+                                    _context=None, _buffer=None, _offset=None,
                                     ):
 
-    z_particles, delta_particles = generate_longitudinal_coordinates(
+    zeta, delta = generate_longitudinal_coordinates(
             distribution='gaussian',
             mass0=particle_on_co.mass0,
             q0=particle_on_co.q0,
@@ -30,9 +34,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
             p_increment=p_increment,
             sigma_z=sigma_z)
 
-    WW, WWinv, Rot = compute_linear_normal_form(R_matrix)
-
-    assert len(z_particles) == len(delta_particles) == num_particles
+    assert len(zeta) == len(delta) == num_particles
 
     gemitt_x = nemitt_x/particle_on_co.beta0/particle_on_co.gamma0
     gemitt_y = nemitt_y/particle_on_co.beta0/particle_on_co.gamma0
@@ -42,30 +44,13 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
     y_norm = np.sqrt(gemitt_y) * np.random.normal(size=num_particles)
     py_norm = np.sqrt(gemitt_y) * np.random.normal(size=num_particles)
 
-    # Transform long. coordinates to normalized space
-    XX_norm = np.dot(WWinv, np.array([np.zeros(num_particles),
-                                     np.zeros(num_particles),
-                                     np.zeros(num_particles),
-                                     np.zeros(num_particles),
-                                     z_particles,
-                                     delta_particles]))
 
-    XX_norm[0, :] = x_norm
-    XX_norm[1, :] = px_norm
-    XX_norm[2, :] = y_norm
-    XX_norm[3, :] = py_norm
-
-    # Transform to physical coordinates
-    XX = np.dot(WW, XX_norm)
-
-    part = particle_on_co.copy()
-    part.x += XX[0, :]
-    part.px += XX[1, :]
-    part.y += XX[2, :]
-    part.py += XX[3, :]
-    part.zeta += XX[4, :]
-    part.delta += XX[5, :]
-    part.particle_id = np.arange(0, num_particles, dtype=np.int64)
-    part.weight = total_intensity_particles/num_particles
-
+    part = assemble_particles(_context=_context, _buffer=_buffer, _offset=_offset,
+                      R_matrix=R_matrix,
+                      particle_class=particle_class,
+                      particle_on_co=particle_on_co,
+                      zeta=zeta, delta=delta,
+                      x_norm=x_norm, px_norm=px_norm,
+                      y_norm=y_norm, py_norm=py_norm,
+                      weight=total_intensity_particles/num_particles)
     return part
