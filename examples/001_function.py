@@ -4,7 +4,6 @@ import numpy as np
 from scipy.constants import e as qe
 from scipy.constants import m_p
 
-import pymask as pm
 import xpart as xp
 
 bunch_intensity = 1e11

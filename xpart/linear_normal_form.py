@@ -1,19 +1,20 @@
 import numpy as np
 from scipy.optimize import fsolve
 
-import xline as xl
-import xtrack as xt
+from .particles import Particles
 
 def _one_turn_map(p, particle_on_madx_co, tracker):
-    xl_part = particle_on_madx_co.copy()
-    xl_part.x = p[0]
-    xl_part.px = p[1]
-    xl_part.y = p[2]
-    xl_part.py = p[3]
-    xl_part.zeta = p[4]
-    xl_part.delta = p[5]
 
-    part = xt.Particles(**xl_part.to_dict())
+    p_dict = particle_on_co.to_dict()
+
+    p_dict['x'] = p[0]
+    p_dict['px ']= p[1]
+    p_dict['y'] = p[2]
+    p_dict['py'] = p[3]
+    p_dict['zeta'] = p[4]
+    p_dict['delta'] = p[5]
+
+    part = Particles(**p_dict)
     tracker.track(part)
     p_res = np.array([
            part.x[0],

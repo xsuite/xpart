@@ -15,7 +15,7 @@ def _check_lengths(**kwargs):
     return length
 
 def assemble_particles(_context=None, _buffer=None, _offset=None,
-                      particle_class=xt.Particles, particle_on_co=None,
+                      particle_class=Particles, particle_on_co=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
                       R_matrix=None,
@@ -92,7 +92,7 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
 
     part_on_co_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
 
-    particles = xt.Particles(_context=_context, _buffer=_buffer, _offset=_offset,
+    particles = Particles(_context=_context, _buffer=_buffer, _offset=_offset,
                              **part_on_co_dict)
     particles.particle_id = np.arange(0, num_particles, dtype=np.int64)
     if weight is not None:

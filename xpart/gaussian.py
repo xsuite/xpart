@@ -1,10 +1,9 @@
 import numpy as np
 
-import xtrack as xt
-
 from .longitudinal import generate_longitudinal_coordinates
 from .linear_normal_form import compute_linear_normal_form
 from .assemble_particles import assemble_particles
+from .particles import Particles
 
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
@@ -16,7 +15,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     rf_voltage,
                                     rf_phase,
                                     p_increment=0.,
-                                    particle_class=xt.Particles,
+                                    particle_class=Particles,
                                     _context=None, _buffer=None, _offset=None,
                                     ):
 

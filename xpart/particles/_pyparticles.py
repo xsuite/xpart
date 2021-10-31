@@ -1,10 +1,30 @@
 import json
+
 import numpy as np
+from scipy.special import wofz
+from scipy.special import gamma as tgamma
+
 from xobjects import JEncoder
 
 def count_not_none(*lst):
     return len(lst) - sum(p is None for p in lst)
 
+
+
+class MathlibDefault(object):
+
+    from numpy import sqrt, exp, sin, cos, abs, pi, tan, interp, linspace
+    from numpy import power as pow
+
+    @classmethod
+    def wfun(cls, z_re, z_im):
+        w = wofz(z_re + 1j * z_im)
+        return w.real, w.imag
+
+    @classmethod
+    def gamma(cls, arg):
+        assert arg > 0.0
+        return tgamma(arg)
 
 class Pyparticles:
     """
@@ -253,8 +273,7 @@ class Pyparticles:
     ):
 
         if mathlib is None:
-            import xline as xl
-            mathlib=xl.MathlibDefault
+            mathlib=MathlibDefault
 
         self._m = mathlib
         self.s = s
