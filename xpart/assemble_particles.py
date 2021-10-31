@@ -1,7 +1,7 @@
 import numpy as np
 from .linear_normal_form import compute_linear_normal_form
 
-import xtrack as xt
+from .particles import Particles
 
 def _check_lengths(**kwargs):
     length = None
