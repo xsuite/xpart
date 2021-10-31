@@ -125,8 +125,9 @@ class Particles(xo.dress(ParticlesData)):
                 else:
                     kwargs['_capacity'] = part_dict['_capacity']
             else:
-                assert '_capacity' in kwargs.keys()
                 pyparticles = None
+                if '_capacity' not in kwargs.keys():
+                    kwargs['_capacity'] = 1
 
             # Make sure _capacity is integer
             kwargs['_capacity'] = int(kwargs['_capacity'])
