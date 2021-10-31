@@ -195,9 +195,21 @@ class Particles(xo.dress(ParticlesData)):
     def unhide_lost_particles(self):
          del(self._lim_arrays_name)
 
+    @property
+    def lost_particles_are_hidden(self):
+         return (hasattr(self, '_lim_arrays_name') and
+                 self._lim_arrays_name == '_num_active_particles')
+
     def reorganize(self):
         assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
                 'Masking does not work with pyopencl')
+
+        if self.lost_particles_are_hidden:
+            restore_hidden = True
+            self.unhide_lost_particles()
+        else:
+            restore_hidden = False
+
         mask_active = self.state > 0
         mask_lost = (self.state < 1) & (self.state>LAST_INVALID_STATE)
 
@@ -216,6 +228,9 @@ class Particles(xo.dress(ParticlesData)):
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
             self._num_lost_particles = n_lost
+
+        if restore_hidden:
+            self.hide_lost_particles()
 
         return n_active, n_lost
 
