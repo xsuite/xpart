@@ -189,6 +189,12 @@ class Particles(xo.dress(ParticlesData)):
          context.kernels.Particles_initialize_rand_gen(particles=self,
              seeds=seeds_dev, n_init=self._capacity)
 
+    def hide_lost_particles(self):
+         self._lim_arrays_name = '_num_active_particles'
+
+    def unhide_lost_particles(self):
+         del(self._lim_arrays_name)
+
     def reorganize(self):
         assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
                 'Masking does not work with pyopencl')
