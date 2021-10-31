@@ -286,6 +286,33 @@ class Particles(xo.dress(ParticlesData)):
             - 1 / self.beta0
         )
 
+    @property
+    def energy0(self):
+        return np.sqrt( self.p0c * self.p0c + self.mass0 * self.mass0 )
+
+    def add_to_energy(self, delta_energy):
+        beta0 = self.beta0.copy()
+        delta_beta0 = self.delta * beta0
+
+        ptau_beta0 = (
+            delta_energy / self.energy0.copy() +
+            np.sqrt( delta_beta0 * delta_beta0 + 2.0 * delta_beta0 * beta0
+                    + 1. ) - 1.)
+
+        ptau   = ptau_beta0 / beta0
+        psigma = ptau / beta0
+        delta = np.sqrt( ptau * ptau + 2. * psigma + 1 ) - 1
+
+        one_plus_delta = delta + 1.
+        rvv = one_plus_delta / ( 1. + ptau_beta0 )
+
+        self.delta = delta
+        self.psigma = psigma
+        self.zeta *= rvv / self.rvv
+
+        self.rvv = rvv
+        self.rpp = 1. / one_plus_delta
+
     def set_reference(self, p0c=7e12, mass0=pmass, q0=1):
         self.q0 = q0
         self.mass0 = mass0
@@ -326,6 +353,16 @@ class Particles(xo.dress(ParticlesData)):
         self.rvv[:] = rvv
         self.rpp[:] = rpp
         self.psigma[:] = psigma
+
+    def compare(self, particle, rel_tol=1e-6, abs_tol=1e-15):
+        identical = True
+        for cc in self._structure.keys():
+            for tt, nn in self._structure[cc]:
+                if not np.allclose(getattr(self, nn), getattr(particle, nn),
+                        atol=abs_tol, rtol=rel_tol):
+                    identical = False
+                    break
+        return identical
 
 def _str_in_list(string, str_list):
 
