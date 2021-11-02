@@ -339,7 +339,7 @@ class Particles(xo.dress(ParticlesData)):
                 continue
             getattr(self, kk)[index] = part_dict[kk][0]
 
-    def _update_delta(self, new_delta_value):
+    def update_delta(self, new_delta_value):
         beta0 = self.beta0
         delta_beta0 = new_delta_value * beta0
         ptau_beta0  = np.sqrt( delta_beta0 * delta_beta0 +

@@ -105,7 +105,7 @@ class Pyparticles:
         return self._g2(mass0, beta0, gamma0)
 
     def copy(self, index=None):
-        p = Particles()
+        p = self.__class__()
         for k, v in list(self.__dict__.items()):
             if type(v) in [np.ndarray, dict]:
                 if index is None:
