@@ -3,6 +3,6 @@ from .gaussian import generate_matched_gaussian_bunch
 from .general import _pkg_root
 
 def enable_pyheadtail_interface():
-    import xtrack.pyheadtail_interface.pyhtxtparticles as pp
-    import xtrack as xt
-    xt.Particles = pp.PyHtXtParticles
+    import xpart.pyheadtail_interface.pyhtxtparticles as pp
+    import xpart as xt
+    xp.Particles = pp.PyHtXtParticles
