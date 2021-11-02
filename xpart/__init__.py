@@ -4,5 +4,5 @@ from .general import _pkg_root
 
 def enable_pyheadtail_interface():
     import xpart.pyheadtail_interface.pyhtxtparticles as pp
-    import xpart as xt
+    import xpart as xp
     xp.Particles = pp.PyHtXtParticles
