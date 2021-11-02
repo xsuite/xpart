@@ -79,7 +79,8 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
         XX[5, :] = delta
 
     assert particle_on_co._capacity == 1
-    part_on_co_dict = {nn: np.atleast_1d(vv)[0] for nn, vv in particle_on_co.to_dict().items()
+    part_on_co_dict = {nn: np.atleast_1d(vv)[0] for nn, vv
+                       in particle_on_co.to_dict().items()
                        if not nn.startswith('_')}
     part_on_co_dict['x'] += XX[0, :]
     part_on_co_dict['px'] += XX[1, :]
@@ -94,7 +95,8 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
 
     particles = Particles(_context=_context, _buffer=_buffer, _offset=_offset,
                              **part_on_co_dict)
-    particles.particle_id = np.arange(0, num_particles, dtype=np.int64)
+    particles.particle_id = _context.nparray_to_context_array(
+                                   np.arange(0, num_particles, dtype=np.int64))
     if weight is not None:
         particles.weight[:] = weight
 
