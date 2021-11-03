@@ -15,17 +15,21 @@ def _check_lengths(**kwargs):
     return length
 
 def assemble_particles(_context=None, _buffer=None, _offset=None,
-                      particle_class=Particles, particle_on_co=None,
+                      particle_class=Particles, particle_ref=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
                       R_matrix=None,
                       weight=None):
 
-    if not isinstance(particle_on_co, particle_class):
-        particle_on_co = particle_class(**particle_on_co.to_dict())
 
-    assert zeta is not None
-    assert delta is not None
+    if not isinstance(particle_ref, particle_class):
+        particle_ref = particle_class(**particle_ref.to_dict())
+
+    if zeta is None:
+        zeta = 0
+
+    if delta is None:
+        delta = 0
 
     if (x_norm is not None or px_norm is not None
         or y_norm is not None or py_norm is not None):
@@ -70,7 +74,7 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
             zeta=zeta, delta=delta, x=x, px=px,
             y=y, py=py)
 
-        XX = np.zeros(shape=(6, num_particle), dtype=np.float64)
+        XX = np.zeros(shape=(6, num_particles), dtype=np.float64)
         XX[0, :] = x
         XX[1, :] = px
         XX[2, :] = y
@@ -78,9 +82,9 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
         XX[4, :] = zeta
         XX[5, :] = delta
 
-    assert particle_on_co._capacity == 1
+    assert particle_ref._capacity == 1
     part_on_co_dict = {nn: np.atleast_1d(vv)[0] for nn, vv
-                       in particle_on_co.to_dict().items()
+                       in particle_ref.to_dict().items()
                        if not nn.startswith('_')}
     part_on_co_dict['x'] += XX[0, :]
     part_on_co_dict['px'] += XX[1, :]
@@ -95,7 +99,7 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
 
     particles = Particles(_context=_context, _buffer=_buffer, _offset=_offset,
                              **part_on_co_dict)
-    particles.particle_id = _context.nparray_to_context_array(
+    particles.particle_id = particles._buffer.context.nparray_to_context_array(
                                    np.arange(0, num_particles, dtype=np.int64))
     if weight is not None:
         particles.weight[:] = weight

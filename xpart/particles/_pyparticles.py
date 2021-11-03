@@ -4,12 +4,15 @@ import numpy as np
 from scipy.special import wofz
 from scipy.special import gamma as tgamma
 
+from scipy.constants import m_p as pmass_kg
+from scipy.constants import e as qe
+from scipy.constants import c as clight
+pmass = pmass_kg*clight**2/qe
+
 from xobjects import JEncoder
 
 def count_not_none(*lst):
     return len(lst) - sum(p is None for p in lst)
-
-
 
 class MathlibDefault(object):
 
@@ -60,19 +63,6 @@ class Pyparticles:
              - parent_particle_id [int]: Identifier of the parent particle (secondary production processes)
     """
 
-    clight = 299792458
-    pi = 3.141592653589793238
-    echarge = 1.602176565e-19
-    emass = 0.510998928e6
-    # Was: 938.272046e6;
-    # correct value acc. to PDG 2018 938.2720813(58)e6 MeV/c²
-    pmass = 938.272081e6
-    epsilon0 = 8.854187817e-12
-    mu0 = 4e-7 * pi
-    eradius = echarge ** 2 / (4 * pi * epsilon0 * emass * clight ** 2)
-    pradius = echarge ** 2 / (4 * pi * epsilon0 * pmass * clight ** 2)
-    anumber = 6.02214129e23
-    kboltz = 1.3806488e-23
 
     def _g1(self, mass0, p0c, energy0):
         beta0 = p0c / energy0
@@ -241,36 +231,42 @@ class Pyparticles:
 
     def __init__(
         self,
-        s=0.0,
-        x=0.0,
-        px=0.0,
-        y=0.0,
-        py=0.0,
-        delta=None,
-        ptau=None,
-        psigma=None,
-        rvv=None,
-        zeta=None,
-        tau=None,
-        sigma=None,
-        mass0=pmass,
-        q0=1.0,
-        p0c=None,
-        energy0=None,
-        gamma0=None,
-        beta0=None,
-        chi=None,
-        mass_ratio=None,
-        charge_ratio=None,
-        particle_id=None,
-        parent_particle_id=None,
-        at_turn=None,
-        state=None,  # == 0 particle lost, == 1 particle active
-        weight=None,
-        at_element=None,
         mathlib=None,
-        **args,
+        **kwargs,
     ):
+
+        for kk, vv in kwargs.items():
+            if isinstance(vv, list):
+                kwargs[kk] = np.array(vv)
+
+
+        s = kwargs.get('s', 0.0)
+        x = kwargs.get('x', 0.0)
+        px = kwargs.get('px', 0.0)
+        y = kwargs.get('y', 0.0)
+        py = kwargs.get('py', 0.0)
+        delta = kwargs.get('delta', None)
+        ptau = kwargs.get('ptau', None)
+        psigma = kwargs.get('psigma', None)
+        rvv = kwargs.get('rvv', None)
+        zeta = kwargs.get('zeta', None)
+        tau = kwargs.get('tau', None)
+        sigma = kwargs.get('sigma', None)
+        mass0 = kwargs.get('mass0', pmass)
+        q0 = kwargs.get('q0', 1.0)
+        p0c = kwargs.get('p0c', None)
+        energy0 = kwargs.get('energy0', None)
+        gamma0 = kwargs.get('gamma0', None)
+        beta0 = kwargs.get('beta0', None)
+        chi = kwargs.get('chi', None)
+        mass_ratio = kwargs.get('mass_ratio', None)
+        charge_ratio = kwargs.get('charge_ratio', None)
+        particle_id = kwargs.get('particle_id', None)
+        parent_particle_id = kwargs.get('parent_particle_id', None)
+        at_turn = kwargs.get('at_turn', None)
+        state = kwargs.get('state', None)  # == 0 particle lost, == 1 particle active
+        weight = kwargs.get('weight', None)
+        at_element = kwargs.get('at_element', None)
 
         if mathlib is None:
             mathlib=MathlibDefault

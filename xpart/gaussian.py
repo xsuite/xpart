@@ -8,7 +8,7 @@ from .particles import Particles
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     nemitt_x, nemitt_y, sigma_z,
-                                    particle_on_co, R_matrix,
+                                    particle_ref, R_matrix,
                                     circumference,
                                     alpha_momentum_compaction,
                                     rf_harmonic,
@@ -21,9 +21,9 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
 
     zeta, delta = generate_longitudinal_coordinates(
             distribution='gaussian',
-            mass0=particle_on_co.mass0,
-            q0=particle_on_co.q0,
-            gamma0=particle_on_co.gamma0,
+            mass0=particle_ref.mass0,
+            q0=particle_ref.q0,
+            gamma0=particle_ref.gamma0,
             num_particles=num_particles,
             circumference=circumference,
             alpha_momentum_compaction=alpha_momentum_compaction,
@@ -35,8 +35,8 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
 
     assert len(zeta) == len(delta) == num_particles
 
-    gemitt_x = nemitt_x/particle_on_co.beta0/particle_on_co.gamma0
-    gemitt_y = nemitt_y/particle_on_co.beta0/particle_on_co.gamma0
+    gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
+    gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
 
     x_norm = np.sqrt(gemitt_x) * np.random.normal(size=num_particles)
     px_norm = np.sqrt(gemitt_x) * np.random.normal(size=num_particles)
@@ -47,7 +47,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
     part = assemble_particles(_context=_context, _buffer=_buffer, _offset=_offset,
                       R_matrix=R_matrix,
                       particle_class=particle_class,
-                      particle_on_co=particle_on_co,
+                      particle_ref=particle_ref,
                       zeta=zeta, delta=delta,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,
