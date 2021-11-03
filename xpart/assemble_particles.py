@@ -42,6 +42,12 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
         assert (x_norm is None and px_norm is None
                 and y_norm is None and py_norm is None)
         mode = 'not normalized'
+
+        if x is None: x = 0
+        if px is None: px = 0
+        if y is None: y = 0
+        if py is None: py = 0
+
     else:
         raise ValueError('Invalid input')
 
