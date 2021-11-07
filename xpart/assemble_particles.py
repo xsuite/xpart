@@ -1,4 +1,7 @@
 import numpy as np
+
+import xobjects as xo
+
 from .linear_normal_form import compute_linear_normal_form
 
 from .particles import Particles
@@ -24,6 +27,9 @@ def assemble_particles(_context=None, _buffer=None, _offset=None,
 
     if not isinstance(particle_ref, particle_class):
         particle_ref = particle_class(**particle_ref.to_dict())
+
+    # Working on CPU, particles transferred at the end 
+    particle_ref = particle_ref.copy(_context=xo.context_default)
 
     if zeta is None:
         zeta = 0

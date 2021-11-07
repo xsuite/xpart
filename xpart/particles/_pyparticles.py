@@ -322,7 +322,7 @@ class Pyparticles:
         length = None
         for nn in names:
             xx = getattr(self, nn)
-            if hasattr(xx, "__iter__"):
+            if hasattr(xx, "__iter__") and len(xx)>1:
                 if length is None:
                     length = len(xx)
                 else:
