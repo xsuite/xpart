@@ -17,7 +17,7 @@ def _check_lengths(**kwargs):
                     raise ValueError(f"invalid length len({nn})={len(xx)}")
     return length
 
-def assemble_particles(_context=None, _buffer=None, _offset=None,
+def build_particles(_context=None, _buffer=None, _offset=None,
                       particle_class=Particles, particle_ref=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,

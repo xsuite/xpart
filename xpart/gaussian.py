@@ -2,7 +2,7 @@ import numpy as np
 
 from .longitudinal import generate_longitudinal_coordinates
 from .linear_normal_form import compute_linear_normal_form
-from .assemble_particles import assemble_particles
+from .build_particles import build_particles
 from .particles import Particles
 
 
@@ -44,7 +44,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
     py_norm = np.sqrt(gemitt_y) * np.random.normal(size=num_particles)
 
 
-    part = assemble_particles(_context=_context, _buffer=_buffer, _offset=_offset,
+    part = build_particles(_context=_context, _buffer=_buffer, _offset=_offset,
                       R_matrix=R_matrix,
                       particle_class=particle_class,
                       particle_ref=particle_ref,
