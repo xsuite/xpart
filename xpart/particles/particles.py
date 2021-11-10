@@ -87,13 +87,6 @@ ParticlesData.custom_kernels = {
             xo.Arg(xo.Int32, name='n_init')],
         n_threads='n_init')}
 
-pysixtrack_naming=(
-        ('qratio', 'charge_ratio'),
-        ('mratio', 'mass_ratio'),
-        ('partid', 'particle_id'),
-        ('turn', 'at_turn'),
-        ('elemid', 'at_element'),
-        )
 
 
 class Particles(xo.dress(ParticlesData)):
@@ -103,12 +96,6 @@ class Particles(xo.dress(ParticlesData)):
             'per_particle_vars': per_particle_vars}
 
     def __init__(self, **kwargs):
-
-        # Compatibility with old pysixtrack naming
-        for old, new in pysixtrack_naming:
-            if old in kwargs.keys():
-                assert new not in kwargs.keys()
-                kwargs[new] = kwargs[old]
 
         if '_xobject' in kwargs.keys():
             # Initialize xobject
@@ -321,13 +308,6 @@ class Particles(xo.dress(ParticlesData)):
 
     def set_particle(self, index, set_scalar_vars=False,
             check_scalar_vars=True, **kwargs):
-
-        # Compatibility with old pysixtrack naming
-        for old, new in pysixtrack_naming:
-            if old in kwargs.keys():
-                assert new not in kwargs.keys()
-                kwargs[new] = kwargs[old]
-
 
         # Needed to generate consistent longitudinal variables
         pyparticles = Pyparticles(**kwargs)
@@ -608,35 +588,31 @@ def _pyparticles_to_xtrack_dict(pyparticles):
 
     out = {}
 
-    pyst_dict = pyparticles.to_dict()
-    for old, new in pysixtrack_naming:
-        if hasattr(pyparticles, old):
-            assert new not in pyst_dict.keys()
-            pyst_dict[new] = getattr(pyparticles, old)
+    dct = pyparticles.to_dict()
 
     if hasattr(pyparticles, 'weight'):
-        pyst_dict['weight'] = getattr(pyparticles, 'weight')
+        dct['weight'] = getattr(pyparticles, 'weight')
     else:
-        pyst_dict['weight'] = 1.
+        dct['weight'] = 1.
 
     for tt, kk in scalar_vars + per_particle_vars:
         if kk.startswith('__'):
             continue
         # Use properties
-        pyst_dict[kk] = getattr(pyparticles, kk)
+        dct[kk] = getattr(pyparticles, kk)
 
 
-    for kk, vv in pyst_dict.items():
-        pyst_dict[kk] = np.atleast_1d(vv)
+    for kk, vv in dct.items():
+        dct[kk] = np.atleast_1d(vv)
 
-    lll = [len(vv) for kk, vv in pyst_dict.items() if hasattr(vv, '__len__')]
+    lll = [len(vv) for kk, vv in dct.items() if hasattr(vv, '__len__')]
     lll = list(set(lll))
     assert len(set(lll) - {1}) <= 1
     _capacity = max(lll)
     out['_capacity'] = _capacity
 
     for tt, kk in scalar_vars:
-        val = pyst_dict[kk]
+        val = dct[kk]
         assert np.allclose(val, val[0], rtol=1e-10, atol=1e-14)
         out[kk] = val[0]
 
@@ -644,17 +620,17 @@ def _pyparticles_to_xtrack_dict(pyparticles):
         if kk.startswith('__'):
             continue
 
-        val_pyst = pyst_dict[kk]
+        val_py = dct[kk]
 
-        if _capacity > 1 and len(val_pyst)==1:
+        if _capacity > 1 and len(val_py)==1:
             temp = np.zeros(int(_capacity), dtype=tt._dtype)
-            temp += val_pyst[0]
-            val_pyst = temp
+            temp += val_py[0]
+            val_py = temp
 
-        if type(val_pyst) != tt._dtype:
-            val_pyst = np.array(val_pyst, dtype=tt._dtype)
+        if type(val_py) != tt._dtype:
+            val_py = np.array(val_py, dtype=tt._dtype)
 
-        out[kk] = val_pyst
+        out[kk] = val_py
 
     #out['_num_active_particles'] = np.sum(out['state']>0)
     #out['_num_lost_particles'] = np.sum((out['state'] < 0) &

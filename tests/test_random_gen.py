@@ -4,7 +4,6 @@ import numpy as np
 
 import xobjects as xo
 import xtrack as xt
-import xline as xl
 import xpart as xp
 
 def test_random_generation():
@@ -42,7 +41,7 @@ def test_random_generation():
         # Use turn-by turin monitor to acquire some statistics
 
         tracker = xt.Tracker(_buffer=telem._buffer,
-                sequence=xl.Line(elements=[telem]))
+                line=xt.Line(elements=[telem]))
 
         tracker.track(part, num_turns=1e6, turn_by_turn_monitor=True)
 
