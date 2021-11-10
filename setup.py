@@ -20,6 +20,7 @@ setup(
     ext_modules = extensions,
     install_requires=[
         'numpy>=1.0',
-        'scipy'
+        'scipy',
+        'xobjects'
         ]
     )
