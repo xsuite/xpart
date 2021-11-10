@@ -106,7 +106,7 @@ class Particles(xo.dress(ParticlesData)):
                 # Needed to generate consistent longitudinal variables
                 pyparticles = Pyparticles(**kwargs)
 
-                part_dict = _pyparticles_to_xtrack_dict(pyparticles)
+                part_dict = _pyparticles_to_xpart_dict(pyparticles)
                 if '_capacity' in kwargs.keys():
                     assert kwargs['_capacity'] >= part_dict['_capacity']
                 else:
@@ -311,7 +311,7 @@ class Particles(xo.dress(ParticlesData)):
 
         # Needed to generate consistent longitudinal variables
         pyparticles = Pyparticles(**kwargs)
-        part_dict = _pyparticles_to_xtrack_dict(pyparticles)
+        part_dict = _pyparticles_to_xpart_dict(pyparticles)
         for tt, kk in list(scalar_vars):
             setattr(self, kk, part_dict[kk])
         for tt, kk in list(per_particle_vars):
@@ -584,7 +584,7 @@ void LocalParticle_update_p0c(LocalParticle* part, double new_p0c_value){
 
     return source
 
-def _pyparticles_to_xtrack_dict(pyparticles):
+def _pyparticles_to_xpart_dict(pyparticles):
 
     out = {}
 
