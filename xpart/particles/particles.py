@@ -96,6 +96,41 @@ class Particles(xo.dress(ParticlesData)):
             'per_particle_vars': per_particle_vars}
 
     def __init__(self, **kwargs):
+        """
+        Particle objects have the following fields:
+
+             - s [m]:  Reference accumulated pathlength
+             - x [m]:  Horizontal position
+             - px[1]:  Px / (m/m0 * p0c) = beta_x gamma /(beta0 gamma0)
+             - y [m]:  Vertical position
+             - py [1]:  Py / (m/m0 * p0c)
+             - delta[1]:  Pc / (m/m0 * p0c) - 1
+             - ptau [1]:  Energy / (m/m0 * p0c) - 1
+             - psigma [1]:  ptau/beta0
+             - rvv [1]:  beta/beta0
+             - rpp [1]:  1/(1+delta) = (m/m0 * p0c) / Pc
+             - zeta [m]:  beta (s/beta0 - ct )
+             - tau [m]:
+             - sigma [m]:  s - beta0 ct = rvv * zeta
+             - mass0 [eV]:
+             - q0 [e]:  Reference charge
+             - p0c [eV]: Reference momentum
+             - energy0 [eV]: Reference energy
+             - gamma0 [1]:  Reference relativistic gamma
+             - beta0 [1]:  Reference relativistix beta
+             - chi [1]:  q/ q0 * m0/m = qratio / mratio
+             - mass_ratio [1]:  mass/mass0
+             - charge_ratio [1]:  q / q0
+             - particle_id [int]: Identifier of the particle
+             - at_turn [int]:  Number of tracked turns
+             - state [int]:  It is ``0`` if the particle is lost, ``1`` otherwise
+             - weight [int]:  Particle weight in number of particles
+                              (for collective sims.)
+             - at_element [int]: Identifier of the last element through which
+                                 the particle has been
+             - parent_particle_id [int]: Identifier of the parent particle
+                                         (secondary production processes)
+    """
 
         if '_xobject' in kwargs.keys():
             # Initialize xobject
