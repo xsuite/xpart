@@ -357,8 +357,8 @@ class Particles(xo.dress(ParticlesData)):
     def update_delta(self, new_delta_value):
         beta0 = self.beta0
         delta_beta0 = new_delta_value * beta0
-        ptau_beta0  = np.sqrt( delta_beta0 * delta_beta0 +
-                                2. * delta_beta0 * beta0 + 1. ) - 1.
+        ptau_beta0  = ( delta_beta0 * delta_beta0 +
+                                2. * delta_beta0 * beta0 + 1. )**0.5 - 1.
         one_plus_delta = 1. + new_delta_value
         rvv    = ( one_plus_delta ) / ( 1. + ptau_beta0 )
         rpp    = 1. / one_plus_delta
