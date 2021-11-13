@@ -2,28 +2,6 @@ import numpy as np
 
 from .particles import Particles
 
-def _one_turn_map(p, particle_on_madx_co, tracker):
-
-    p_dict = particle_on_co.to_dict()
-
-    p_dict['x'] = p[0]
-    p_dict['px ']= p[1]
-    p_dict['y'] = p[2]
-    p_dict['py'] = p[3]
-    p_dict['zeta'] = p[4]
-    p_dict['delta'] = p[5]
-
-    part = Particles(**p_dict)
-    tracker.track(part)
-    p_res = np.array([
-           part.x[0],
-           part.px[0],
-           part.y[0],
-           part.py[0],
-           part.zeta[0],
-           part.delta[0]])
-    return p_res
-
 
 def healy_symplectify(M):
     # https://accelconf.web.cern.ch/e06/PAPERS/WEPCH152.PDF
@@ -74,7 +52,14 @@ def Rot2D(mu):
     return np.array([[ np.cos(mu), np.sin(mu)],
                      [-np.sin(mu), np.cos(mu)]])
 
-def compute_linear_normal_form(M):
+def compute_linear_normal_form(M, simplectify=True, tol_det_M=1e-3):
+
+    if np.abs(np.linalg.det(M)-1) > tol_det_M:
+        raise ValueError('The determinant of M is out tolerance.')
+
+    if symplectify:
+        return healy_symplectify(M)
+
     w0, v0 = np.linalg.eig(M)
 
     a0 = np.real(v0)
