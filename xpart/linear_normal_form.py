@@ -52,13 +52,13 @@ def Rot2D(mu):
     return np.array([[ np.cos(mu), np.sin(mu)],
                      [-np.sin(mu), np.cos(mu)]])
 
-def compute_linear_normal_form(M, simplectify=True, tol_det_M=1e-3):
+def compute_linear_normal_form(M, symplectify=True, tol_det_M=1e-3):
 
     if np.abs(np.linalg.det(M)-1) > tol_det_M:
         raise ValueError('The determinant of M is out tolerance.')
 
     if symplectify:
-        return healy_symplectify(M)
+        healy_symplectify(M)
 
     w0, v0 = np.linalg.eig(M)
 
