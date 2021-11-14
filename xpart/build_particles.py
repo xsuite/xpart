@@ -43,10 +43,7 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         assert (x is  None and px is  None
                 and y is  None and py is  None)
         mode = 'normalized'
-    elif (x is not  None or px is not  None
-          or y is not  None or py is not  None):
-        assert (x_norm is None and px_norm is None
-                and y_norm is None and py_norm is None)
+    else:
         mode = 'not normalized'
 
         if x is None: x = 0
@@ -54,8 +51,6 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         if y is None: y = 0
         if py is None: py = 0
 
-    else:
-        raise ValueError('Invalid input')
 
     if mode == 'normalized':
 
