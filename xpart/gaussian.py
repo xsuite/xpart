@@ -35,13 +35,10 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
 
     assert len(zeta) == len(delta) == num_particles
 
-    gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
-    gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
-
-    x_norm = np.sqrt(gemitt_x) * np.random.normal(size=num_particles)
-    px_norm = np.sqrt(gemitt_x) * np.random.normal(size=num_particles)
-    y_norm = np.sqrt(gemitt_y) * np.random.normal(size=num_particles)
-    py_norm = np.sqrt(gemitt_y) * np.random.normal(size=num_particles)
+    x_norm = np.random.normal(size=num_particles)
+    px_norm = np.random.normal(size=num_particles)
+    y_norm = np.random.normal(size=num_particles)
+    py_norm = np.random.normal(size=num_particles)
 
 
     part = build_particles(_context=_context, _buffer=_buffer, _offset=_offset,
@@ -51,5 +48,6 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                       zeta=zeta, delta=delta,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,
+                      scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y),
                       weight=total_intensity_particles/num_particles)
     return part

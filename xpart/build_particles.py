@@ -22,6 +22,7 @@ def build_particles(_context=None, _buffer=None, _offset=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
                       R_matrix=None,
+                      scale_with_transverse_norm_emitt=None,
                       weight=None):
 
 
@@ -50,6 +51,8 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         if py_norm is None: py_norm = 0
     else:
         mode = 'not normalized'
+        assert scale_with_transverse_norm_emitt is not None, (
+                'Available only for normalized coordinates')
 
         if x is None: x = 0
         if px is None: px = 0
@@ -63,6 +66,28 @@ def build_particles(_context=None, _buffer=None, _offset=None,
             zeta=zeta, delta=delta, x_norm=x_norm, px_norm=px_norm,
             y_norm=y_norm, py_norm=py_norm)
 
+        if scale_with_transverse_norm_emitt is not None:
+            assert len(scale_with_transverse_norm_emitt) == 2
+
+            nemitt_x = scale_with_transverse_norm_emitt[0]
+            nemitt_y = scale_with_transverse_norm_emitt[1]
+
+            gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
+            gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
+
+            x_norm_scaled = np.sqrt(gemitt_x) * x_norm
+            px_norm_scaled = np.sqrt(gemitt_x) * px_norm
+            y_norm_scaled = np.sqrt(gemitt_y) * y_norm
+            py_norm_scaled = np.sqrt(gemitt_y) * py_norm
+        else:
+            x_norm_scaled = x_norm
+            px_norm_scaled = px_norm
+            y_norm_scaled = y_norm
+            py_norm_scaled = py_norm
+
+
+
+
         WW, WWinv, Rot = compute_linear_normal_form(R_matrix)
 
         # Transform long. coordinates to normalized space
@@ -70,15 +95,15 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         XX_long[4, :] = zeta
         XX_long[5, :] = delta
 
-        XX_norm = np.dot(WWinv, XX_long)
+        XX_norm_scaled = np.dot(WWinv, XX_long)
 
-        XX_norm[0, :] = x_norm
-        XX_norm[1, :] = px_norm
-        XX_norm[2, :] = y_norm
-        XX_norm[3, :] = py_norm
+        XX_norm_scaled[0, :] = x_norm_scaled
+        XX_norm_scaled[1, :] = px_norm_scaled
+        XX_norm_scaled[2, :] = y_norm_scaled
+        XX_norm_scaled[3, :] = py_norm_scaled
 
         # Transform to physical coordinates
-        XX = np.dot(WW, XX_norm)
+        XX = np.dot(WW, XX_norm_scaled)
 
     elif mode == 'not normalized':
 
