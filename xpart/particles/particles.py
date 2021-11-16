@@ -89,7 +89,11 @@ ParticlesData.custom_kernels = {
 
 
 
-class Particles(xo.dress(ParticlesData)):
+class Particles(xo.dress(ParticlesData, rename={
+                             'delta': '_delta',
+                             'psigma': '_psigma',
+                             'rvv': '_rvv',
+                             'rpp': '_rpp'})):
     _structure = {
             'size_vars': size_vars,
             'scalar_vars': scalar_vars,
@@ -300,6 +304,22 @@ class Particles(xo.dress(ParticlesData)):
         energy0 = np.sqrt(self.p0c ** 2 + self.mass0 ** 2)
         self.beta0 = self.p0c / energy0
         self.gamma0 = energy0 / self.mass0
+
+    @property
+    def delta(self):
+        return self._delta
+
+    @property
+    def psigma(self):
+        return self._psigma
+
+    @property
+    def rvv(self):
+        return self._rvv
+
+    @property
+    def rpp(self):
+        return self._rpp
 
     @property
     def ptau(self):
