@@ -332,6 +332,11 @@ class Particles(xo.dress(ParticlesData, rename={
     def energy0(self):
         return np.sqrt( self.p0c * self.p0c + self.mass0 * self.mass0 )
 
+    @property
+    def energy(self):
+        return self.energy0 + self.psigma * self.p0c * self.beta0 # eV
+
+
     def add_to_energy(self, delta_energy):
         beta0 = self.beta0.copy()
         delta_beta0 = self.delta * beta0
