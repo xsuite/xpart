@@ -43,6 +43,11 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         assert (x is  None and px is  None
                 and y is  None and py is  None)
         mode = 'normalized'
+
+        if x_norm is None: x_norm = 0
+        if px_norm is None: px_norm = 0
+        if y_norm is None: y_norm = 0
+        if py_norm is None: py_norm = 0
     else:
         mode = 'not normalized'
 

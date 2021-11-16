@@ -58,7 +58,7 @@ def compute_linear_normal_form(M, symplectify=True, tol_det_M=1e-3):
         raise ValueError('The determinant of M is out tolerance.')
 
     if symplectify:
-        healy_symplectify(M)
+        M = healy_symplectify(M)
 
     w0, v0 = np.linalg.eig(M)
 
