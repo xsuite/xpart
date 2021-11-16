@@ -51,7 +51,7 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         if py_norm is None: py_norm = 0
     else:
         mode = 'not normalized'
-        assert scale_with_transverse_norm_emitt is not None, (
+        assert scale_with_transverse_norm_emitt is None, (
                 'Available only for normalized coordinates')
 
         if x is None: x = 0

@@ -99,6 +99,14 @@ class Particles(xo.dress(ParticlesData, rename={
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
+    def to_dict(self):
+        dct = super().to_dict()
+        dct['delta'] = self.delta
+        dct['psigma'] = self.psigma
+        dct['rvv'] = self.rvv
+        dct['rpp'] = self.rpp
+        return dct
+
     def __init__(self, **kwargs):
         """
         Particle objects have the following fields:
