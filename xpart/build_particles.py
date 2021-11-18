@@ -25,6 +25,42 @@ def build_particles(_context=None, _buffer=None, _offset=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None):
 
+    """
+    Function to create particle objects from arrays containing physical or normalized coordinates.
+
+    Arguments:
+
+        - particle_ref: Reference particle to which the provided arrays with coordinates are added
+        - x: Values to be added to particle_ref.x
+        - px: Values to be added to particle_ref.px
+        - y: Values to be added to particle_ref.y
+        - py: Values to be added to particle_ref.py
+        - zeta: Values to be added to particle_ref.zeta
+        - delta: Values to be added to particle_ref.delta
+        - x_norm: transverse normalized coordinate x (in sigmas) used in combination
+            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
+            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
+            x_norm, px_norm, y_norm, py_norm are provided).
+        - px_norm: transverse normalized coordinate px (in sigmas) used in combination
+            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
+            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
+            x_norm, px_norm, y_norm, py_norm are provided).
+        - y_norm: transverse normalized coordinate y (in sigmas) used in combination
+            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
+            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
+            x_norm, px_norm, y_norm, py_norm are provided).
+        - py_norm: transverse normalized coordinate py (in sigmas) used in combination
+            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
+            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
+            x_norm, px_norm, y_norm, py_norm are provided).
+        - R_matrix: 6x6 matrix defining the linearized one-turn map to be used for the transformation of
+            the normalized coordinates into physical space.
+        - scale_with_transverse_norm_emitt: Tuple of two elements defining the transverse normalized
+            emittances used to rescale the provided transverse normalized coordinates (x, px, y, py).
+        - weight: weights to be assigned to the particles.
+        - _context: xobjects context in which the particle object is allocated.
+
+    """
 
     if not isinstance(particle_ref, particle_class):
         particle_ref = particle_class(**particle_ref.to_dict())
