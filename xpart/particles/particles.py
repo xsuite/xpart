@@ -94,21 +94,8 @@ class Particles(xo.dress(ParticlesData, rename={
                              'psigma': '_psigma',
                              'rvv': '_rvv',
                              'rpp': '_rpp'})):
-    _structure = {
-            'size_vars': size_vars,
-            'scalar_vars': scalar_vars,
-            'per_particle_vars': per_particle_vars}
 
-    def to_dict(self):
-        dct = super().to_dict()
-        dct['delta'] = self.delta
-        dct['psigma'] = self.psigma
-        dct['rvv'] = self.rvv
-        dct['rpp'] = self.rpp
-        return dct
-
-    def __init__(self, **kwargs):
-        """
+    """
         Particle objects have the following fields:
 
              - s [m]:  Reference accumulated pathlength
@@ -143,6 +130,21 @@ class Particles(xo.dress(ParticlesData, rename={
              - parent_particle_id [int]: Identifier of the parent particle
                                          (secondary production processes)
     """
+
+    _structure = {
+            'size_vars': size_vars,
+            'scalar_vars': scalar_vars,
+            'per_particle_vars': per_particle_vars}
+
+    def to_dict(self):
+        dct = super().to_dict()
+        dct['delta'] = self.delta
+        dct['psigma'] = self.psigma
+        dct['rvv'] = self.rvv
+        dct['rpp'] = self.rpp
+        return dct
+
+    def __init__(self, **kwargs):
 
         if '_xobject' in kwargs.keys():
             # Initialize xobject
