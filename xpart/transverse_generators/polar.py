@@ -50,3 +50,25 @@ def generate_2D_polar_grid(
     a2 = r_all*np.sin(theta_all)
 
     return a1, a2, r_all, theta_all
+
+def generate_2D_uniform_circular_sector(num_particles, r_range=(0, 1),
+                                        theta_range=(0, 2*np.pi)):
+
+
+    # CDF(r) = (r^2 - r0^2)/(r1^2 - r0^2)
+    # InvCDF(u) = sqrt(r0^2 + u * (r1^2 -r0^2))
+
+    r0 = r_range[0]
+    r1 = r_range[1]
+
+    uu = np.random.uniform(low=0, high=1., size=num_particles)
+
+    r_all = np.sqrt(r0*r0 + uu * (r1*r1 - r0*r0))
+
+    theta_all = np.random.uniform(low=theta_range[0], high=theta_range[1],
+                           size=num_particles)
+
+    a1 = r_all*np.cos(theta_all)
+    a2 = r_all*np.sin(theta_all)
+
+    return a1, a2, r_all, theta_all
