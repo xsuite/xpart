@@ -34,7 +34,8 @@ delta = 1e-3
 
 # Build particles:
 #    - scale with given emittances
-#    - transform to physical coordinatesi (using 1-turn matrix)
+#    - transform to physical coordinates (using 1-turn matrix)
+#    - handle dispersion
 #    - center around the closed orbit
 particles = xp.build_particles(
            R_matrix=input_data['RR_finite_diffs'], particle_ref=part_on_closed_orbit,
