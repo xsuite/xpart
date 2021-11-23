@@ -5,6 +5,7 @@ from .build_particles import build_particles
 from .linear_normal_form import compute_linear_normal_form
 from .transverse_generators import generate_2D_polar_grid
 from .transverse_generators import generate_2D_uniform_circular_sector
+from .transverse_generators import generate_2D_pencil
 
 def enable_pyheadtail_interface():
     import xpart.pyheadtail_interface.pyhtxtparticles as pp
