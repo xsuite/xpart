@@ -7,6 +7,7 @@ from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
 
 def _characterize_tracker(tracker, particle_ref):
+    line = tracker.line
     T_rev = line.get_length()/(particle_ref.beta0[0]*clight)
     freq_list = []
     lag_list_deg = []
@@ -33,8 +34,9 @@ def _characterize_tracker(tracker, particle_ref):
     dct['lag_list_deg'] = lag_list_deg
     dct['voltage_list'] = voltage_list
     dct['h_list'] = h_list
-    dct['alpha_momentum_compaction'] = alpha_momentum_compaction
+    dct['alpha_momentum_compaction'] = alpha_mom_compaction
     dct['eta'] = eta
+    return dct
 
 def generate_longitudinal_coordinates(
                                     tracker=None,
@@ -50,6 +52,42 @@ def generate_longitudinal_coordinates(
                                     distribution='gaussian',
                                     sigma_z=None
                                     ):
+
+    if tracker is not None:
+        assert particle_ref is not None
+        dct = _characterize_tracker(tracker, particle_ref)
+
+    if mass0 is None:
+        assert tracker is not None
+        mass0 = particle_ref.mass0
+
+    if q0 is None:
+        assert tracker is not None
+        q0 = particle_ref.q0
+
+    if gamma0 is None:
+        assert tracker is not None
+        gamma0 = particle_ref.gamma0[0]
+
+    if circumference is None:
+        assert tracker is not None
+        circumference = tracker.line.get_length()
+
+    if alpha_momentum_compaction is None:
+        assert tracker is not None
+        alpha_momentum_compaction = dct['alpha_momentum_compaction']
+
+    if rf_harmonic is None:
+        assert tracker is not None
+        rf_harmonic=dct['h_list']
+
+    if rf_voltage is None:
+        assert tracker is not None
+        rf_voltage=dct['voltage_list']
+
+    if rf_phase is None:
+        assert tracker is not None
+        rf_phase=(np.array(dct['lag_list_deg']) - 180)/180*np.pi
 
     if distribution != 'gaussian':
         raise NotImplementedError
