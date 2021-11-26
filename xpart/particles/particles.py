@@ -146,6 +146,8 @@ class Particles(xo.dress(ParticlesData, rename={
 
     def __init__(self, **kwargs):
 
+        input_kwargs = kwargs.copy()
+
         if '_xobject' in kwargs.keys():
             # Initialize xobject
             self.xoinitialize(**kwargs)
@@ -203,6 +205,15 @@ class Particles(xo.dress(ParticlesData, rename={
 
         self._num_active_particles = -1 # To be filled in only on CPU
         self._num_lost_particles = -1 # To be filled in only on CPU
+
+        # Force values provided by user if compatible
+        for nn in part_energy_varnames():
+            vvv = context.nparray_from_context_array(getattr(self, nn))
+            if nn in input_kwargs.keys():
+                if np.allclose(vvv, input_kwargs[nn], rtol=0, atol=1e-14):
+                    getattr(self, "_"+nn)[:] = (
+                            context.nparray_from_context_array(
+                                input_kwargs[nn]))
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             # Particles always need to be organized to run on CPU
