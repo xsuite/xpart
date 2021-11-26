@@ -31,28 +31,32 @@ def build_particles(_context=None, _buffer=None, _offset=None,
     Arguments:
 
         - particle_ref: Reference particle to which the provided arrays with coordinates are added
-        - x: Values to be added to particle_ref.x
-        - px: Values to be added to particle_ref.px
-        - y: Values to be added to particle_ref.y
-        - py: Values to be added to particle_ref.py
-        - zeta: Values to be added to particle_ref.zeta
-        - delta: Values to be added to particle_ref.delta
+        - x: x coordinate of the particles
+        - px: px coordinate of the particles
+        - y: y coordinate of the particles
+        - py: py coordinate of the particles
+        - zeta: zeta coordinate of the particles
+        - delta: delta coordinate of the particles
         - x_norm: transverse normalized coordinate x (in sigmas) used in combination
-            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
-            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
-            x_norm, px_norm, y_norm, py_norm are provided).
+            with the one turn matrix R_matrix and with the transverse emittances
+            provided in the argument scale_with_transverse_norm_emitt to generate
+            x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
+            py_norm are provided).
         - px_norm: transverse normalized coordinate px (in sigmas) used in combination
-            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
-            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
-            x_norm, px_norm, y_norm, py_norm are provided).
+            with the one turn matrix R_matrix and with the transverse emittances
+            provided in the argument scale_with_transverse_norm_emitt to generate
+            x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
+            py_norm are provided).
         - y_norm: transverse normalized coordinate y (in sigmas) used in combination
-            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
-            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
-            x_norm, px_norm, y_norm, py_norm are provided).
+            with the one turn matrix R_matrix and with the transverse emittances
+            provided in the argument scale_with_transverse_norm_emitt to generate
+            x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
+            py_norm are provided).
         - py_norm: transverse normalized coordinate py (in sigmas) used in combination
-            with the one turn matrix R_matrix and with the transverse emittances provided in the argument
-            scale_with_transverse_norm_emitt to generate x, px, y, py (x, px, y, py cannot be provided if
-            x_norm, px_norm, y_norm, py_norm are provided).
+            with the one turn matrix R_matrix and with the transverse emittances
+            provided in the argument scale_with_transverse_norm_emitt to generate
+            x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
+            py_norm are provided).
         - R_matrix: 6x6 matrix defining the linearized one-turn map to be used for the transformation of
             the normalized coordinates into physical space.
         - scale_with_transverse_norm_emitt: Tuple of two elements defining the transverse normalized
@@ -120,9 +124,6 @@ def build_particles(_context=None, _buffer=None, _offset=None,
             px_norm_scaled = px_norm
             y_norm_scaled = y_norm
             py_norm_scaled = py_norm
-
-
-
 
         WW, WWinv, Rot = compute_linear_normal_form(R_matrix)
 
