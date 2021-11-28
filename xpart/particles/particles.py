@@ -208,7 +208,7 @@ class Particles(xo.dress(ParticlesData, rename={
 
         # Force values provided by user if compatible
         for nn in part_energy_varnames():
-            vvv = context.nparray_from_context_array(getattr(self, nn))
+            vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
             if nn in input_kwargs.keys():
                 if np.allclose(vvv, input_kwargs[nn], rtol=0, atol=1e-14):
                     getattr(self, "_"+nn)[:] = (
