@@ -36,12 +36,12 @@ delta = 1e-3
 #    - transform to physical coordinates (using 1-turn matrix)
 #    - handle dispersion
 #    - center around the closed orbit
-# particles = xp.build_particles(
-#            R_matrix=input_data['RR_finite_diffs'], particle_ref=part_on_closed_orbit,
-#            zeta=zeta, delta=delta,
-#            x_norm=x_in_sigmas, px_norm=px_in_sigmas,
-#            y_norm=y_in_sigmas, py_norm=py_in_sigmas,
-#            scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
+particles = xp.build_particles(
+            R_matrix=input_data['RR_finite_diffs'], particle_ref=part_on_closed_orbit,
+            zeta=zeta, delta=delta,
+            x_norm=x_in_sigmas, px_norm=px_in_sigmas,
+            y_norm=y_in_sigmas, py_norm=py_in_sigmas,
+            scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
 
 
 import matplotlib.pyplot as plt

@@ -31,7 +31,7 @@ def test_gaussian_bunch_generation():
                  _context=context,
                  num_particles=n_part, total_intensity_particles=bunch_intensity,
                  nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-                 particle_ref=part_on_co, R_matrix=RR,
+                 particle_on_co=part_on_co, R_matrix=RR,
                  circumference=6911., alpha_momentum_compaction=0.0030777,
                  rf_harmonic=4620, rf_voltage=3e6, rf_phase=0)
 

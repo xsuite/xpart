@@ -158,7 +158,8 @@ class Particles(xo.dress(ParticlesData, rename={
                 pyparticles = Pyparticles(**kwargs)
 
                 part_dict = _pyparticles_to_xpart_dict(pyparticles)
-                if '_capacity' in kwargs.keys():
+                if ('_capacity' in kwargs.keys() and
+                         kwargs['_capacity'] is not None):
                     assert kwargs['_capacity'] >= part_dict['_capacity']
                 else:
                     kwargs['_capacity'] = part_dict['_capacity']

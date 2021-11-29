@@ -1,10 +1,13 @@
+import logging
+
 import numpy as np
 
 import xobjects as xo
 
 from .linear_normal_form import compute_linear_normal_form
-
 from .particles import Particles
+
+logger = logging.getLogger(__name__)
 
 def _check_lengths(**kwargs):
     length = None
@@ -15,14 +18,23 @@ def _check_lengths(**kwargs):
             else:
                 if length != len(xx):
                     raise ValueError(f"invalid length len({nn})={len(xx)}")
+    if 'num_particles' in kwargs.keys():
+        num_particles = kwargs['num_particles']
+        if num_particles is not None and length != num_particles:
+            raise ValueError(
+                f"num_particles={num_particles} is inconsistent with array length")
     return length
 
-def build_particles(_context=None, _buffer=None, _offset=None,
-                      particle_class=Particles, particle_ref=None,
+def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
+                      ref_from_particle=None,
+                      num_particles=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
+                      particle_on_co=None,
                       R_matrix=None,
+                      tracker=None,
                       scale_with_transverse_norm_emitt=None,
+                      particle_class=Particles,
                       weight=None):
 
     """
@@ -30,7 +42,7 @@ def build_particles(_context=None, _buffer=None, _offset=None,
 
     Arguments:
 
-        - particle_ref: Reference particle to which the provided arrays with coordinates are added
+        - particle_on_co: Particle on closed orbit
         - x: x coordinate of the particles
         - px: px coordinate of the particles
         - y: y coordinate of the particles
@@ -66,11 +78,9 @@ def build_particles(_context=None, _buffer=None, _offset=None,
 
     """
 
-    if not isinstance(particle_ref, particle_class):
-        particle_ref = particle_class(**particle_ref.to_dict())
-
-    # Working on CPU, particles transferred at the end 
-    particle_ref = particle_ref.copy(_context=xo.context_default)
+    if ref_from_particle is None:
+        assert particle_on_co is not None
+        ref_from_particle = particle_on_co
 
     if zeta is None:
         zeta = 0
@@ -99,10 +109,29 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         if y is None: y = 0
         if py is None: py = 0
 
+    assert ref_from_particle._capacity == 1
+    ref_dict = {
+        'q0': ref_from_particle.q0,
+        'mass0': ref_from_particle.mass0,
+        'p0c': ref_from_particle.p0c[0],
+        'gamma0': ref_from_particle.gamma0[0],
+        'beta0': ref_from_particle.beta0[0],
+    }
+    part_dict = ref_dict.copy()
 
     if mode == 'normalized':
+        if particle_on_co is None:
+            assert tracker is not None
+            particle_on_co = tracker.find_closed_orbit(
+                particle_co_guess=xp.Particle(
+                    x=0, px=0, y=0, py=0, zeta=0, delta=0.,
+                    **ref_dict))
 
-        num_particles = _check_lengths(
+        if R_matrix is None:
+            R_matrix = tracker.compute_one_turn_matrix_finite_differences(
+                particle_on_co=particle_on_co)
+
+        num_particles = _check_lengths(num_particles=num_particles,
             zeta=zeta, delta=delta, x_norm=x_norm, px_norm=px_norm,
             y_norm=y_norm, py_norm=py_norm)
 
@@ -112,8 +141,8 @@ def build_particles(_context=None, _buffer=None, _offset=None,
             nemitt_x = scale_with_transverse_norm_emitt[0]
             nemitt_y = scale_with_transverse_norm_emitt[1]
 
-            gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
-            gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
+            gemitt_x = nemitt_x/ref_from_particle.beta0/ref_from_particle.gamma0
+            gemitt_y = nemitt_y/ref_from_particle.beta0/ref_from_particle.gamma0
 
             x_norm_scaled = np.sqrt(gemitt_x) * x_norm
             px_norm_scaled = np.sqrt(gemitt_x) * px_norm
@@ -129,8 +158,8 @@ def build_particles(_context=None, _buffer=None, _offset=None,
 
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
-        XX_long[4, :] = zeta
-        XX_long[5, :] = delta
+        XX_long[4, :] = zeta - particle_on_co.zeta
+        XX_long[5, :] = delta - particle_on_co.delta
 
         XX_norm_scaled = np.dot(WWinv, XX_long)
 
@@ -144,7 +173,12 @@ def build_particles(_context=None, _buffer=None, _offset=None,
 
     elif mode == 'not normalized':
 
-        num_particles = _check_lengths(
+        if particle_on_co is not None:
+            logger.warning('particle_on_co provided but not used in this mode!')
+        if R_matrix is not None:
+            logger.warning('R_matrix provided but not used in this mode!')
+
+        num_particles = _check_lengths(num_particles=num_particles,
             zeta=zeta, delta=delta, x=x, px=px,
             y=y, py=py)
 
@@ -156,23 +190,18 @@ def build_particles(_context=None, _buffer=None, _offset=None,
         XX[4, :] = zeta
         XX[5, :] = delta
 
-    assert particle_ref._capacity == 1
-    part_on_co_dict = {nn: np.atleast_1d(vv)[0] for nn, vv
-                       in particle_ref.to_dict().items()
-                       if not nn.startswith('_')}
-    part_on_co_dict['x'] += XX[0, :]
-    part_on_co_dict['px'] += XX[1, :]
-    part_on_co_dict['y'] += XX[2, :]
-    part_on_co_dict['py'] += XX[3, :]
-    part_on_co_dict['zeta'] += XX[4, :]
-    part_on_co_dict['delta'] += XX[5, :]
+    part_dict['x'] = XX[0, :]
+    part_dict['px'] = XX[1, :]
+    part_dict['y'] = XX[2, :]
+    part_dict['py'] = XX[3, :]
+    part_dict['zeta'] = XX[4, :]
+    part_dict['delta'] = XX[5, :]
 
-    del(part_on_co_dict['psigma'])
-
-    part_on_co_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
+    part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
 
     particles = Particles(_context=_context, _buffer=_buffer, _offset=_offset,
-                             **part_on_co_dict)
+                          _capacity=_capacity,**part_dict)
+
     particles.particle_id = particles._buffer.context.nparray_to_context_array(
                                    np.arange(0, num_particles, dtype=np.int64))
     if weight is not None:
