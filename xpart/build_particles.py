@@ -26,7 +26,8 @@ def _check_lengths(**kwargs):
     return length
 
 def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
-                      ref_from_particle=None,
+                      mode=None,
+                      particle_ref=None,
                       num_particles=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
@@ -78,9 +79,16 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     """
 
-    if ref_from_particle is None:
-        assert particle_on_co is not None
-        ref_from_particle = particle_on_co
+    assert mode in [None, 'set', 'shift', 'normalized_transverse']
+
+    if (particle_ref is not None and particle_on_co is not None):
+        raise ValueError("`particle_ref` and `particle_on_co`"
+                " cannot be provided at the same time")
+
+    if particle_ref is None:
+        assert particle_on_co is not None, (
+            "`particle_ref` or `particle_on_co` must be provided!")
+        particle_ref = particle_on_co
 
     if zeta is None:
         zeta = 0
@@ -93,39 +101,45 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         assert (x is  None and px is  None
                 and y is  None and py is  None)
-        mode = 'normalized'
 
+        if mode is None:
+            mode = 'normalized_transverse'
+        else:
+            assert mode == 'normalized_transverse'
+
+    if mode is None:
+        mode = 'set'
+
+    if mode == 'normalized_transverse':
         if x_norm is None: x_norm = 0
         if px_norm is None: px_norm = 0
         if y_norm is None: y_norm = 0
         if py_norm is None: py_norm = 0
     else:
-        mode = 'not normalized'
-        assert scale_with_transverse_norm_emitt is None, (
-                'Available only for normalized coordinates')
-
         if x is None: x = 0
         if px is None: px = 0
         if y is None: y = 0
         if py is None: py = 0
 
-    assert ref_from_particle._capacity == 1
+    assert particle_ref._capacity == 1
     ref_dict = {
-        'q0': ref_from_particle.q0,
-        'mass0': ref_from_particle.mass0,
-        'p0c': ref_from_particle.p0c[0],
-        'gamma0': ref_from_particle.gamma0[0],
-        'beta0': ref_from_particle.beta0[0],
+        'q0': particle_ref.q0,
+        'mass0': particle_ref.mass0,
+        'p0c': particle_ref.p0c[0],
+        'gamma0': particle_ref.gamma0[0],
+        'beta0': particle_ref.beta0[0],
     }
     part_dict = ref_dict.copy()
 
-    if mode == 'normalized':
+    if mode == 'normalized_transverse':
         if particle_on_co is None:
             assert tracker is not None
             particle_on_co = tracker.find_closed_orbit(
                 particle_co_guess=xp.Particle(
                     x=0, px=0, y=0, py=0, zeta=0, delta=0.,
                     **ref_dict))
+        else:
+            assert particle_on_co._capacity == 1
 
         if R_matrix is None:
             R_matrix = tracker.compute_one_turn_matrix_finite_differences(
@@ -141,8 +155,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             nemitt_x = scale_with_transverse_norm_emitt[0]
             nemitt_y = scale_with_transverse_norm_emitt[1]
 
-            gemitt_x = nemitt_x/ref_from_particle.beta0/ref_from_particle.gamma0
-            gemitt_y = nemitt_y/ref_from_particle.beta0/ref_from_particle.gamma0
+            gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
+            gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
 
             x_norm_scaled = np.sqrt(gemitt_x) * x_norm
             px_norm_scaled = np.sqrt(gemitt_x) * px_norm
@@ -171,10 +185,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Transform to physical coordinates
         XX = np.dot(WW, XX_norm_scaled)
 
-    elif mode == 'not normalized':
+    elif mode == 'set':
 
-        if particle_on_co is not None:
-            logger.warning('particle_on_co provided but not used in this mode!')
         if R_matrix is not None:
             logger.warning('R_matrix provided but not used in this mode!')
 
@@ -189,6 +201,24 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[3, :] = py
         XX[4, :] = zeta
         XX[5, :] = delta
+    elif mode == "shift":
+
+        if R_matrix is not None:
+            logger.warning('R_matrix provided but not used in this mode!')
+
+        num_particles = _check_lengths(num_particles=num_particles,
+            zeta=zeta, delta=delta, x=x, px=px,
+            y=y, py=py)
+
+        XX = np.zeros(shape=(6, num_particles), dtype=np.float64)
+        XX[0, :] = x + particle_ref.x
+        XX[1, :] = px + particle_ref.px
+        XX[2, :] = y + particle_ref.y
+        XX[3, :] = py + particle_ref.py
+        XX[4, :] = zeta + particle_ref.zeta
+        XX[5, :] = delta + particle_ref.delta
+    else:
+        raise ValueError('What?!')
 
     part_dict['x'] = XX[0, :]
     part_dict['px'] = XX[1, :]
