@@ -5,6 +5,7 @@ from scipy.constants import e as qe
 from scipy.constants import m_p
 
 import xpart as xp
+import xtrack as xt
 
 bunch_intensity = 1e11
 sigma_z = 22.5e-2
@@ -12,20 +13,19 @@ n_part = int(5e6)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
-filename = ('../../xtrack/test_data/sps_w_spacecharge/'
-             'optics_and_co_at_start_ring.json')
+filename = ('../../xtrack/test_data/sps_w_spacecharge'
+            '/line_no_spacecharge_and_particle.json')
 with open(filename, 'r') as fid:
     ddd = json.load(fid)
-RR = np.array(ddd['RR_madx'])
-part_on_co = xp.Particles.from_dict(ddd['particle_on_madx_co'])
+tracker = xt.Tracker(line=xt.Line.from_dict(ddd['line']))
+part_ref = xp.Particles.from_dict(ddd['particle'])
 
 
 part = xp.generate_matched_gaussian_bunch(
          num_particles=n_part, total_intensity_particles=bunch_intensity,
          nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-         particle_on_co=part_on_co, R_matrix=RR,
-         circumference=6911., alpha_momentum_compaction=0.0030777,
-         rf_harmonic=4620, rf_voltage=3e6, rf_phase=0)
+         particle_ref=part_ref,
+         tracker=tracker)
 
 # CHECKS
 
@@ -37,13 +37,17 @@ delta_rms = np.std(part.delta)
 zeta_rms = np.std(part.zeta)
 
 
-gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
-gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
+fopt = ('../../xtrack/test_data/sps_w_spacecharge/'
+            'optics_and_co_at_start_ring.json')
+with open(fopt, 'r') as fid:
+    dopt = json.load(fid)
+gemitt_x = nemitt_x/part_ref.beta0/part_ref.gamma0
+gemitt_y = nemitt_y/part_ref.beta0/part_ref.gamma0
 assert np.isclose(zeta_rms, sigma_z, rtol=1e-3, atol=1e-15)
 assert np.isclose(x_rms,
-             np.sqrt(ddd['betx']*gemitt_x + ddd['dx']**2*delta_rms**2),
+             np.sqrt(dopt['betx']*gemitt_x + dopt['dx']**2*delta_rms**2),
              rtol=1e-3, atol=1e-15)
 assert np.isclose(y_rms,
-             np.sqrt(ddd['bety']*gemitt_y + ddd['dy']**2*delta_rms**2),
+             np.sqrt(dopt['bety']*gemitt_y + dopt['dy']**2*delta_rms**2),
              rtol=1e-3, atol=1e-15)
 
