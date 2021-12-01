@@ -211,9 +211,9 @@ class Particles(xo.dress(ParticlesData, rename={
         for nn in part_energy_varnames():
             vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
             if nn in input_kwargs.keys():
-                if np.allclose(vvv, input_kwargs[nn], rtol=0, atol=1e-14):
+                if np.allclose(vvv, input_kwargs[nn], rtol=0, atol=1e-13):
                     getattr(self, "_"+nn)[:] = (
-                            context.nparray_from_context_array(
+                            context.nparray_to_context_array(
                                 input_kwargs[nn]))
 
         if isinstance(self._buffer.context, xo.ContextCpu):
