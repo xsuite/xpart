@@ -15,10 +15,11 @@ def _characterize_tracker(tracker, particle_ref):
     h_list = []
     for ee in tracker.line.elements:
         if ee.__class__.__name__ == 'Cavity':
-            freq_list.append(ee.frequency)
-            lag_list_deg.append(ee.lag)
-            voltage_list.append(ee.voltage)
-            h_list.append(ee.frequency*T_rev)
+            if ee.voltage != 0:
+                freq_list.append(ee.frequency)
+                lag_list_deg.append(ee.lag)
+                voltage_list.append(ee.voltage)
+                h_list.append(ee.frequency*T_rev)
 
     particle_co = tracker.find_closed_orbit(particle_ref)
 

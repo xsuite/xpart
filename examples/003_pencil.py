@@ -30,7 +30,7 @@ x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
 
 # Longitudinal - matched to bucket 
 zeta, delta = xp.longitudinal.generate_longitudinal_coordinates(
-        num_particles=100000, distribution='gaussian',
+        num_particles=num_particles, distribution='gaussian',
         sigma_z=10e-2, particle_ref=particle_sample, tracker=tracker)
 
 # Build particles:
