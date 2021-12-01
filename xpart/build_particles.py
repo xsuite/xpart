@@ -90,6 +90,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             "`particle_ref` or `particle_on_co` must be provided!")
         particle_ref = particle_on_co
 
+    if not isinstance(particle_ref._buffer.context, xo.ContextCpu):
+        particle_ref = particle_ref.copy(_context=xo.ContextCpu())
+
+    if tracker is not None and tracker.iscollective:
+        logger.warning('Ignoring collective elements in particles generation.')
+        tracker = tracker._supertracker
+
     if zeta is None:
         zeta = 0
 
@@ -140,6 +147,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     **ref_dict))
         else:
             assert particle_on_co._capacity == 1
+
+        if not isinstance(particle_on_co._buffer.context, xo.ContextCpu):
+            particle_on_co = particle_on_co.copy(_context=xo.ContextCpu())
 
         if R_matrix is None:
             R_matrix = tracker.compute_one_turn_matrix_finite_differences(

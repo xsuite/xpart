@@ -8,23 +8,35 @@ from .particles import Particles
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     nemitt_x, nemitt_y, sigma_z,
-                                    particle_on_co, R_matrix,
-                                    circumference,
-                                    alpha_momentum_compaction,
-                                    rf_harmonic,
-                                    rf_voltage,
-                                    rf_phase,
+                                    particle_on_co=None,
+                                    R_matrix=None,
+                                    circumference=None,
+                                    alpha_momentum_compaction=None,
+                                    rf_harmonic=None,
+                                    rf_voltage=None,
+                                    rf_phase=None,
                                     p_increment=0.,
+                                    tracker=None,
+                                    particle_ref=None,
                                     particle_class=Particles,
                                     _context=None, _buffer=None, _offset=None,
                                     ):
 
+    if (particle_ref is not None and particle_on_co is not None):
+        raise ValueError("`particle_ref` and `particle_on_co`"
+                " cannot be provided at the same time")
+
+    if particle_ref is None:
+        assert particle_on_co is not None, (
+            "`particle_ref` or `particle_on_co` must be provided!")
+        particle_ref = particle_on_co
+
     zeta, delta = generate_longitudinal_coordinates(
             distribution='gaussian',
-            mass0=particle_on_co.mass0,
-            q0=particle_on_co.q0,
-            gamma0=particle_on_co.gamma0,
             num_particles=num_particles,
+            particle_ref=(particle_ref if particle_ref is not None
+                          else particle_on_co),
+            tracker=tracker,
             circumference=circumference,
             alpha_momentum_compaction=alpha_momentum_compaction,
             rf_harmonic=rf_harmonic,
@@ -45,6 +57,8 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                       R_matrix=R_matrix,
                       particle_class=particle_class,
                       particle_on_co=particle_on_co,
+                      particle_ref=particle_ref,
+                      tracker=tracker,
                       zeta=zeta, delta=delta,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,

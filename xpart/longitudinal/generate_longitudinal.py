@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from scipy.constants import c as clight
 from scipy.constants import e as qe
@@ -6,7 +8,14 @@ from .rfbucket_matching import RFBucketMatcher
 from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
 
+logger = logging.getLogger(__name__)
+
 def _characterize_tracker(tracker, particle_ref):
+
+    if tracker.iscollective:
+        logger.warning('Ignoring collective elements in particles generation.')
+        tracker = tracker._supertracker
+
     line = tracker.line
     T_rev = line.get_length()/(particle_ref.beta0[0]*clight)
     freq_list = []
