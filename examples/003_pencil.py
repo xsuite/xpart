@@ -28,9 +28,10 @@ y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
 # Horizontal gaussian
 x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
 
-# Longitudinal - all particles off momentum
-zeta = 0
-delta = 1e-3
+# Longitudinal - matched to bucket 
+zeta, delta = xp.longitudinal.generate_longitudinal_coordinates(
+        num_particles=100000, distribution='gaussian',
+        sigma_z=10e-2, particle_ref=particle_sample, tracker=tracker)
 
 # Build particles:
 #    - scale with given emittances
@@ -40,6 +41,7 @@ delta = 1e-3
 particles = xp.build_particles(
             tracker=tracker,
             particle_ref=particle_sample,
+            zeta=zeta, delta=delta,
             x_norm=x_in_sigmas, px_norm=px_in_sigmas,
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
             scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
