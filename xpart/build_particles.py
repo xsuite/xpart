@@ -135,7 +135,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         if particle_on_co is None:
             assert tracker is not None
             particle_on_co = tracker.find_closed_orbit(
-                particle_co_guess=xp.Particle(
+                particle_co_guess=Particles(
                     x=0, px=0, y=0, py=0, zeta=0, delta=0.,
                     **ref_dict))
         else:

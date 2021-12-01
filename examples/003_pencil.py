@@ -2,6 +2,7 @@ import json
 import numpy as np
 
 import xpart as xp
+import xtrack as xt
 
 num_particles = 10000
 nemitt_x = 2.5e-6
@@ -11,8 +12,8 @@ nemitt_y = 3e-6
 filename = ('../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
-particle_sample = xp.Particles.from_dict(
-                                 input_data['particle'])
+tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
+particle_sample = xp.Particles.from_dict(input_data['particle'])
 
 
 # Vertical pencil
@@ -37,8 +38,8 @@ delta = 1e-3
 #    - handle dispersion
 #    - center around the closed orbit
 particles = xp.build_particles(
-            R_matrix=input_data['RR_finite_diffs'], particle_ref=part_on_closed_orbit,
-            zeta=zeta, delta=delta,
+            tracker=tracker,
+            particle_ref=particle_sample,
             x_norm=x_in_sigmas, px_norm=px_in_sigmas,
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
             scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
