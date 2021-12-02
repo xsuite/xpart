@@ -45,6 +45,11 @@ particles = xp.build_particles(
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
             scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
 
+# Absolute coordinates can be inspected in particle.x, particles.px, etc.
+
+# Tracking can be done with:
+# tracker.track(particles, num_turns=10)
+
 #!end-doc-part
 
 import matplotlib.pyplot as plt
