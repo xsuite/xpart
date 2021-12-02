@@ -136,13 +136,29 @@ class Particles(xo.dress(ParticlesData, rename={
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def to_dict(self):
-        dct = super().to_dict()
-        dct['delta'] = self.delta
-        dct['psigma'] = self.psigma
-        dct['rvv'] = self.rvv
-        dct['rpp'] = self.rpp
+    def to_dict(self, copy_to_cpu=True):
+        if copy_to_cpu:
+            cpobj = self.copy(_context=xo.context_default)
+            return cpobj.to_dict(copy_to_cpu=False)
+        else:
+            dct = super().to_dict()
+            dct['delta'] = self.delta
+            dct['psigma'] = self.psigma
+            dct['rvv'] = self.rvv
+            dct['rpp'] = self.rpp
         return dct
+
+    def to_pandas(self):
+        import pandas as pd
+        return pd.DataFrame(self.to_dict())
+
+    @classmethod
+    def from_pandas(cls, df, _context=None, _buffer=None, _offset=None):
+        dct = df.to_dict(orient='list')
+        for tt, nn in scalar_vars + size_vars:
+            if nn in dct.keys() and not np.isscalar(dct[nn]):
+                dct[nn] = dct[nn][0]
+        return cls(**dct, _context=_context, _buffer=_buffer, _offset=_offset)
 
     def __init__(self, **kwargs):
 
@@ -152,7 +168,6 @@ class Particles(xo.dress(ParticlesData, rename={
             # Initialize xobject
             self.xoinitialize(**kwargs)
         else:
-
             if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
                 # Needed to generate consistent longitudinal variables
                 pyparticles = Pyparticles(**kwargs)
