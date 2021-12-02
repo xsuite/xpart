@@ -17,9 +17,10 @@ particle_sample = xp.Particles.from_dict(input_data['particle'])
 
 # Horizontal plane: generate cut halo distribution 
 (x_in_sigmas, px_in_sigmas, r_points, theta_points
-    )= xp.generate_2D_uniform_circular_sector(num_particles=num_particles,
-                                              r_range=(0.6, 0.9), # sigmas
-                                              theta_range=(0.25*np.pi, 1.75*np.pi))
+    )= xp.generate_2D_uniform_circular_sector(
+                                          num_particles=num_particles,
+                                          r_range=(0.6, 0.9), # sigmas
+                                          theta_range=(0.25*np.pi, 1.75*np.pi))
 
 # Vertical plane: all particles on the closed orbit
 y_in_sigmas = 0.
