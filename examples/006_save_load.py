@@ -33,10 +33,6 @@ with open('part.pkl', 'wb') as fid:
 with open('part.pkl', 'rb') as fid:
     part_from_pkl= xp.Particles.from_dict(pickle.load(fid), _context=context)
 
-#!end-doc-part
-dct = part.to_dict()
-assert isinstance(dct['delta'], np.ndarray)
-
 ##############
 # PANDAS/HDF #
 ##############
@@ -48,3 +44,7 @@ df.to_hdf('part.hdf', key='df', mode='w')
 
 # Read particles from hdf file via pandas
 part_from_pdhdf = xp.Particles.from_pandas(pd.read_hdf('part.hdf'))
+
+#!end-doc-part
+dct = part.to_dict()
+assert isinstance(dct['delta'], np.ndarray)
