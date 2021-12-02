@@ -46,4 +46,5 @@ import pandas as pd
 df = part.to_pandas()
 df.to_hdf('part.hdf', key='df', mode='w')
 
+# Read particles from hdf file via pandas
 part_from_pdhdf = xp.Particles.from_pandas(pd.read_hdf('part.hdf'))
