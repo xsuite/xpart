@@ -13,7 +13,7 @@ n_part = int(5e6)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
-filename = ('../../xtrack/test_data/sps_w_spacecharge'
+filename = ('../../../xtrack/test_data/sps_w_spacecharge'
             '/line_no_spacecharge_and_particle.json')
 with open(filename, 'r') as fid:
     ddd = json.load(fid)
@@ -37,7 +37,7 @@ delta_rms = np.std(part.delta)
 zeta_rms = np.std(part.zeta)
 
 
-fopt = ('../../xtrack/test_data/sps_w_spacecharge/'
+fopt = ('../../../xtrack/test_data/sps_w_spacecharge/'
             'optics_and_co_at_start_ring.json')
 with open(fopt, 'r') as fid:
     dopt = json.load(fid)

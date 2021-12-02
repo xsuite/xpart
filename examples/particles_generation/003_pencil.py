@@ -9,7 +9,7 @@ nemitt_x = 2.5e-6
 nemitt_y = 3e-6
 
 # Load machine model (from pymask)
-filename = ('../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
+filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
 tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))

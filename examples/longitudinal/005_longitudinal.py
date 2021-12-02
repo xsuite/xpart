@@ -8,7 +8,7 @@ import xpart as xp
 from scipy.constants import c as clight
 
 
-fname_line = '../../xtrack/test_data/hllhc_14/line_and_particle.json'
+fname_line = '../../../xtrack/test_data/hllhc_14/line_and_particle.json'
 
 
 ##############
