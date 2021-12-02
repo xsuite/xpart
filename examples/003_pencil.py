@@ -13,10 +13,12 @@ filename = ('../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
 tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
+
+# Horizontal plane: generate gaussian distribution in normalized coordinates
+x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
 particle_sample = xp.Particles.from_dict(input_data['particle'])
 
-
-# Vertical pencil
+# Vertical plane: generate pencil distribution in normalized coordinates
 pencil_cut_sigmas = 6.
 pencil_dr_sigmas = 0.7
 y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
@@ -25,10 +27,7 @@ y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
                              dr_sigmas=pencil_dr_sigmas,
                              side='+-')
 
-# Horizontal gaussian
-x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
-
-# Longitudinal - matched to bucket 
+# Longitudinal plane: generate gaussian distribution matched to bucket 
 zeta, delta = xp.longitudinal.generate_longitudinal_coordinates(
         num_particles=num_particles, distribution='gaussian',
         sigma_z=10e-2, particle_ref=particle_sample, tracker=tracker)
@@ -46,6 +45,7 @@ particles = xp.build_particles(
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
             scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
 
+#!end-doc-part
 
 import matplotlib.pyplot as plt
 plt.close('all')
