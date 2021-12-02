@@ -15,22 +15,19 @@ with open(filename, 'r') as fid:
 tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
 particle_sample = xp.Particles.from_dict(input_data['particle'])
 
-# Horizontal plane: generate gaussian distribution in normalized coordinates
-x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
+# Horizontal plane: generate cut halo distribution 
+(x_in_sigmas, px_in_sigmas, r_points, theta_points
+    )= xp.generate_2D_uniform_circular_sector(num_particles=num_particles,
+                                              r_range=(0.6, 0.9), # sigmas
+                                              theta_range=(0.25*np.pi, 1.75*np.pi))
 
-# Vertical plane: generate pencil distribution in normalized coordinates
-pencil_cut_sigmas = 6.
-pencil_dr_sigmas = 0.7
-y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
-                             num_particles=num_particles,
-                             pos_cut_sigmas=pencil_cut_sigmas,
-                             dr_sigmas=pencil_dr_sigmas,
-                             side='+-')
+# Vertical plane: all particles on the closed orbit
+y_in_sigmas = 0.
+py_in_sigmas = 0.
 
-# Longitudinal plane: generate gaussian distribution matched to bucket 
-zeta, delta = xp.longitudinal.generate_longitudinal_coordinates(
-        num_particles=num_particles, distribution='gaussian',
-        sigma_z=10e-2, particle_ref=particle_sample, tracker=tracker)
+# Longitudinal plane: all particles off momentum by 1e-3
+zeta = 0.
+delta = 1e-3
 
 # Build particles:
 #    - scale with given emittances
@@ -52,6 +49,18 @@ particles = xp.build_particles(
 
 #!end-doc-part
 
+assert (len(x_in_sigmas) == len(px_in_sigmas)
+        == len(r_points) == len(theta_points) == 10000)
+
+assert np.isclose(np.max(np.abs(x_in_sigmas)), 0.9, rtol=1e-2)
+assert np.isclose(np.max(px_in_sigmas), 0.9, rtol=1e-2)
+assert np.isclose(np.min(np.sqrt(x_in_sigmas**2 + px_in_sigmas**2)), 0.6, rtol=1e-2)
+
+assert np.isclose(np.min(theta_points), 0.25*np.pi, rtol=1e-2)
+assert np.isclose(np.max(theta_points), 1.75*np.pi, rtol=1e-2)
+assert np.isclose(np.min(r_points), 0.6, rtol=1e-2)
+assert np.isclose(np.max(r_points), 0.9, rtol=1e-2)
+
 import matplotlib.pyplot as plt
 plt.close('all')
 fig1 = plt.figure(1, figsize=(6.4, 7))
@@ -61,17 +70,18 @@ ax3 = fig1.add_subplot(3,2,5)
 ax1.plot(x_in_sigmas, px_in_sigmas, '.', markersize=1)
 ax1.set_xlabel(r'x [$\sigma$]')
 ax1.set_ylabel(r'px [$\sigma$]')
-ax1.set_xlim(-7, 7)
-ax1.set_ylim(-7, 7)
+ax1.set_xlim(-1, 1)
+ax1.set_ylim(-1, 1)
 ax2.plot(y_in_sigmas, py_in_sigmas, '.', markersize=1)
 ax2.set_xlabel(r'y [$\sigma$]')
 ax2.set_ylabel(r'py [$\sigma$]')
-ax2.axvline(x=pencil_cut_sigmas)
-ax2.set_xlim(-7, 7)
-ax2.set_ylim(-7, 7)
+ax2.set_xlim(-1, 1)
+ax2.set_ylim(-1, 1)
 ax3.plot(zeta, delta*1000, '.', markersize=1)
 ax3.set_xlabel(r'z [m]')
 ax3.set_ylabel(r'$\delta$ [1e-3]')
+ax3.set_xlim(-0.05, 0.05)
+ax3.set_ylim(-1.5, 1.5)
 
 ax21 = fig1.add_subplot(3,2,2)
 ax22 = fig1.add_subplot(3,2,4)
@@ -82,10 +92,13 @@ ax21.set_ylabel(r'px [-]')
 ax22.plot(particles.y*1000, particles.py, '.', markersize=1)
 ax22.set_xlabel(r'y [mm]')
 ax22.set_ylabel(r'py [-]')
+ax22.set_xlim(-1, 1)
+ax22.set_ylim(-5e-6, 5e-6)
 ax23.plot(particles.zeta, particles.delta*1000, '.', markersize=1)
 ax23.set_xlabel(r'z [-]')
 ax23.set_ylabel(r'$\delta$ [1e-3]')
+ax23.set_xlim(-0.05, 0.05)
+ax23.set_ylim(-1.5, 1.5)
 fig1.subplots_adjust(bottom=.08, top=.93, hspace=.33,
                      right=.96, wspace=.33)
 plt.show()
-
