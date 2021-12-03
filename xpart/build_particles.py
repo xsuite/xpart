@@ -64,7 +64,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
               normalized values `x_norm`, `px_norm`, `y_norm`, `py_norm` using
               the closed-orbit information and the linear transfer map obtained
               from the `tracker` or provided by the user.
-
             The default mode is `set`. `normalized_transverse` is used if any
             of x_norm, px_norm, y_norm, pynorm is provided.
         - particle_ref: particle object defining the reference quantities
@@ -84,27 +83,19 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             `scale_with_transverse_norm_emitt` to generate x, px, y, py (x, px,
             y, py cannot be provided if x_norm, px_norm, y_norm, py_norm are
             provided).
-        - px_norm: transverse normalized coordinate px (in sigmas) used in combination
-            with the one turn matrix R_matrix and with the transverse emittances
-            provided in the argument scale_with_transverse_norm_emitt to generate
-            x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
-            py_norm are provided).
-        - y_norm: transverse normalized coordinate y (in sigmas) used in combination
-            with the one turn matrix R_matrix and with the transverse emittances
-            provided in the argument scale_with_transverse_norm_emitt to generate
-            x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
-            py_norm are provided).
-        - py_norm: transverse normalized coordinate py (in sigmas) used in combination
-            with the one turn matrix R_matrix and with the transverse emittances
-            provided in the argument scale_with_transverse_norm_emitt to generate
-            x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
-            py_norm are provided).
-        - tracker: tracker object used to find the closed orbit and the one-turn matrix.
+        - x_norm: transverse normalized coordinate x (in sigmas).
+        - px_norm: transverse normalized coordinate px (in sigmas).
+        - y_norm: transverse normalized coordinate y (in sigmas).
+        - py_norm: transverse normalized coordinate py (in sigmas).
+        - tracker: tracker object used to find the closed orbit and the
+          one-turn matrix.
         - particle_on_co: Particle on closed orbit
-        - R_matrix: 6x6 matrix defining the linearized one-turn map to be used for the transformation of
-            the normalized coordinates into physical space.
-        - scale_with_transverse_norm_emitt: Tuple of two elements defining the transverse normalized
-            emittances used to rescale the provided transverse normalized coordinates (x, px, y, py).
+        - R_matrix: 6x6 matrix defining the linearized one-turn map to be used
+          for the transformation of the normalized coordinates into physical
+          space.
+        - scale_with_transverse_norm_emitt: Tuple of two elements defining the
+          transverse normalized emittances used to rescale the provided
+          transverse normalized coordinates (x, px, y, py).
         - weight: weights to be assigned to the particles.
         - _context: xobjects context in which the particle object is allocated.
 
