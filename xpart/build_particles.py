@@ -45,6 +45,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     Arguments:
 
         - mode: choose between
+
             - `set` (reference quantities including mass0, q0, p0c,
                 gamma0, etc are taken from the reference particle.
         - particle_ref:
