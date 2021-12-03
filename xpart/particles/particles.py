@@ -160,6 +160,45 @@ class Particles(xo.dress(ParticlesData, rename={
                 dct[nn] = dct[nn][0]
         return cls(**dct, _context=_context, _buffer=_buffer, _offset=_offset)
 
+    @classmethod
+    def merge(cls, lst, _context=None, _buffer=None, _offset=None):
+
+        cpu_lst = []
+        for pp in lst:
+            assert isinstance(pp, cls)
+            if isinstance(pp._buffer.context, xo.ContextCpu):
+                cpu_lst.append(pp)
+            else:
+                cpu_lst.append(pp.copy(_context=xo.context_default))
+
+        for tt, nn in scalar_vars:
+            assert np.allclose([getattr(pp, nn) for pp in cpu_lst],
+                                getattr(cpu_lst[0], nn), rtol=0, atol=1e-14)
+
+        capacity = np.sum([pp._capacity for pp in cpu_lst])
+
+        new_part_cpu = cls(_capacity=capacity)
+
+        for tt, nn in scalar_vars:
+            setattr(new_part_cpu, nn, getattr(cpu_lst[0], nn))
+
+        first = 0
+        for pp in cpu_lst:
+            for tt, nn in per_particle_vars:
+                getattr(new_part_cpu, nn)[
+                        first:first+pp._capacity] = getattr(pp, nn)
+            first += pp._capacity
+
+        if _context is None and _buffer is None:
+            if isinstance(lst[0]._buffer.context, xo.ContextCpu):
+                return new_part_cpu
+            else:
+                return new_part_cpu.copy(_context=lst[0]._buffer._context)
+        else:
+            return new_part_cpu.copy(_context=_context, _buffer=_buffer,
+                                     _offset=_offset)
+
+
     def __init__(self, **kwargs):
 
         input_kwargs = kwargs.copy()
