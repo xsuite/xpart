@@ -64,6 +64,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
               normalized values `x_norm`, `px_norm`, `y_norm`, `py_norm` using
               the closed-orbit information and the linear transfer map obtained
               from the `tracker` or provided by the user.
+
             The default mode is `set`. `normalized_transverse` is used if any
             of x_norm, px_norm, y_norm, pynorm is provided.
         - particle_ref: particle object defining the reference quantities
