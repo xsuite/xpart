@@ -51,15 +51,15 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
             - `normalized_transverse`: reference quantities including mass0, q0, p0c, gamma0, etc. are taken from the provided reference particle. The longitudinal coordinates are set according to the provided input `zeta`, `delta` (zero is assumed as default value for these variable`. The transverse coordinates are computed from normalized values `x_norm`, `px_norm`, `y_norm`, `py_norm` using the closed-orbit information and the linear transfer map obtained from the `tracker` or provided by the user.
 
-            The default mode is `set`. `normalized_transverse` is used whenever... 
-        - particle_ref:
-        - num_particles:
-        - x: x coordinate of the particles
-        - px: px coordinate of the particles
-        - y: y coordinate of the particles
-        - py: py coordinate of the particles
-        - zeta: zeta coordinate of the particles
-        - delta: delta coordinate of the particles
+            The default mode is `set`. `normalized_transverse` is used if any of x_norm, px_norm, y_norm, pynorm is provided.
+        - particle_ref: particle object defining the reference quantities (mass0, 0, p0c, gamma0, etc.). Its coordinates (x, py, y, py, zeta, delta) are ignored unless `mode`='shift' is selected.
+        - num_particles: Number of particles to be generated (used if provided coordinates are all scalar)
+        - x: x coordinate of the particles (default is 0).
+        - px: px coordinate of the particles (default is 0).
+        - y: y coordinate of the particles (default is 0).
+        - py: py coordinate of the particles (default is 0).
+        - zeta: zeta coordinate of the particles (default is 0).
+        - delta: delta coordinate of the particles (default is 0).
         - x_norm: transverse normalized coordinate x (in sigmas) used in combination
             with the one turn matrix R_matrix and with the transverse emittances
             provided in the argument scale_with_transverse_norm_emitt to generate
@@ -80,7 +80,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             provided in the argument scale_with_transverse_norm_emitt to generate
             x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
             py_norm are provided).
-        - tracker: 
+        - tracker: tracker object used to find the closed orbit and the one-turn matrix.
         - particle_on_co: Particle on closed orbit
         - R_matrix: 6x6 matrix defining the linearized one-turn map to be used for the transformation of
             the normalized coordinates into physical space.
