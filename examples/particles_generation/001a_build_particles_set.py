@@ -14,3 +14,10 @@ particles = xp.build_particles(particle_ref=p0, y=[1,2,3])
 print(particles.p0c[1]) # gives 7e12
 print(particles.x[1]) # gives 0.0
 print(particles.y[1]) # gives 2.0
+
+#!end-doc-part
+
+assert particles.p0c[1] == 7e12
+assert particles.x[1] == 0.0
+assert particles.y[1] == 2.0
+
