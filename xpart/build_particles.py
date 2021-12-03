@@ -46,8 +46,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         - mode: choose between
 
-            - `set` (reference quantities including mass0, q0, p0c,
-                gamma0, etc are taken from the reference particle.
+            - `set`: reference quantities including mass0, q0, p0c, gamma0, etc. are taken from the reference particle while particles coordinates are set according to the providede input x, px, y, py, zeta, delta (zero is assumed as default for these variables).
         - particle_ref:
         - num_particles:
         - x: x coordinate of the particles
