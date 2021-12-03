@@ -27,6 +27,9 @@ part = xp.generate_matched_gaussian_bunch(
          particle_ref=part_ref,
          tracker=tracker)
 
+
+#!end-doc-part
+
 # CHECKS
 
 y_rms = np.std(part.y)

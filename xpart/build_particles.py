@@ -31,19 +31,24 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       num_particles=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
+                      tracker=None,
                       particle_on_co=None,
                       R_matrix=None,
-                      tracker=None,
                       scale_with_transverse_norm_emitt=None,
+                      weight=None,
                       particle_class=Particles,
-                      weight=None):
+                    ):
 
     """
     Function to create particle objects from arrays containing physical or normalized coordinates.
 
     Arguments:
 
-        - particle_on_co: Particle on closed orbit
+        - mode:
+            - choose between `set` (reference quantities including mass0, q0, p0c,
+                gamma0, etc are taken from the reference particle.
+        - particle_ref:
+        - num_particles:
         - x: x coordinate of the particles
         - px: px coordinate of the particles
         - y: y coordinate of the particles
@@ -70,6 +75,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             provided in the argument scale_with_transverse_norm_emitt to generate
             x, px, y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
             py_norm are provided).
+        - tracker: 
+        - particle_on_co: Particle on closed orbit
         - R_matrix: 6x6 matrix defining the linearized one-turn map to be used for the transformation of
             the normalized coordinates into physical space.
         - scale_with_transverse_norm_emitt: Tuple of two elements defining the transverse normalized
