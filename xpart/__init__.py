@@ -7,6 +7,7 @@ from .transverse_generators import generate_2D_polar_grid
 from .transverse_generators import generate_2D_uniform_circular_sector
 from .transverse_generators import generate_2D_pencil
 from .transverse_generators import generate_2D_gaussian
+from .constants import PROTON_MASS_EV, ELECTRON_MASS_EV
 
 def enable_pyheadtail_interface():
     import xpart.pyheadtail_interface.pyhtxtparticles as pp
