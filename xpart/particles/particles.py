@@ -163,6 +163,7 @@ class Particles(xo.dress(ParticlesData, rename={
     @classmethod
     def merge(cls, lst, _context=None, _buffer=None, _offset=None):
 
+        # Move everything to cpu
         cpu_lst = []
         for pp in lst:
             assert isinstance(pp, cls)
@@ -171,25 +172,48 @@ class Particles(xo.dress(ParticlesData, rename={
             else:
                 cpu_lst.append(pp.copy(_context=xo.context_default))
 
+        # Check that scalar variable are compatible
         for tt, nn in scalar_vars:
             assert np.allclose([getattr(pp, nn) for pp in cpu_lst],
                                 getattr(cpu_lst[0], nn), rtol=0, atol=1e-14)
 
+        # Make new particle on CPU
         capacity = np.sum([pp._capacity for pp in cpu_lst])
-
         new_part_cpu = cls(_capacity=capacity)
 
+        # Copy scalar vars from first particle
         for tt, nn in scalar_vars:
             setattr(new_part_cpu, nn, getattr(cpu_lst[0], nn))
 
+        # Copy per-particle vars
         first = 0
+        max_id_curr = -1
         for pp in cpu_lst:
             for tt, nn in per_particle_vars:
-                getattr(new_part_cpu, nn)[
-                        first:first+pp._capacity] = getattr(pp, nn)
+                if not(nn == 'particle_id' or nn == 'parent_id'):
+                    getattr(new_part_cpu, nn)[
+                            first:first+pp._capacity] = getattr(pp, nn)
+
+            # Handle particle_ids and parent_ids
+            mask = pp.particle_id >= 0
+            new_id = pp.particle_id.copy()
+            new_parent_id = pp.parent_particle_id.copy()
+            if np.min(new_id[mask]) <= max_id_curr:
+                new_id[mask] += (max_id_curr + 1)
+                new_parent_id[mask] += (max_id_curr + 1)
+            new_part_cpu.particle_id[first:first+len(new_id)] = new_id
+            new_part_cpu.parent_particle_id[
+                    first:first+len(new_id)] = new_parent_id
+
+            max_id_curr = np.max(new_id)
             first += pp._capacity
 
+        # Reorganize
+        new_part_cpu.reorganize()
+
+        # Copy to appropriate context
         if _context is None and _buffer is None:
+            # Use constext of first particle
             if isinstance(lst[0]._buffer.context, xo.ContextCpu):
                 return new_part_cpu
             else:
