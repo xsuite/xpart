@@ -44,12 +44,14 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     Arguments:
 
-        - mode: choose between
+        - mode: choose between:
 
             - `set`: reference quantities including mass0, q0, p0c, gamma0, etc. are taken from the provided reference particle. Particles coordinates are set according to the provided input x, px, y, py, zeta, delta (zero is assumed as default for these variables).
             - `shift`: reference quantities including mass0, q0, p0c, gamma0, etc. are taken from the provided reference particle. Particles coordinates are set from the reference particles and shofted accorrding to the provided input x, px, y, py, zeta, delta (zero is assumed as default for these variables).
 
-            bla bla
+            - `normalized_transverse`: reference quantities including mass0, q0, p0c, gamma0, etc. are taken from the provided reference particle. The longitudinal coordinates are set according to the provided input `zeta`, `delta` (zero is assumed as default value for these variable`. The transverse coordinates are computed from normalized values `x_norm`, `px_norm`, `y_norm`, `py_norm` using the closed-orbit information and the linear transfer map obtained from the `tracker` or provided by the user.
+
+            The default mode is `set`. `normalized_transverse` is used whenever... 
         - particle_ref:
         - num_particles:
         - x: x coordinate of the particles
