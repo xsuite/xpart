@@ -17,7 +17,8 @@ with open(filename, 'r') as fid:
 tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data['line']))
 
 # Built a set of three particles with different x coordinates
-particles = xp.build_particles(tracker=tracker, particle_ref=p0,
+particles = xp.build_particles(_context=ctx,
+                               tracker=tracker, particle_ref=p0,
                                zeta=0, delta=1e-3,
                                x_norm=[1,0,-1], # in sigmas
                                px_norm=[0,1,0], # in sigmas

@@ -8,7 +8,8 @@ p0 = xp.Particles(mass0=xp.PROTON_MASS_EV, q0=1, p0c=7e12, x=1, y=3)
 ctx = xo.ContextCpu()
 
 # Built a set of three particles with different x coordinates
-particles = xp.build_particles(mode='shift', particle_ref=p0, y=[1,2,3])
+particles = xp.build_particles(mode='shift', particle_ref=p0, y=[1,2,3],
+                               _context=ctx)
 
 # Inspect
 print(particles.p0c[1]) # gives 7e12
