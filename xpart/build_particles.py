@@ -53,8 +53,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
               zeta, delta (zero is assumed as default for these variables).
             - `shift`: reference quantities including mass0, q0, p0c, gamma0,
               etc. are taken from the provided reference particle. Particles
-              coordinates are set from the reference particles and shofted
-              accorrding to the provided input x, px, y, py, zeta, delta (zero
+              coordinates are set from the reference particles and shifted
+              according to the provided input x, px, y, py, zeta, delta (zero
               is assumed as default for these variables).
             - `normalized_transverse`: reference quantities including mass0,
               q0, p0c, gamma0, etc. are taken from the provided reference
