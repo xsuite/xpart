@@ -28,7 +28,7 @@ y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
                              side='+-')
 
 # Longitudinal plane: generate gaussian distribution matched to bucket 
-zeta, delta = xp.longitudinal.generate_longitudinal_coordinates(
+zeta, delta = xp.generate_longitudinal_coordinates(
         num_particles=num_particles, distribution='gaussian',
         sigma_z=10e-2, particle_ref=particle_sample, tracker=tracker)
 
