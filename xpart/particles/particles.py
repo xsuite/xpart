@@ -231,7 +231,7 @@ class Particles(xo.dress(ParticlesData, rename={
         if isinstance(self._buffer.context, xo.ContextCpu):
             self_cpu = self
         else:
-            self_cpu = self.copy(_context=xo.context_default))
+            self_cpu = self.copy(_context=xo.context_default)
 
         # copy mask to cpu is needed
         if isinstance(mask, self._buffer.context.nplike_array_type):
@@ -240,7 +240,7 @@ class Particles(xo.dress(ParticlesData, rename={
         # Make new particle on CPU
         test_x = self_cpu.x[mask]
         capacity = len(test_x)
-        new_part_cpu = cls(_capacity=capacity)
+        new_part_cpu = self.__class__(_capacity=capacity)
 
         # Copy scalar vars from first particle
         for tt, nn in scalar_vars:
@@ -255,7 +255,7 @@ class Particles(xo.dress(ParticlesData, rename={
 
         # Copy to original context 
         target_ctx = self._buffer.context
-        if isinstance(target_ctx, xo.ContextCpu()):
+        if isinstance(target_ctx, xo.ContextCpu):
             new_part_cpu._buffer.context = target_ctx
             return new_part_cpu
         else:
