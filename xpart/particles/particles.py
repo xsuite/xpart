@@ -163,6 +163,9 @@ class Particles(xo.dress(ParticlesData, rename={
     @classmethod
     def merge(cls, lst, _context=None, _buffer=None, _offset=None):
 
+        # TODO For now the merge is performed on CPU for add contexts.
+        # Slow for objects on GPU (transferred to CPU for the merge).
+
         # Move everything to cpu
         cpu_lst = []
         for pp in lst:
