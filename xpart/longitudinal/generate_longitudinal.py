@@ -68,15 +68,15 @@ def generate_longitudinal_coordinates(
         dct = _characterize_tracker(tracker, particle_ref)
 
     if mass0 is None:
-        assert tracker is not None
+        assert particle_ref is not None
         mass0 = particle_ref.mass0
 
     if q0 is None:
-        assert tracker is not None
+        assert particle_ref is not None
         q0 = particle_ref.q0
 
     if gamma0 is None:
-        assert tracker is not None
+        assert particle_ref is not None
         gamma0 = particle_ref.gamma0[0]
 
     if circumference is None:
