@@ -20,9 +20,14 @@ def _check_lengths(**kwargs):
                     raise ValueError(f"invalid length len({nn})={len(xx)}")
     if 'num_particles' in kwargs.keys():
         num_particles = kwargs['num_particles']
+        if num_particles is not None and length is None:
+            length = num_particles
         if num_particles is not None and length != num_particles:
             raise ValueError(
               f"num_particles={num_particles} is inconsistent with array length")
+
+    if length is None:
+        length = 1
     return length
 
 def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
