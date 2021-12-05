@@ -238,6 +238,12 @@ class Particles(xo.dress(ParticlesData, rename={
         if isinstance(mask, self._buffer.context.nplike_array_type):
             mask = self._buffer.context.nparray_from_context_array(mask)
 
+            # Pyopencl returns int8 instead of bool
+            if (isinstance(self._buffer.context, xo.ContextPyopencl) and
+                mask.dtype==np.int8):
+                assert np.all((mask>=0) & (mask<=1))
+                mask = mask > 0
+
         # Make new particle on CPU
         test_x = self_cpu.x[mask]
         capacity = len(test_x)

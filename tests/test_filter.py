@@ -13,9 +13,6 @@ def test_basics():
 
         mask = p1.x > 1
 
-        if isinstance(context, xo.ContextPyopencl):
-            mask = context.nparray_from_context_array(mask)>0
-
         p2 = p1.filter(mask)
 
         assert p2._buffer.context == context
