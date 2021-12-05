@@ -21,3 +21,4 @@ def test_to_from_dict():
         for nn in 'x px y py zeta delta psigma rpp rvv gamma0 p0c'.split():
             assert isinstance(dct[nn], np.ndarray)
             assert isinstance(getattr(part_from_dict, nn), context.nplike_array_type)
+
