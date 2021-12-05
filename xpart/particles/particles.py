@@ -221,7 +221,7 @@ class Particles(xo.dress(ParticlesData, rename={
                 new_part_cpu._buffer.context = lst[0]._buffer.context
                 return new_part_cpu
             else:
-                return new_part_cpu.copy(_context=lst[0]._buffer._context)
+                return new_part_cpu.copy(_context=lst[0]._buffer.context)
         else:
             return new_part_cpu.copy(_context=_context, _buffer=_buffer,
                                      _offset=_offset)
