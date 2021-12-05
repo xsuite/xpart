@@ -176,8 +176,10 @@ class Particles(xo.dress(ParticlesData, rename={
                 cpu_lst.append(pp.copy(_context=xo.context_default))
 
         # Check that scalar variable are compatible
+        import pdb; pdb.set_trace()
         for tt, nn in scalar_vars:
-            assert np.allclose([getattr(pp, nn) for pp in cpu_lst],
+            vals = [getattr(pp, nn) for pp in cpu_lst]
+            assert np.allclose(vals,
                                 getattr(cpu_lst[0], nn), rtol=0, atol=1e-14)
 
         # Make new particle on CPU
