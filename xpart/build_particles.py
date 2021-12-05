@@ -218,6 +218,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Transform to physical coordinates
         XX = np.dot(WW, XX_norm_scaled)
 
+        XX[0, :] += particle_on_co.x
+        XX[1, :] += particle_on_co.px
+        XX[2, :] += particle_on_co.y
+        XX[3, :] += particle_on_co.py
+        XX[4, :] += particle_on_co.zeta
+        XX[5, :] += particle_on_co.delta
+
     elif mode == 'set':
 
         if R_matrix is not None:
@@ -234,6 +241,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[3, :] = py
         XX[4, :] = zeta
         XX[5, :] = delta
+
     elif mode == "shift":
 
         if R_matrix is not None:
