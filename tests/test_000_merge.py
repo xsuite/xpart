@@ -12,7 +12,6 @@ def test_merge():
         p2 = xp.Particles(x=[4, 5], p0c=7e12, mass0=xp.ELECTRON_MASS_EV)
         p3 = xp.Particles(x=6, delta=[-1e-1], p0c=7e12, mass0=xp.ELECTRON_MASS_EV)
 
-        import pdb; pdb.set_trace()
         particles = xp.Particles.merge([p1,p2,p3])
 
         assert particles._buffer.context == context

@@ -176,7 +176,6 @@ class Particles(xo.dress(ParticlesData, rename={
                 cpu_lst.append(pp.copy(_context=xo.context_default))
 
         # Check that scalar variable are compatible
-        import pdb; pdb.set_trace()
         for tt, nn in scalar_vars:
             vals = [getattr(pp, nn) for pp in cpu_lst]
             assert np.allclose(vals,
