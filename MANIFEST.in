@@ -6,4 +6,4 @@ include *.md
 # Include the license file
 include LICENSE.txt
 
-recursive-include xtrack *.h
+recursive-include xpart *.h
