@@ -18,6 +18,7 @@ setup(
     url='https://github.com/xsuite/xpart',
     packages=find_packages(),
     ext_modules = extensions,
+    include_package_data=True,
     install_requires=[
         'numpy>=1.0',
         'scipy',
