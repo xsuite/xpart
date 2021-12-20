@@ -194,25 +194,26 @@ class Particles(xo.dress(ParticlesData, rename={
         # Copy per-particle vars
         first = 0
         max_id_curr = -1
-        for pp in cpu_lst:
-            for tt, nn in per_particle_vars:
-                if not(nn == 'particle_id' or nn == 'parent_id'):
-                    getattr(new_part_cpu, nn)[
-                            first:first+pp._capacity] = getattr(pp, nn)
+        with new_part_cpu._bypass_linked_vars():
+            for pp in cpu_lst:
+                for tt, nn in per_particle_vars:
+                    if not(nn == 'particle_id' or nn == 'parent_id'):
+                        getattr(new_part_cpu, nn)[
+                                first:first+pp._capacity] = getattr(pp, nn)
 
-            # Handle particle_ids and parent_ids
-            mask = pp.particle_id >= 0
-            new_id = pp.particle_id.copy()
-            new_parent_id = pp.parent_particle_id.copy()
-            if np.min(new_id[mask]) <= max_id_curr:
-                new_id[mask] += (max_id_curr + 1)
-                new_parent_id[mask] += (max_id_curr + 1)
-            new_part_cpu.particle_id[first:first+len(new_id)] = new_id
-            new_part_cpu.parent_particle_id[
-                    first:first+len(new_id)] = new_parent_id
+                # Handle particle_ids and parent_ids
+                mask = pp.particle_id >= 0
+                new_id = pp.particle_id.copy()
+                new_parent_id = pp.parent_particle_id.copy()
+                if np.min(new_id[mask]) <= max_id_curr:
+                    new_id[mask] += (max_id_curr + 1)
+                    new_parent_id[mask] += (max_id_curr + 1)
+                new_part_cpu.particle_id[first:first+len(new_id)] = new_id
+                new_part_cpu.parent_particle_id[
+                        first:first+len(new_id)] = new_parent_id
 
-            max_id_curr = np.max(new_id)
-            first += pp._capacity
+                max_id_curr = np.max(new_id)
+                first += pp._capacity
 
         # Reorganize
         new_part_cpu.reorganize()
