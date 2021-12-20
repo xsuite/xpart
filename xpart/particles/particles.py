@@ -257,7 +257,8 @@ class Particles(xo.dress(ParticlesData, rename={
 
         # Copy per-particle vars
         for tt, nn in per_particle_vars:
-            getattr(new_part_cpu, nn)[:] = getattr(self_cpu, nn)[mask]
+            with new_part_cpu._bypass_linked_vars():
+                getattr(new_part_cpu, nn)[:] = getattr(self_cpu, nn)[mask]
 
         # Reorganize
         new_part_cpu.reorganize()
@@ -442,10 +443,11 @@ class Particles(xo.dress(ParticlesData, rename={
             assert np.isclose(getattr(self, nn), getattr(part, nn),
                     rtol=1e-14, atol=1e-14)
 
-        for tt, nn in self._structure['per_particle_vars']:
-            vv = getattr(self, nn)
-            vv_copy = getattr(part, nn)[mask_copy]
-            vv[i_start_copy:i_start_copy+n_copy] = vv_copy
+        with self._bypass_linked_vars():
+            for tt, nn in self._structure['per_particle_vars']:
+                vv = getattr(self, nn)
+                vv_copy = getattr(part, nn)[mask_copy]
+                vv[i_start_copy:i_start_copy+n_copy] = vv_copy
 
         self.particle_id[i_start_copy:i_start_copy+n_copy] = np.arange(
                                      max_id+1, max_id+1+n_copy, dtype=np.int64)
