@@ -695,7 +695,7 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
         src_lines.append('}')
     src_setters = '\n'.join(src_lines)
 
-    # Getters 
+    # Getters
     src_lines=[]
     for tt, vv in size_vars + scalar_vars:
         src_lines.append('/*gpufun*/')
