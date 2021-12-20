@@ -9,6 +9,8 @@ from scipy.constants import m_p
 from scipy.constants import e as qe
 from scipy.constants import c as clight
 
+from xobjects.context_cpu import BypassLinked
+
 pmass = m_p * clight * clight / qe
 
 LAST_INVALID_STATE = -999999999
@@ -268,13 +270,6 @@ class Particles(xo.dress(ParticlesData, rename={
         else:
             return new_part_cpu.copy(_context=target_ctx)
 
-    def _bypass_linked_vars(self):
-        self._flag_bypass_linked = True
-
-    def _restore_linked_vars(self):
-        del(self._flag_bypass_linked)
-
-
     def __init__(self, **kwargs):
 
         input_kwargs = kwargs.copy()
@@ -309,32 +304,31 @@ class Particles(xo.dress(ParticlesData, rename={
             self.xoinitialize(**kwargs)
 
             # Initialize coordinates
-            self._bypass_linked_vars()
-            if pyparticles is not None:
-                context = self._buffer.context
-                for tt, kk in list(scalar_vars):
-                    setattr(self, kk, part_dict[kk])
-                for tt, kk in list(per_particle_vars):
-                    if kk.startswith('__'):
-                        continue
-                    vv = getattr(self, kk)
-                    vals =  context.nparray_to_context_array(part_dict[kk])
-                    ll = len(vals)
-                    vv[:ll] = vals
-                    vv[ll:] = LAST_INVALID_STATE
-            else:
-                for tt, kk in list(scalar_vars):
-                    setattr(self, kk, 0.)
+            with self._bypass_linked_vars():
+                if pyparticles is not None:
+                    context = self._buffer.context
+                    for tt, kk in list(scalar_vars):
+                        setattr(self, kk, part_dict[kk])
+                    for tt, kk in list(per_particle_vars):
+                        if kk.startswith('__'):
+                            continue
+                        vv = getattr(self, kk)
+                        vals =  context.nparray_to_context_array(part_dict[kk])
+                        ll = len(vals)
+                        vv[:ll] = vals
+                        vv[ll:] = LAST_INVALID_STATE
+                else:
+                    for tt, kk in list(scalar_vars):
+                        setattr(self, kk, 0.)
 
-                for tt, kk in list(per_particle_vars):
-                    if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
-                        value = 1.
-                    elif kk == 'particle_id':
-                        value = np.arange(0, self._capacity, dtype=np.int64)
-                    else:
-                        value = 0.
-                    getattr(self, kk)[:] = value
-        self._restore_linked_vars()
+                    for tt, kk in list(per_particle_vars):
+                        if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
+                            value = 1.
+                        elif kk == 'particle_id':
+                            value = np.arange(0, self._capacity, dtype=np.int64)
+                        else:
+                            value = 0.
+                        getattr(self, kk)[:] = value
 
         self._num_active_particles = -1 # To be filled in only on CPU
         self._num_lost_particles = -1 # To be filled in only on CPU
@@ -352,11 +346,14 @@ class Particles(xo.dress(ParticlesData, rename={
                                     np.array(input_kwargs[nn])))
                 else:
                     raise ValueError(
-                            'What?! This should have been intercepted before!')
+                           'What?! This should have been intercepted before!')
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             # Particles always need to be organized to run on CPU
             self.reorganize()
+
+    def _bypass_linked_vars(self):
+        return BypassLinked(self)
 
     def _init_random_number_generator(self, seeds=None):
 
@@ -377,6 +374,7 @@ class Particles(xo.dress(ParticlesData, rename={
 
     def hide_lost_particles(self):
          self._lim_arrays_name = '_num_active_particles'
+         self.reorganize()
 
     def unhide_lost_particles(self):
          del(self._lim_arrays_name)
@@ -402,16 +400,15 @@ class Particles(xo.dress(ParticlesData, rename={
         n_active = np.sum(mask_active)
         n_lost = np.sum(mask_lost)
 
-        self._bypass_linked_vars()
-        for tt, nn in self._structure['per_particle_vars']:
-            vv = getattr(self, nn)
-            vv_active = vv[mask_active]
-            vv_lost = vv[mask_lost]
+        with self._bypass_linked_vars():
+            for tt, nn in self._structure['per_particle_vars']:
+                vv = getattr(self, nn)
+                vv_active = vv[mask_active]
+                vv_lost = vv[mask_lost]
 
-            vv[:n_active] = vv_active
-            vv[n_active:n_active+n_lost] = vv_lost
-            vv[n_active+n_lost:] = LAST_INVALID_STATE
-        self._restore_linked_vars()
+                vv[:n_active] = vv_active
+                vv[n_active:n_active+n_lost] = vv_lost
+                vv[n_active+n_lost:] = LAST_INVALID_STATE
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
