@@ -9,7 +9,7 @@ from scipy.constants import m_p
 from scipy.constants import e as qe
 from scipy.constants import c as clight
 
-from xobjects.context_cpu import BypassLinked
+from xobjects import BypassLinked
 
 pmass = m_p * clight * clight / qe
 
