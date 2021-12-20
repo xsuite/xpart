@@ -268,6 +268,13 @@ class Particles(xo.dress(ParticlesData, rename={
         else:
             return new_part_cpu.copy(_context=target_ctx)
 
+    def _bypass_linked_vars(self):
+        self._flag_bypass_linked = True
+
+    def _restore_linked_vars(self):
+        del(self._flag_bypass_linked)
+
+
     def __init__(self, **kwargs):
 
         input_kwargs = kwargs.copy()
@@ -302,6 +309,7 @@ class Particles(xo.dress(ParticlesData, rename={
             self.xoinitialize(**kwargs)
 
             # Initialize coordinates
+            self._bypass_linked_vars()
             if pyparticles is not None:
                 context = self._buffer.context
                 for tt, kk in list(scalar_vars):
@@ -312,13 +320,8 @@ class Particles(xo.dress(ParticlesData, rename={
                     vv = getattr(self, kk)
                     vals =  context.nparray_to_context_array(part_dict[kk])
                     ll = len(vals)
-                    vvrestore = hasattr(vv, 'mode') and vv.mode=='readonly'
-                    if vvrestore:
-                        vv.mode = None
                     vv[:ll] = vals
                     vv[ll:] = LAST_INVALID_STATE
-                    if vvrestore:
-                        vv.mode = 'readonly'
             else:
                 for tt, kk in list(scalar_vars):
                     setattr(self, kk, 0.)
@@ -331,6 +334,7 @@ class Particles(xo.dress(ParticlesData, rename={
                     else:
                         value = 0.
                     getattr(self, kk)[:] = value
+        self._restore_linked_vars()
 
         self._num_active_particles = -1 # To be filled in only on CPU
         self._num_lost_particles = -1 # To be filled in only on CPU
@@ -398,19 +402,16 @@ class Particles(xo.dress(ParticlesData, rename={
         n_active = np.sum(mask_active)
         n_lost = np.sum(mask_lost)
 
+        self._bypass_linked_vars()
         for tt, nn in self._structure['per_particle_vars']:
             vv = getattr(self, nn)
-            vvrestore = hasattr(vv, 'mode') and vv.mode=='readonly'
-            if vvrestore:
-                vv.mode = None
             vv_active = vv[mask_active]
             vv_lost = vv[mask_lost]
 
             vv[:n_active] = vv_active
             vv[n_active:n_active+n_lost] = vv_lost
             vv[n_active+n_lost:] = LAST_INVALID_STATE
-            if vvrestore:
-                vv.mode = 'readonly' 
+        self._restore_linked_vars()
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
@@ -478,21 +479,23 @@ class Particles(xo.dress(ParticlesData, rename={
         self._delta[indx] = val
         self.update_delta(self._delta)
 
-
     @property
     def psigma(self):
         return self._buffer.context.linked_array_type.from_array(
-                                            self._psigma, mode='readonly')
+                                            self._psigma, mode='readonly',
+                                            container=self)
 
     @property
     def rvv(self):
         return self._buffer.context.linked_array_type.from_array(
-                                            self._rvv, mode='readonly')
+                                            self._rvv, mode='readonly',
+                                            container=self)
 
     @property
     def rpp(self):
         return self._buffer.context.linked_array_type.from_array(
-                                            self._rpp, mode='readonly')
+                                            self._rpp, mode='readonly',
+                                            container=self)
 
     @property
     def ptau(self):
@@ -526,12 +529,12 @@ class Particles(xo.dress(ParticlesData, rename={
         one_plus_delta = delta + 1.
         rvv = one_plus_delta / ( 1. + ptau_beta0 )
 
-        self.delta = delta
-        self.psigma = psigma
-        self.zeta *= rvv / self.rvv
+        self._delta = delta
+        self._psigma = psigma
+        self._zeta *= rvv / self.rvv
 
-        self.rvv = rvv
-        self.rpp = 1. / one_plus_delta
+        self._rvv = rvv
+        self._rpp = 1. / one_plus_delta
 
     def set_reference(self, p0c=7e12, mass0=pmass, q0=1):
         self.q0 = q0
