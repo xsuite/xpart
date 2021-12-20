@@ -260,7 +260,7 @@ class Particles(xo.dress(ParticlesData, rename={
         # Reorganize
         new_part_cpu.reorganize()
 
-        # Copy to original context 
+        # Copy to original context
         target_ctx = self._buffer.context
         if isinstance(target_ctx, xo.ContextCpu):
             new_part_cpu._buffer.context = target_ctx
@@ -312,8 +312,13 @@ class Particles(xo.dress(ParticlesData, rename={
                     vv = getattr(self, kk)
                     vals =  context.nparray_to_context_array(part_dict[kk])
                     ll = len(vals)
+                    vvrestore = hasattr(vv, 'mode') and vv.mode=='readonly'
+                    if vvrestore:
+                        vv.mode = None
                     vv[:ll] = vals
                     vv[ll:] = LAST_INVALID_STATE
+                    if vvrestore:
+                        vv.mode = 'readonly'
             else:
                 for tt, kk in list(scalar_vars):
                     setattr(self, kk, 0.)
@@ -395,12 +400,17 @@ class Particles(xo.dress(ParticlesData, rename={
 
         for tt, nn in self._structure['per_particle_vars']:
             vv = getattr(self, nn)
+            vvrestore = hasattr(vv, 'mode') and vv.mode=='readonly'
+            if vvrestore:
+                vv.mode = None
             vv_active = vv[mask_active]
             vv_lost = vv[mask_lost]
 
             vv[:n_active] = vv_active
             vv[n_active:n_active+n_lost] = vv_lost
             vv[n_active+n_lost:] = LAST_INVALID_STATE
+            if vvrestore:
+                vv.mode = 'readonly' 
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
@@ -458,19 +468,31 @@ class Particles(xo.dress(ParticlesData, rename={
 
     @property
     def delta(self):
-        return self._delta
+        return self._buffer.context.linked_array_type.from_array(
+                                        self._delta,
+                                        mode='setitem_from_container',
+                                        container=self,
+                                        container_setitem_name='_delta_setitem')
+
+    def _delta_setitem(self, indx, val):
+        self._delta[indx] = val
+        self.update_delta(self._delta)
+
 
     @property
     def psigma(self):
-        return self._psigma
+        return self._buffer.context.linked_array_type.from_array(
+                                            self._psigma, mode='readonly')
 
     @property
     def rvv(self):
-        return self._rvv
+        return self._buffer.context.linked_array_type.from_array(
+                                            self._rvv, mode='readonly')
 
     @property
     def rpp(self):
-        return self._rpp
+        return self._buffer.context.linked_array_type.from_array(
+                                            self._rpp, mode='readonly')
 
     @property
     def ptau(self):
@@ -540,10 +562,10 @@ class Particles(xo.dress(ParticlesData, rename={
         rpp    = 1. / one_plus_delta
         psigma = ptau_beta0 / ( beta0 * beta0 )
 
-        self.delta[:] = new_delta_value
-        self.rvv[:] = rvv
-        self.rpp[:] = rpp
-        self.psigma[:] = psigma
+        self._delta[:] = new_delta_value
+        self._rvv[:] = rvv
+        self._rpp[:] = rpp
+        self._psigma[:] = psigma
 
     def compare(self, particle, rel_tol=1e-6, abs_tol=1e-15):
         identical = True
