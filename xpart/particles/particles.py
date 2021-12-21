@@ -475,6 +475,10 @@ class Particles(xo.dress(ParticlesData, rename={
                                         container=self,
                                         container_setitem_name='_delta_setitem')
 
+    @delta.setter
+    def delta(self, value):
+        self.delta[:] = value
+
     def _delta_setitem(self, indx, val):
         self._delta[indx] = val
         self.update_delta(self._delta)
