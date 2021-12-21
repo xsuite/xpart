@@ -1,8 +1,11 @@
 import numpy as np
 
 import xpart as xp
+import xobjects as xo
 
-particles = xp.Particles(p0c=26e9, delta=[1,2,3])
+context = xo.ContextPyopencl()
+
+particles = xp.Particles(_context=context, p0c=26e9, delta=[1,2,3])
 
 assert particles.delta[2] == 3
 assert np.isclose(particles.rvv[2], 1.00061, rtol=0, atol=1e-5)
