@@ -19,6 +19,8 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     tracker=None,
                                     particle_ref=None,
                                     particle_class=Particles,
+                                    co_search_settings=None,
+                                    steps_r_matrix=None,
                                     _context=None, _buffer=None, _offset=None,
                                     ):
 
@@ -64,5 +66,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,
                       scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y),
-                      weight=total_intensity_particles/num_particles)
+                      weight=total_intensity_particles/num_particles,
+                      co_search_settings=co_search_settings,
+                      steps_r_matrix=steps_r_matrix)
     return part

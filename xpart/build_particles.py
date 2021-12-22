@@ -44,6 +44,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
                       particle_class=Particles,
+                      co_search_settings=None,
+                      steps_r_matrix=None
                     ):
 
     """
@@ -189,7 +191,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             particle_on_co = tracker.find_closed_orbit(
                 particle_co_guess=Particles(
                     x=0, px=0, y=0, py=0, zeta=0, delta=0.,
-                    **ref_dict))
+                    **ref_dict), 
+                co_search_settings=co_search_settings)
         else:
             assert particle_on_co._capacity == 1
 
@@ -198,7 +201,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         if R_matrix is None:
             R_matrix = tracker.compute_one_turn_matrix_finite_differences(
-                particle_on_co=particle_on_co)
+                particle_on_co=particle_on_co, steps_r_matrix=steps_r_matrix)
 
         num_particles = _check_lengths(num_particles=num_particles,
             zeta=zeta, delta=delta, x_norm=x_norm, px_norm=px_norm,

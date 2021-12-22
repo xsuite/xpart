@@ -31,7 +31,7 @@ def healy_symplectify(M):
         V_else = np.matmul(S, np.matmul(I + M, np.linalg.inv(I - M)))
         W_else = (V_else + V_else.T) / 2
         M_new = -np.matmul(
-            I + np.matmul(S, W_else), np.linalg(I - np.matmul(S, W_else))
+            I + np.matmul(S, W_else), np.linalg.det(I - np.matmul(S, W_else))
         )
 
     print("After symplectifying: det(M) = {}".format(np.linalg.det(M_new)))
