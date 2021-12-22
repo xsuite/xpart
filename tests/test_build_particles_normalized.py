@@ -71,4 +71,4 @@ def test_build_particles_normalized_closed_orbit():
             dct_co = particle_on_co.to_dict()
 
             for nn in 'x px y py zeta delta psigma rvv rpp gamma0 beta0 p0c'.split():
-                assert np.allclose(dct[nn], dct_co[nn], atol=1e-16, rtol=0)
+                assert np.allclose(dct[nn], dct_co[nn], atol=1e-15, rtol=0)
