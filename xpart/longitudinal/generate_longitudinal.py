@@ -30,13 +30,7 @@ def _characterize_tracker(tracker, particle_ref):
                 voltage_list.append(ee.voltage)
                 h_list.append(ee.frequency*T_rev)
 
-    particle_co = tracker.find_closed_orbit(particle_ref)
-
-    R_matrix = tracker.compute_one_turn_matrix_finite_differences(
-                       particle_on_co=particle_co)
-
-    eta = -R_matrix[4, 5]/line.get_length() # minus sign comes from z = s-ct
-    alpha_mom_compaction = eta + 1/particle_ref.gamma0[0]**2
+    tw = tracker.twiss(particle_ref=particle_ref, at_elements=[line.element_names[0]])
 
     dct={}
     dct['T_rev'] = T_rev
@@ -44,8 +38,8 @@ def _characterize_tracker(tracker, particle_ref):
     dct['lag_list_deg'] = lag_list_deg
     dct['voltage_list'] = voltage_list
     dct['h_list'] = h_list
-    dct['alpha_momentum_compaction'] = alpha_mom_compaction
-    dct['eta'] = eta
+    dct['momentum_compaction_factor'] = tw['momentum_compaction_factor']
+    dct['slip_factor'] = tw['slip_factor']
     return dct
 
 def generate_longitudinal_coordinates(
@@ -54,7 +48,7 @@ def generate_longitudinal_coordinates(
                                     mass0=None, q0=None, gamma0=None,
                                     num_particles=None,
                                     circumference=None,
-                                    alpha_momentum_compaction=None,
+                                    momentum_compaction_factor=None,
                                     rf_harmonic=None,
                                     rf_voltage=None,
                                     rf_phase=None,
@@ -83,9 +77,9 @@ def generate_longitudinal_coordinates(
         assert tracker is not None
         circumference = tracker.line.get_length()
 
-    if alpha_momentum_compaction is None:
+    if momentum_compaction_factor is None:
         assert tracker is not None
-        alpha_momentum_compaction = dct['alpha_momentum_compaction']
+        momentum_compaction_factor = dct['momentum_compaction_factor']
 
     if rf_harmonic is None:
         assert tracker is not None
@@ -108,7 +102,7 @@ def generate_longitudinal_coordinates(
                            gamma=gamma0,
                            mass_kg=mass0/(clight**2)*qe,
                            charge_coulomb=q0*qe,
-                           alpha_array=np.atleast_1d(alpha_momentum_compaction),
+                           alpha_array=np.atleast_1d(momentum_compaction_factor),
                            harmonic_list=np.atleast_1d(rf_harmonic),
                            voltage_list=np.atleast_1d(rf_voltage),
                            phi_offset_list=np.atleast_1d(rf_phase),
