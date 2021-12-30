@@ -5,9 +5,9 @@ from .particles import Particles
 
 def healy_symplectify(M):
     # https://accelconf.web.cern.ch/e06/PAPERS/WEPCH152.PDF
-    print("Symplectifying linear One-Turn-Map...")
+    #print("Symplectifying linear One-Turn-Map...")
 
-    print("Before symplectifying: det(M) = {}".format(np.linalg.det(M)))
+    #print("Before symplectifying: det(M) = {}".format(np.linalg.det(M)))
     I = np.identity(6)
 
     S = np.array(
@@ -34,7 +34,7 @@ def healy_symplectify(M):
             I + np.matmul(S, W_else), np.linalg.det(I - np.matmul(S, W_else))
         )
 
-    print("After symplectifying: det(M) = {}".format(np.linalg.det(M_new)))
+    #print("After symplectifying: det(M) = {}".format(np.linalg.det(M_new)))
     return M_new
 
 S = np.array([[0., 1., 0., 0., 0., 0.],
