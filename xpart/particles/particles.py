@@ -352,7 +352,10 @@ class Particles(xo.dress(ParticlesData, rename={
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             # Particles always need to be organized to run on CPU
-            self.reorganize()
+            if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
+                pass
+            else:
+                self.reorganize()
 
     def _bypass_linked_vars(self):
         return BypassLinked(self)
