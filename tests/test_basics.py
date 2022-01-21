@@ -33,6 +33,8 @@ def test_unallocated_particles():
         assert np.isclose(dct['psigma'][1], 1e-4, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-4, rtol=0, atol=1e-14)
 
+        particles2 = xp.Particles.from_dict(dct, _context=context)
+
 
 def test_linked_arrays():
 
