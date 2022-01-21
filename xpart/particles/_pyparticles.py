@@ -73,7 +73,7 @@ class Pyparticles:
             p.__dict__[k] = v
         return p
 
-    def __init__ref(self, p0c, energy0, gamma0, beta0):
+    def __init__ref(self, p0c, energy0, gamma0, beta0, mask_check=None):
         not_none = count_not_none(beta0, gamma0, p0c, energy0)
         if not_none == 0:
             p0c = 1e9
@@ -100,7 +100,13 @@ class Pyparticles:
                     if vv is None:
                         continue
 
-                    if not np.allclose(vv, getattr(self, nn), atol=1e-13):
+                    vv_ref = getattr(self, nn)
+
+                    if mask_check is not None:
+                        vv = vv[mask_check]
+                        vv_ref = vv_ref[mask_check]
+
+                    if not np.allclose(vv, vv_ref, atol=1e-13):
                         raise ValueError(
                             f"""\
                         Provided energy reference is inconsistent:
@@ -110,7 +116,7 @@ class Pyparticles:
                         beta0  = {beta0}"""
                         )
 
-    def __init__delta(self, delta, ptau, psigma):
+    def __init__delta(self, delta, ptau, psigma, mask_check=None):
         not_none = count_not_none(delta, ptau, psigma)
         if not_none == 0:
             self.delta = 0.0
@@ -128,7 +134,13 @@ class Pyparticles:
                     if vv is None:
                         continue
 
-                    if not np.allclose(vv, getattr(self, nn), atol=1e-13):
+                    vv_ref = getattr(self, nn)
+
+                    if mask_check is not None:
+                        vv = vv[mask_check]
+                        vv_ref = vv_ref[mask_check]
+
+                    if not np.allclose(vv, vv_ref, atol=1e-13):
                         raise ValueError(
                             f"""
                         Particles defined with inconsistent energy deviations:
@@ -249,8 +261,13 @@ class Pyparticles:
         self._mass0 = mass0
         self.q0 = q0
         self._update_coordinates = False
-        self.__init__ref(p0c, energy0, gamma0, beta0)
-        self.__init__delta(delta, ptau, psigma)
+
+        if state is not None and not(np.isscalar(state)):
+            mask_check = state > -1e8 # Unallocated particles
+        else:
+            mask_check = None
+        self.__init__ref(p0c, energy0, gamma0, beta0, mask_check=mask_check)
+        self.__init__delta(delta, ptau, psigma, mask_check=mask_check)
         self.__init__zeta(zeta, tau, sigma)
         self.__init__chi(chi=chi, mass_ratio=mass_ratio, charge_ratio=charge_ratio)
         self._update_coordinates = True

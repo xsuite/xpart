@@ -340,19 +340,16 @@ class Particles(xo.dress(ParticlesData, rename={
             vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
             if nn in input_kwargs.keys():
                 if hasattr(input_kwargs[nn], '__len__'):
-                    ll = len(input_kwargs[nn])
+                    ll = len(input_kwargs[nn]) # in case there is unallocated space
                 else:
                     ll = len(vvv)
-                if np.allclose(vvv[:ll], input_kwargs[nn], rtol=0, atol=1e-13):
-                    if np.isscalar(input_kwargs[nn]):
-                        getattr(self, "_"+nn)[:] = input_kwargs[nn]
-                    else:
-                        getattr(self, "_"+nn)[:ll] = (
-                                context.nparray_to_context_array(
-                                    np.array(input_kwargs[nn])))
+
+                if np.isscalar(input_kwargs[nn]):
+                    getattr(self, "_"+nn)[:] = input_kwargs[nn]
                 else:
-                    raise ValueError(
-                           'What?! This should have been intercepted before!')
+                    getattr(self, "_"+nn)[:ll] = (
+                            context.nparray_to_context_array(
+                                np.array(input_kwargs[nn])))
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             # Particles always need to be organized to run on CPU
