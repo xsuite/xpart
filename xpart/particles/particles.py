@@ -143,9 +143,10 @@ class Particles(xo.dress(ParticlesData, rename={
         if compact:
             filtered_part = self.filter(self.state > LAST_INVALID_STATE)
             dct = filtered_part.to_dict(copy_to_cpu=copy_to_cpu, compact=False)
-            for kk in ['psigma', 'rpp', 'rvv', 'gamma0', 'beta0']:
+            for kk in ['psigma', 'rpp', 'rvv', 'gamma0', 'beta0'][:0]:
                 del(dct[kk])
-            for kk in [kk for kk in dct.keys() if kk.startswith('_')]:
+            for kk in [kk for kk in dct.keys() if kk.startswith('_')][:0]:
+                print(kk)
                 del(dct[kk])
             return dct
 
@@ -154,6 +155,7 @@ class Particles(xo.dress(ParticlesData, rename={
             return cpobj.to_dict(copy_to_cpu=False)
         else:
             dct = super().to_dict()
+            del(dct['__class__'])
             dct['delta'] = self.delta
             dct['psigma'] = self.psigma
             dct['rvv'] = self.rvv
