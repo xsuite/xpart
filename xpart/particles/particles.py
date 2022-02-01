@@ -160,9 +160,9 @@ class Particles(xo.dress(ParticlesData, rename={
             dct['rpp'] = self.rpp
             return dct
 
-    def to_pandas(self):
+    def to_pandas(self, compact=False):
         import pandas as pd
-        return pd.DataFrame(self.to_dict())
+        return pd.DataFrame(self.to_dict(compact=compact))
 
     @classmethod
     def from_pandas(cls, df, _context=None, _buffer=None, _offset=None):
