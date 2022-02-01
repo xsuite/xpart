@@ -138,7 +138,17 @@ class Particles(xo.dress(ParticlesData, rename={
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def to_dict(self, copy_to_cpu=True):
+    def to_dict(self, copy_to_cpu=True, compact=False):
+
+        if compact:
+            filtered_part = self.filter(self.state > LAST_INVALID_STATE)
+            dct = filtered_part.to_dict(copy_to_cpu=copy_to_cpu, compact=False)
+            for kk in ['psigma', 'rpp', 'rvv', 'gamma0', 'beta0']:
+                del(dct[kk])
+            for kk in [kk for kk in dct.keys() if kk.startswith('_')]:
+                del(dct[kk])
+            return dct
+
         if copy_to_cpu:
             cpobj = self.copy(_context=xo.context_default)
             return cpobj.to_dict(copy_to_cpu=False)
@@ -148,7 +158,7 @@ class Particles(xo.dress(ParticlesData, rename={
             dct['psigma'] = self.psigma
             dct['rvv'] = self.rvv
             dct['rpp'] = self.rpp
-        return dct
+            return dct
 
     def to_pandas(self):
         import pandas as pd
