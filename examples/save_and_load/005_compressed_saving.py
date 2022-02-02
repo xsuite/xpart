@@ -14,25 +14,42 @@ part = xp.Particles(_capacity=3000,
             p0c=7e12)
 
 
+df_part = part.to_pandas()
+df_part_compact = part.to_pandas(compact=True)
+
+assert len(df_part) == 3000
+assert len(df_part_compact) == 1000
+
+# Check that underscored vars (if any) are rng statuses
+for df in [df_part, df_part_compact]:
+    ltest = [nn for nn in df.keys() if nn.startswith('_')]
+    assert np.all([nn.startswith('__rng') for nn in ltest])
+
+for nn in ['__rng_s1', '__rng_s2', '__rng_s3', '__rng_s4',
+            'beta0', 'gamma0', 'psigma', 'rpp', 'rvv']:
+    assert nn in df_part.keys()
+    assert nn not in df_part_compact.keys()
+
+df_part.to_hdf('part.hdf', key='df', mode='w')
+df_part_compact.to_hdf('part_compact.hdf', key='df', mode='w')
+df_part.to_hdf('part_compressed.hdf', key='df', mode='w',
+               complevel=4, complib='zlib')
+df_part_compact.to_hdf('part_compact_compressed.hdf', key='df', mode='w',
+                       complevel=4, complib='zlib')
+
+# Measured sizes
+# -rw-r--r--  1 giadarol  staff   618K  2 Feb 17:05 part.hdf
+# -rw-r--r--  1 giadarol  staff   158K  2 Feb 17:05 part_compact.hdf
+# -rw-r--r--  1 giadarol  staff    98K  2 Feb 17:05 part_compressed.hdf
+# -rw-r--r--  1 giadarol  staff    74K  2 Feb 17:05 part_compact_compressed.hdf
+
 import pandas as pd
-df = part.to_pandas()
-df_compact = part.to_pandas(compact=True)
-
-
-
-prrrrr
-
-df.to_hdf('part.hdf', key='df', mode='w')
-
-df_compact = part.to_pandas(compact=True)
-df_compact.to_hdf('part_compact.hdf', key='df', mode='w')
-df_compact.to_hdf('part_compact_compressed.hdf', key='df', mode='w', complevel=4, complib='zlib')
-
-########################
-# Check data integrity #
-########################
-
-part_from_pdhdf = xp.Particles.from_pandas(pd.read_hdf('part_compact.hdf'))
-
-for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'psigma']:
-    assert np.all(getattr(part, kk) == getattr(part_from_pdhdf, kk))
+for fname in[
+          'part', 'part_compact', 'part_compressed', 'part_compact_compressed']:
+    if 'compact' in fname:
+        pref = part.remove_unused_space()
+    else:
+        pref = part
+    part_from_pdhdf = xp.Particles.from_pandas(pd.read_hdf(fname +'.hdf'))
+    for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'psigma', 'gamma0']:
+        assert np.all(getattr(pref, kk) == getattr(part_from_pdhdf, kk))
