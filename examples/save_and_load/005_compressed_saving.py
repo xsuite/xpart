@@ -20,7 +20,7 @@ df_part_compact = part.to_pandas(compact=True)
 assert len(df_part) == 3000
 assert len(df_part_compact) == 1000
 
-# Check that underscored vars (if any) are rng statuses
+# Check that underscored vars (if any) are all rng states
 for df in [df_part, df_part_compact]:
     ltest = [nn for nn in df.keys() if nn.startswith('_')]
     assert np.all([nn.startswith('__rng') for nn in ltest])
