@@ -22,3 +22,36 @@ def test_to_from_dict():
             assert isinstance(dct[nn], np.ndarray)
             assert isinstance(getattr(part_from_dict, nn), context.nplike_array_type)
 
+def test_to_pandas():
+    n_particles = 1000
+    part = xp.Particles(_capacity=3000,
+                px=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
+                y=np.random.uniform(low=-1e-3, high=1e-3, size=n_particles),
+                py=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
+                zeta=np.random.uniform(low=-1e-2, high=1e-2, size=n_particles),
+                delta=np.random.uniform(low=-1e-4, high=1e-4, size=n_particles),
+                p0c=7e12)
+
+
+    df_part = part.to_pandas()
+    df_part_compact = part.to_pandas(compact=True)
+
+    assert len(df_part) == 3000
+    assert len(df_part_compact) == 1000
+
+    # Check that underscored vars (if any) are all rng states
+    for df in [df_part, df_part_compact]:
+        ltest = [nn for nn in df.keys() if nn.startswith('_')]
+        assert np.all([nn.startswith('__rng') for nn in ltest])
+
+    for nn in ['__rng_s1', '__rng_s2', '__rng_s3', '__rng_s4',
+                'beta0', 'gamma0', 'psigma', 'rpp', 'rvv']:
+        assert nn in df_part.keys()
+        assert nn not in df_part_compact.keys()
+
+    import pandas as pd
+    for df, pref in zip([df_part, df_part_compact],
+                        [part, part.remove_unused_space()]):
+        part_from_pdhdf = xp.Particles.from_pandas(df)
+        for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'psigma', 'gamma0']:
+            assert np.all(getattr(pref, kk) == getattr(part_from_pdhdf, kk))

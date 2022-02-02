@@ -3,7 +3,6 @@ import numpy as np
 import xobjects as xo
 import xpart as xp
 
-# Create a Particles on your selected context (default is CPU)
 n_particles = 1000
 part = xp.Particles(_capacity=3000,
             px=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
