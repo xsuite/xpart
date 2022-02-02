@@ -5,8 +5,7 @@ import xpart as xp
 
 # Create a Particles on your selected context (default is CPU)
 n_particles = 1000
-part = xp.Particles(
-            x=np.random.uniform(low=-1e-3, high=1e-3, size=n_particles),
+part = xp.Particles(_capacity=3000,
             px=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
             y=np.random.uniform(low=-1e-3, high=1e-3, size=n_particles),
             py=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
@@ -15,13 +14,14 @@ part = xp.Particles(
             p0c=7e12)
 
 
-##############
-# PANDAS/HDF #
-##############
-
-# Save particles to hdf file via pandas
 import pandas as pd
 df = part.to_pandas()
+df_compact = part.to_pandas(compact=True)
+
+
+
+prrrrr
+
 df.to_hdf('part.hdf', key='df', mode='w')
 
 df_compact = part.to_pandas(compact=True)

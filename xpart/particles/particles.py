@@ -138,6 +138,92 @@ class Particles(xo.dress(ParticlesData, rename={
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
+    def __init__(self, **kwargs):
+
+        input_kwargs = kwargs.copy()
+
+        if '_xobject' in kwargs.keys():
+            # Initialize xobject
+            self.xoinitialize(**kwargs)
+        else:
+            if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
+                # Needed to generate consistent longitudinal variables
+                pyparticles = Pyparticles(**kwargs)
+
+                part_dict = _pyparticles_to_xpart_dict(pyparticles)
+                if ('_capacity' in kwargs.keys() and
+                         kwargs['_capacity'] is not None):
+                    assert kwargs['_capacity'] >= part_dict['_num_particles']
+                else:
+                    kwargs['_capacity'] = part_dict['_num_particles']
+            else:
+                pyparticles = None
+                if '_capacity' not in kwargs.keys():
+                    kwargs['_capacity'] = 1
+
+            # Make sure _capacity is integer
+            kwargs['_capacity'] = int(kwargs['_capacity'])
+
+            # We just provide array sizes to xoinitialize (we will set values later)
+            kwargs.update(
+                    {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
+
+            # Initialize xobject
+            self.xoinitialize(**kwargs)
+
+            # Initialize coordinates
+            with self._bypass_linked_vars():
+                if pyparticles is not None:
+                    context = self._buffer.context
+                    for tt, kk in list(scalar_vars):
+                        setattr(self, kk, part_dict[kk])
+                    for tt, kk in list(per_particle_vars):
+                        if kk.startswith('__'):
+                            continue
+                        vv = getattr(self, kk)
+                        vals =  context.nparray_to_context_array(part_dict[kk])
+                        ll = len(vals)
+                        vv[:ll] = vals
+                        vv[ll:] = LAST_INVALID_STATE
+                else:
+                    for tt, kk in list(scalar_vars):
+                        setattr(self, kk, 0.)
+
+                    for tt, kk in list(per_particle_vars):
+                        if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
+                            value = 1.
+                        elif kk == 'particle_id':
+                            value = np.arange(0, self._capacity, dtype=np.int64)
+                        else:
+                            value = 0.
+                        getattr(self, kk)[:] = value
+
+        self._num_active_particles = -1 # To be filled in only on CPU
+        self._num_lost_particles = -1 # To be filled in only on CPU
+
+        # Force values provided by user if compatible
+        for nn in part_energy_varnames():
+            vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
+            if nn in input_kwargs.keys():
+                if hasattr(input_kwargs[nn], '__len__'):
+                    ll = len(input_kwargs[nn]) # in case there is unallocated space
+                else:
+                    ll = len(vvv)
+
+                if np.isscalar(input_kwargs[nn]):
+                    getattr(self, "_"+nn)[:] = input_kwargs[nn]
+                else:
+                    getattr(self, "_"+nn)[:ll] = (
+                            context.nparray_to_context_array(
+                                np.array(input_kwargs[nn])))
+
+        if isinstance(self._buffer.context, xo.ContextCpu):
+            # Particles always need to be organized to run on CPU
+            if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
+                pass
+            else:
+                self.reorganize()
+
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
                 remove_unused_space=None,
@@ -163,13 +249,13 @@ class Particles(xo.dress(ParticlesData, rename={
             p_for_dict = p_for_dict.copy(_context=xo.context_default)
 
         if remove_unused_space:
-            p_for_dict = p_for_dict.filter(self.state > LAST_INVALID_STATE)
+            p_for_dict = p_for_dict.remove_unused_space()
 
         dct = super(p_for_dict.__class__, p_for_dict).to_dict()
-        dct['delta'] = self.delta
-        dct['psigma'] = self.psigma
-        dct['rvv'] = self.rvv
-        dct['rpp'] = self.rpp
+        dct['delta'] = p_for_dict.delta
+        dct['psigma'] = p_for_dict.psigma
+        dct['rvv'] = p_for_dict.rvv
+        dct['rpp'] = p_for_dict.rpp
 
         if remove_underscored:
             for kk in list(dct.keys()):
@@ -190,13 +276,14 @@ class Particles(xo.dress(ParticlesData, rename={
                   remove_redundant_variables=None,
                   keep_rng_state=None,
                   compact=False):
+        dct = self.to_dict(
+                    remove_underscored=remove_underscored,
+                    remove_unused_space=remove_unused_space,
+                    remove_redundant_variables=remove_redundant_variables,
+                    keep_rng_state=keep_rng_state,
+                    compact=compact)
         import pandas as pd
-        return pd.DataFrame(self.to_dict(
-                                remove_underscored=remove_underscored,
-                                remove_unused_space=remove_unused_space,
-                                remove_redundant_variables=remove_redundant_variables,
-                                keep_rng_state=keep_rng_state,
-                                compact=compact))
+        return pd.DataFrame(dct)
 
     @classmethod
     def from_pandas(cls, df, _context=None, _buffer=None, _offset=None):
@@ -207,7 +294,6 @@ class Particles(xo.dress(ParticlesData, rename={
         return cls(**dct, _context=_context, _buffer=_buffer, _offset=_offset)
 
     @classmethod
-    #@profile
     def merge(cls, lst, _context=None, _buffer=None, _offset=None):
 
         # TODO For now the merge is performed on CPU for add contexts.
@@ -317,91 +403,8 @@ class Particles(xo.dress(ParticlesData, rename={
         else:
             return new_part_cpu.copy(_context=target_ctx)
 
-    def __init__(self, **kwargs):
-
-        input_kwargs = kwargs.copy()
-
-        if '_xobject' in kwargs.keys():
-            # Initialize xobject
-            self.xoinitialize(**kwargs)
-        else:
-            if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
-                # Needed to generate consistent longitudinal variables
-                pyparticles = Pyparticles(**kwargs)
-
-                part_dict = _pyparticles_to_xpart_dict(pyparticles)
-                if ('_capacity' in kwargs.keys() and
-                         kwargs['_capacity'] is not None):
-                    assert kwargs['_capacity'] >= part_dict['_num_particles']
-                else:
-                    kwargs['_capacity'] = part_dict['_num_particles']
-            else:
-                pyparticles = None
-                if '_capacity' not in kwargs.keys():
-                    kwargs['_capacity'] = 1
-
-            # Make sure _capacity is integer
-            kwargs['_capacity'] = int(kwargs['_capacity'])
-
-            # We just provide array sizes to xoinitialize (we will set values later)
-            kwargs.update(
-                    {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
-
-            # Initialize xobject
-            self.xoinitialize(**kwargs)
-
-            # Initialize coordinates
-            with self._bypass_linked_vars():
-                if pyparticles is not None:
-                    context = self._buffer.context
-                    for tt, kk in list(scalar_vars):
-                        setattr(self, kk, part_dict[kk])
-                    for tt, kk in list(per_particle_vars):
-                        if kk.startswith('__'):
-                            continue
-                        vv = getattr(self, kk)
-                        vals =  context.nparray_to_context_array(part_dict[kk])
-                        ll = len(vals)
-                        vv[:ll] = vals
-                        vv[ll:] = LAST_INVALID_STATE
-                else:
-                    for tt, kk in list(scalar_vars):
-                        setattr(self, kk, 0.)
-
-                    for tt, kk in list(per_particle_vars):
-                        if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
-                            value = 1.
-                        elif kk == 'particle_id':
-                            value = np.arange(0, self._capacity, dtype=np.int64)
-                        else:
-                            value = 0.
-                        getattr(self, kk)[:] = value
-
-        self._num_active_particles = -1 # To be filled in only on CPU
-        self._num_lost_particles = -1 # To be filled in only on CPU
-
-        # Force values provided by user if compatible
-        for nn in part_energy_varnames():
-            vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
-            if nn in input_kwargs.keys():
-                if hasattr(input_kwargs[nn], '__len__'):
-                    ll = len(input_kwargs[nn]) # in case there is unallocated space
-                else:
-                    ll = len(vvv)
-
-                if np.isscalar(input_kwargs[nn]):
-                    getattr(self, "_"+nn)[:] = input_kwargs[nn]
-                else:
-                    getattr(self, "_"+nn)[:ll] = (
-                            context.nparray_to_context_array(
-                                np.array(input_kwargs[nn])))
-
-        if isinstance(self._buffer.context, xo.ContextCpu):
-            # Particles always need to be organized to run on CPU
-            if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
-                pass
-            else:
-                self.reorganize()
+    def remove_unused_space(self):
+        return self.filter(self.state > LAST_INVALID_STATE)
 
     def _bypass_linked_vars(self):
         return BypassLinked(self)
@@ -565,7 +568,6 @@ class Particles(xo.dress(ParticlesData, rename={
     def energy(self):
         return self.energy0 + self.psigma * self.p0c * self.beta0 # eV
 
-
     def add_to_energy(self, delta_energy):
         beta0 = self.beta0.copy()
         delta_beta0 = self.delta * beta0
@@ -588,12 +590,6 @@ class Particles(xo.dress(ParticlesData, rename={
 
         self._rvv = rvv
         self._rpp = 1. / one_plus_delta
-
-    def set_reference(self, p0c=7e12, mass0=pmass, q0=1):
-        self.q0 = q0
-        self.mass0 = mass0
-        self.p0c = p0c
-        return self
 
     def set_particle(self, index, set_scalar_vars=False,
             check_scalar_vars=True, **kwargs):
@@ -622,16 +618,6 @@ class Particles(xo.dress(ParticlesData, rename={
         self._rvv[:] = rvv
         self._rpp[:] = rpp
         self._psigma[:] = psigma
-
-    def compare(self, particle, rel_tol=1e-6, abs_tol=1e-15):
-        identical = True
-        for cc in self._structure.keys():
-            for tt, nn in self._structure[cc]:
-                if not np.allclose(getattr(self, nn), getattr(particle, nn),
-                        atol=abs_tol, rtol=rel_tol):
-                    identical = False
-                    break
-        return identical
 
 def _str_in_list(string, str_list):
 
