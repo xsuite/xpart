@@ -138,29 +138,51 @@ class Particles(xo.dress(ParticlesData, rename={
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def to_dict(self, copy_to_cpu=True, compact=False):
+    def to_dict(self, copy_to_cpu=True,
+                remove_underscored=None,
+                remove_unused_space=None,
+                remove_redundant_variables=None,
+                keep_rng_state=None,
+                compact=False):
 
-        if compact:
-            filtered_part = self.filter(self.state > LAST_INVALID_STATE)
-            dct = filtered_part.to_dict(copy_to_cpu=copy_to_cpu, compact=False)
-            for kk in ['psigma', 'rpp', 'rvv', 'gamma0', 'beta0'][:0]:
-                del(dct[kk])
-            for kk in [kk for kk in dct.keys() if kk.startswith('_')][:0]:
-                print(kk)
-                del(dct[kk])
-            return dct
+        if remove_underscored is None:
+            remove_underscored = True
+
+        if remove_unused_space is None:
+            remove_unused_space = compact
+
+        if remove_redundant_variables is None:
+            remove_redundant_variables = compact
+
+        if keep_rng_state is None:
+            keep_rng_state = not(compact)
+
+        p_for_dict = self
 
         if copy_to_cpu:
-            cpobj = self.copy(_context=xo.context_default)
-            return cpobj.to_dict(copy_to_cpu=False)
-        else:
-            dct = super().to_dict()
-            del(dct['__class__'])
-            dct['delta'] = self.delta
-            dct['psigma'] = self.psigma
-            dct['rvv'] = self.rvv
-            dct['rpp'] = self.rpp
-            return dct
+            p_for_dict = p_for_dict.copy(_context=xo.context_default)
+
+        if remove_unused_space:
+            p_for_dict = p_for_dict.filter(self.state > LAST_INVALID_STATE)
+
+        dct = super(p_for_dict.__class__, p_for_dict).to_dict()
+        dct['delta'] = self.delta
+        dct['psigma'] = self.psigma
+        dct['rvv'] = self.rvv
+        dct['rpp'] = self.rpp
+
+        if remove_underscored:
+            for kk in list(dct.keys()):
+                if kk.startswith('_'):
+                    if keep_rng_state and kk.startswith('__rng'):
+                        continue
+                    del(dct[kk])
+
+        if remove_redundant_variables:
+            for kk in ['psigma', 'rpp', 'rvv', 'gamma0', 'beta0']:
+                del(dct[kk])
+
+        return dct
 
     def to_pandas(self, compact=False):
         import pandas as pd
@@ -175,6 +197,7 @@ class Particles(xo.dress(ParticlesData, rename={
         return cls(**dct, _context=_context, _buffer=_buffer, _offset=_offset)
 
     @classmethod
+    #@profile
     def merge(cls, lst, _context=None, _buffer=None, _offset=None):
 
         # TODO For now the merge is performed on CPU for add contexts.

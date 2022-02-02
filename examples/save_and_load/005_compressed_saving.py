@@ -26,7 +26,7 @@ df.to_hdf('part.hdf', key='df', mode='w')
 
 df_compact = part.to_pandas(compact=True)
 df_compact.to_hdf('part_compact.hdf', key='df', mode='w')
-
+df_compact.to_hdf('part_compact_compressed.hdf', key='df', mode='w', complevel=4, complib='zlib')
 
 ########################
 # Check data integrity #
