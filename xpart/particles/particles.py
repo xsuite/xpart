@@ -184,9 +184,19 @@ class Particles(xo.dress(ParticlesData, rename={
 
         return dct
 
-    def to_pandas(self, compact=False):
+    def to_pandas(self,
+                  remove_underscored=None,
+                  remove_unused_space=None,
+                  remove_redundant_variables=None,
+                  keep_rng_state=None,
+                  compact=False):
         import pandas as pd
-        return pd.DataFrame(self.to_dict(compact=compact))
+        return pd.DataFrame(self.to_dict(
+                                remove_underscored=remove_underscored,
+                                remove_unused_space=remove_unused_space,
+                                remove_redundant_variables=remove_redundant_variables,
+                                keep_rng_state=keep_rng_state,
+                                compact=compact))
 
     @classmethod
     def from_pandas(cls, df, _context=None, _buffer=None, _offset=None):
