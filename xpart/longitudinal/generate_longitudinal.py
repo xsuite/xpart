@@ -99,20 +99,29 @@ def generate_longitudinal_coordinates(
     assert sigma_z is not None
 
     rfbucket = RFBucket(circumference=circumference,
-                           gamma=gamma0,
-                           mass_kg=mass0/(clight**2)*qe,
-                           charge_coulomb=q0*qe,
-                           alpha_array=np.atleast_1d(momentum_compaction_factor),
-                           harmonic_list=np.atleast_1d(rf_harmonic),
-                           voltage_list=np.atleast_1d(rf_voltage),
-                           phi_offset_list=np.atleast_1d(rf_phase),
-                           p_increment=p_increment)
+                        gamma=gamma0,
+                        mass_kg=mass0/(clight**2)*qe,
+                        charge_coulomb=q0*qe,
+                        alpha_array=np.atleast_1d(momentum_compaction_factor),
+                        harmonic_list=np.atleast_1d(rf_harmonic),
+                        voltage_list=np.atleast_1d(rf_voltage),
+                        phi_offset_list=np.atleast_1d(rf_phase),
+                        p_increment=p_increment)
 
-    # Generate longitudinal coordinates
-    matcher = RFBucketMatcher(rfbucket=rfbucket,
-        distribution_type=ThermalDistribution,
-        sigma_z=sigma_z)
-    z_particles, delta_particles, _, _ = matcher.generate(
-                                             macroparticlenumber=num_particles)
+    if sigma_z < 0.1 * circumference/np.max(np.atleast_1d(rf_harmonic)):
+        eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
+        beta_z = np.abs(eta) * circumference / 2.0 / np.pi / rfbucket.Q_s
+        sigma_dp = sigma_z / beta_z
+
+        z_particles = sigma_z * np.random.normal(size=num_particles)
+        delta_particles = sigma_dp * np.random.normal(size=num_particles)
+
+    else:
+        # Generate longitudinal coordinates
+        matcher = RFBucketMatcher(rfbucket=rfbucket,
+            distribution_type=ThermalDistribution,
+            sigma_z=sigma_z)
+        z_particles, delta_particles, _, _ = matcher.generate(
+                                                macroparticlenumber=num_particles)
 
     return z_particles, delta_particles
