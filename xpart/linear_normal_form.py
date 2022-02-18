@@ -57,15 +57,26 @@ def compute_linear_normal_form(M, symplectify=True, tol_det_M=0.05):
     if np.abs(np.linalg.det(M)-1) > tol_det_M:
         raise ValueError('The determinant of M is out tolerance.')
 
+    for ii in range(6):
+        mask_non_zero = np.abs(M[ii, :])>1e-15
+        mask_non_zero[ii] = False
+        if np.sum(mask_non_zero)<1:
+            raise ValueError(
+                'Invalid one-turn map: No coordinates respond to variations of '
+                + 'x px y py zeta delta'.split()[ii])
+
     if symplectify:
         M = healy_symplectify(M)
 
+
     w0, v0 = np.linalg.eig(M)
+    if np.any(np.abs(w0) > 1. + 1e-10):
+        raise ValueError('One-turn matrix is unstable')
 
     a0 = np.real(v0)
     b0 = np.imag(v0)
 
-    index_list = [0,5,1,2,3,4]
+    index_list = [0,5,1,2,3,4] # we mix them up to check the algorithm
 
     ##### Sort modes in pairs of conjugate modes #####
 

@@ -117,6 +117,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         raise ValueError("`particle_ref` and `particle_on_co`"
                 " cannot be provided at the same time")
 
+    if particle_on_co is None and particle_ref is None:
+        if tracker is not None:
+            particle_ref = tracker.particle_ref
+
     if particle_ref is None:
         assert particle_on_co is not None, (
             "`particle_ref` or `particle_on_co` must be provided!")
@@ -191,7 +195,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             particle_on_co = tracker.find_closed_orbit(
                 particle_co_guess=Particles(
                     x=0, px=0, y=0, py=0, zeta=0, delta=0.,
-                    **ref_dict), 
+                    **ref_dict),
                 co_search_settings=co_search_settings)
         else:
             assert particle_on_co._capacity == 1
