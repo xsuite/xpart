@@ -59,7 +59,7 @@ def test_short_bunch():
 
         bunch_intensity = 1e11
         sigma_z = 22.5e-2/5
-        n_part = int(5e2)
+        n_part = int(5e3)
         nemitt_x = 2e-6
         nemitt_y = 2.5e-6
 
