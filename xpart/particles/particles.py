@@ -149,6 +149,8 @@ class Particles(xo.dress(ParticlesData, rename={
             if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
                 # Needed to generate consistent longitudinal variables
                 pyparticles = Pyparticles(**kwargs)
+                if 'mass_ratio' in kwargs.keys():
+                    del(kwargs['mass_ratio']) # info transferred in pyparticles.chi
 
                 part_dict = _pyparticles_to_xpart_dict(pyparticles)
                 if ('_capacity' in kwargs.keys() and
