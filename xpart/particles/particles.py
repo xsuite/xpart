@@ -411,6 +411,18 @@ class Particles(xo.dress(ParticlesData, rename={
     def _bypass_linked_vars(self):
         return BypassLinked(self)
 
+    def _has_valid_rng_state(self):
+        # I check only the first particle
+        print(self._xobject)
+        import pdb; pdb.set_trace()
+        if (self._xobject.__rng_s1[0] == 0
+            and self._xobject.__rng_s2[0] == 0
+            and self._xobject.__rng_s3[0] == 0
+            and self._xobject.__rng_s4[0] == 0):
+            return False
+        else:
+            return True
+
     def _init_random_number_generator(self, seeds=None):
 
          self.compile_custom_kernels(only_if_needed=True)
