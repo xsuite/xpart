@@ -58,10 +58,10 @@ per_particle_vars = (
         (xo.Int64, 'at_turn'),
         (xo.Int64, 'state'),
         (xo.Int64, 'parent_particle_id'),
-        (xo.UInt32, '__rng_s1'),
-        (xo.UInt32, '__rng_s2'),
-        (xo.UInt32, '__rng_s3'),
-        (xo.UInt32, '__rng_s4')
+        (xo.UInt32, '_rng_s1'),
+        (xo.UInt32, '_rng_s2'),
+        (xo.UInt32, '_rng_s3'),
+        (xo.UInt32, '_rng_s4')
     )
     )
 
@@ -180,7 +180,7 @@ class Particles(xo.dress(ParticlesData, rename={
                     for tt, kk in list(scalar_vars):
                         setattr(self, kk, part_dict[kk])
                     for tt, kk in list(per_particle_vars):
-                        if kk.startswith('__'):
+                        if kk.startswith('_rng'):
                             continue
                         vv = getattr(self, kk)
                         vals =  context.nparray_to_context_array(part_dict[kk])
@@ -262,7 +262,7 @@ class Particles(xo.dress(ParticlesData, rename={
         if remove_underscored:
             for kk in list(dct.keys()):
                 if kk.startswith('_'):
-                    if keep_rng_state and kk.startswith('__rng'):
+                    if keep_rng_state and kk.startswith('_rng'):
                         continue
                     del(dct[kk])
 
@@ -413,12 +413,10 @@ class Particles(xo.dress(ParticlesData, rename={
 
     def _has_valid_rng_state(self):
         # I check only the first particle
-        print(self._xobject)
-        import pdb; pdb.set_trace()
-        if (self._xobject.__rng_s1[0] == 0
-            and self._xobject.__rng_s2[0] == 0
-            and self._xobject.__rng_s3[0] == 0
-            and self._xobject.__rng_s4[0] == 0):
+        if (self._xobject._rng_s1[0] == 0
+            and self._xobject._rng_s2[0] == 0
+            and self._xobject._rng_s3[0] == 0
+            and self._xobject._rng_s4[0] == 0):
             return False
         else:
             return True
@@ -614,7 +612,7 @@ class Particles(xo.dress(ParticlesData, rename={
         for tt, kk in list(scalar_vars):
             setattr(self, kk, part_dict[kk])
         for tt, kk in list(per_particle_vars):
-            if kk.startswith('__') and kk not in part_dict.keys():
+            if kk.startswith('_rng') and kk not in part_dict.keys():
                 continue
             getattr(self, kk)[index] = part_dict[kk][0]
 
@@ -893,7 +891,7 @@ def _pyparticles_to_xpart_dict(pyparticles):
         dct['weight'] = 1.
 
     for tt, kk in scalar_vars + per_particle_vars:
-        if kk.startswith('__'):
+        if kk.startswith('_rng'):
             continue
         # Use properties
         dct[kk] = getattr(pyparticles, kk)
@@ -914,7 +912,7 @@ def _pyparticles_to_xpart_dict(pyparticles):
         out[kk] = val[0]
 
     for tt, kk in per_particle_vars:
-        if kk.startswith('__'):
+        if kk.startswith('_rng'):
             continue
 
         val_py = dct[kk]

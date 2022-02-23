@@ -44,9 +44,9 @@ def test_to_pandas():
         # Check that underscored vars (if any) are all rng states
         for df in [df_part, df_part_compact]:
             ltest = [nn for nn in df.keys() if nn.startswith('_')]
-            assert np.all([nn.startswith('__rng') for nn in ltest])
+            assert np.all([nn.startswith('_rng') for nn in ltest])
 
-        for nn in ['__rng_s1', '__rng_s2', '__rng_s3', '__rng_s4',
+        for nn in ['_rng_s1', '_rng_s2', '_rng_s3', '_rng_s4',
                     'beta0', 'gamma0', 'psigma', 'rpp', 'rvv']:
             assert nn in df_part.keys()
             assert nn not in df_part_compact.keys()
