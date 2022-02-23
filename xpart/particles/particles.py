@@ -804,7 +804,11 @@ void LocalParticle_add_to_energy(LocalParticle* part, double delta_energy, int p
 
     double const new_rpp = 1./irpp;
     LocalParticle_set_delta(part, irpp - 1.);
-    LocalParticle_set_rvv(part, irpp/(1 + beta0*ptau));
+
+    double const new_rvv = irpp/(1 + beta0*ptau);
+    LocalParticle_scale_zeta(part,
+        new_rvv / LocalParticle_get_rvv(part));
+    LocalParticle_set_rvv(part, new_rvv);
     LocalParticle_set_psigma(part, ptau/beta0);
 
     if (!pz_only) {
