@@ -69,7 +69,7 @@ def compute_linear_normal_form(M, symplectify=True, tol_det_M=0.05):
         M = healy_symplectify(M)
 
     w0, v0 = np.linalg.eig(M)
-    if np.any(np.abs(w0) > 1. + 1e-10):
+    if np.any(np.abs(w0) > 1. + 1e-6): #1e-10):
         raise ValueError('One-turn matrix is unstable')
 
     a0 = np.real(v0)
@@ -151,7 +151,8 @@ def compute_linear_normal_form(M, symplectify=True, tol_det_M=0.05):
 
     W = np.array([a1,b1,a2,b2,a3,b3]).T
     W[abs(W) < 1.e-14] = 0. # Set very small numbers to zero.
-    invW = np.matmul(np.matmul(S.T, W.T), S)
+    #invW = np.matmul(np.matmul(S.T, W.T), S)
+    invW = np.linalg.inv(W)
 
     ##################################################
     #### Get tunes and rotation matrix in the normalized coordinates ####

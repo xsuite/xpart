@@ -45,7 +45,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       weight=None,
                       particle_class=Particles,
                       co_search_settings=None,
-                      steps_r_matrix=None
+                      steps_r_matrix=None,
+                      symplectify=False
                     ):
 
     """
@@ -230,7 +231,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             y_norm_scaled = y_norm
             py_norm_scaled = py_norm
 
-        WW, WWinv, Rot = compute_linear_normal_form(R_matrix)
+        WW, WWinv, Rot = compute_linear_normal_form(R_matrix,
+                                                    symplectify=symplectify)
+
 
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
