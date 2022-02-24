@@ -69,7 +69,7 @@ def compute_linear_normal_form(M, symplectify=True, tol_det_M=0.05):
         M = healy_symplectify(M)
 
     w0, v0 = np.linalg.eig(M)
-    if np.any(np.abs(w0) > 1. + 1e-6): #1e-10):
+    if np.any(np.abs(w0) > 1. + 1e-4):
         raise ValueError('One-turn matrix is unstable')
 
     a0 = np.real(v0)
