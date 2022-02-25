@@ -181,6 +181,7 @@ class Particles(xo.dress(ParticlesData, rename={
                         setattr(self, kk, part_dict[kk])
                     for tt, kk in list(per_particle_vars):
                         if kk.startswith('_rng'):
+                            getattr(self, kk)[:] = 0
                             continue
                         vv = getattr(self, kk)
                         vals =  context.nparray_to_context_array(part_dict[kk])
@@ -429,7 +430,7 @@ class Particles(xo.dress(ParticlesData, rename={
             seeds = np.random.randint(low=1, high=4e9,
                         size=self._capacity, dtype=np.uint32)
          else:
-            assert len(seeds) == particles._capacity
+            assert len(seeds) == self._capacity
             if not hasattr(seeds, 'dtype') or seeds.dtype != np.uint32:
                 seeds = np.array(seeds, dtype=np.uint32)
 
