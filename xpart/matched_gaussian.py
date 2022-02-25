@@ -1,10 +1,10 @@
 import numpy as np
 
 from .longitudinal import generate_longitudinal_coordinates
-from .linear_normal_form import compute_linear_normal_form
 from .build_particles import build_particles
 from .particles import Particles
 
+from xtrack.linear_normal_form import compute_linear_normal_form
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     nemitt_x, nemitt_y, sigma_z,

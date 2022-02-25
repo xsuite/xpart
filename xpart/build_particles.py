@@ -3,9 +3,10 @@ import logging
 import numpy as np
 
 import xobjects as xo
+from xtrack.linear_normal_form import compute_linear_normal_form
 
-from .linear_normal_form import compute_linear_normal_form
 from .particles import Particles
+
 
 logger = logging.getLogger(__name__)
 
