@@ -47,7 +47,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       particle_class=Particles,
                       co_search_settings=None,
                       steps_r_matrix=None,
-                      symplectify=False
+                      symplectify=False,
+                      at_element=0
                     ):
 
     """
@@ -150,6 +151,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         logger.warning('Ignoring collective elements in particles generation.')
         tracker = tracker._supertracker
 
+
     if zeta is None:
         zeta = 0
 
@@ -191,6 +193,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     }
     part_dict = ref_dict.copy()
 
+    if at_element != 0:
+        # Only this case is covered if not starting at element 0
+        assert tracker is not None
+        assert mode == 'normalized_transverse'
+
     if mode == 'normalized_transverse':
         if particle_on_co is None:
             assert tracker is not None
@@ -204,6 +211,16 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         if not isinstance(particle_on_co._buffer.context, xo.ContextCpu):
             particle_on_co = particle_on_co.copy(_context=xo.ContextCpu())
+
+        assert particle_on_co.at_element[0] == 0
+        assert particle_on_co.s[0] == 0
+        assert particle_on_co.state[0] == 0
+
+        if at_element != 0:
+            assert at_element > 0
+            part_co_ctx = particle_on_co.copy(_context=tracker._buffer.context)
+            tracker.track(part_co_ctx, num_elements=at_element)
+            particle_on_co = part_co_ctx.copy(_context=xo.ContextCpu())
 
         if R_matrix is None:
             R_matrix = tracker.compute_one_turn_matrix_finite_differences(
@@ -310,5 +327,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                                    np.arange(0, num_particles, dtype=np.int64))
     if weight is not None:
         particles.weight[:] = weight
+
+    if at_element != 0:
+        assert particle_on_co.at_element[0] == at_element
+        particles.s[:] = particle_on_co.s[0]
+        particles.at_element[:] = -at_element # Minus sign tells the tracker where to start tracking
 
     return particles
