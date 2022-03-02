@@ -214,9 +214,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         assert particle_on_co.at_element[0] == 0
         assert particle_on_co.s[0] == 0
-        assert particle_on_co.state[0] == 0
+        assert particle_on_co.state[0] == 1
 
         if at_element != 0:
+            # Match in a different position of the line
+            if isinstance(at_element, str):
+                at_element = tracker.line.element_names.index(at_element)
             assert at_element > 0
             part_co_ctx = particle_on_co.copy(_context=tracker._buffer.context)
             tracker.track(part_co_ctx, num_elements=at_element)
@@ -326,11 +329,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     particles.particle_id = particles._buffer.context.nparray_to_context_array(
                                    np.arange(0, num_particles, dtype=np.int64))
     if weight is not None:
-        particles.weight[:] = weight
+        particles.weight[:num_particles] = weight
 
     if at_element != 0:
         assert particle_on_co.at_element[0] == at_element
-        particles.s[:] = particle_on_co.s[0]
-        particles.at_element[:] = -at_element # Minus sign tells the tracker where to start tracking
+        particles.s[:num_particles] = particle_on_co.s[0]
+        particles.at_element[:num_particles] = -at_element # Minus sign tells the tracker where to start tracking
 
     return particles
