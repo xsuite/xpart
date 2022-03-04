@@ -19,6 +19,7 @@ size_vars = (
     (xo.Int64,   '_capacity'),
     (xo.Int64,   '_num_active_particles'),
     (xo.Int64,   '_num_lost_particles'),
+    (xo.Int64,   'start_tracking_at_element'),
     )
 # Capacity is always kept up to date
 # the other two are placeholders to be used if needed
@@ -173,6 +174,9 @@ class Particles(xo.dress(ParticlesData, rename={
             # Initialize xobject
             self.xoinitialize(**kwargs)
 
+            if 'start_tracking_at_element' not in kwargs.keys():
+                self.start_tracking_at_element = -1
+
             # Initialize coordinates
             with self._bypass_linked_vars():
                 if pyparticles is not None:
@@ -227,6 +231,9 @@ class Particles(xo.dress(ParticlesData, rename={
             else:
                 self.reorganize()
 
+
+
+
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
                 remove_unused_space=None,
@@ -259,6 +266,7 @@ class Particles(xo.dress(ParticlesData, rename={
         dct['psigma'] = p_for_dict.psigma
         dct['rvv'] = p_for_dict.rvv
         dct['rpp'] = p_for_dict.rpp
+        dct['start_tracking_at_element'] = p_for_dict.start_tracking_at_element
 
         if remove_underscored:
             for kk in list(dct.keys()):
