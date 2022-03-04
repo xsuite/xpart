@@ -31,8 +31,7 @@ assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
 
-tracker.track(particles, turn_by_turn_monitor='ONE_TURN_EBE',
-             ele_start=particles.at_element[0])
+tracker.track(particles, turn_by_turn_monitor='ONE_TURN_EBE')
 mon = tracker.record_last_track
 i_ele_start = tracker.line.element_names.index(at_element)
 assert np.all(mon.at_element[:, :i_ele_start] == 0)
@@ -57,8 +56,7 @@ assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
 
-tracker.track(particles, num_turns=3,
-             ele_start=particles.at_element[0])
+tracker.track(particles, num_turns=3)
 
 tw0 = tracker.twiss(at_elements=[0])
 assert np.isclose(
@@ -89,9 +87,8 @@ tw = tracker.twiss(at_elements=[at_element])
 assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
-import pdb; pdb.set_trace()
-tracker.track(particles, num_turns=3,
-             ele_start=particles.at_element[0])
+
+tracker.track(particles, num_turns=3)
 
 tw0 = tracker.twiss(at_elements=[0])
 assert np.isclose(
