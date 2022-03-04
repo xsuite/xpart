@@ -18,7 +18,7 @@ tracker.line.particle_ref = xp.Particles.from_dict(input_data['particle'])
 r_sigma = 1
 theta = np.linspace(0, 2*np.pi, 1000)
 
-at_element = 1000#'ip2'
+at_element = 'ip2'
 particles = xp.build_particles(tracker=tracker,
                    x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
                    scale_with_transverse_norm_emitt=(2.5e-6, 2.5e-6),
@@ -37,4 +37,4 @@ mon = tracker.record_last_track
 tw0 = tracker.twiss(at_elements=[0])
 assert np.isclose(
     np.sqrt(tw0['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
-    np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
+    np.max(np.abs(particles.x - np.mean(particles.x))), rtol=2e-3, atol=0)
