@@ -48,7 +48,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       co_search_settings=None,
                       steps_r_matrix=None,
                       symplectify=False,
-                      at_element=0
+                      at_element=None,
+                      match_at_s=None
                     ):
 
     """
@@ -193,10 +194,29 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     }
     part_dict = ref_dict.copy()
 
-    if at_element != 0:
+    if at_element is not None or match_at_s is not None:
         # Only this case is covered if not starting at element 0
         assert tracker is not None
         assert mode == 'normalized_transverse'
+
+    if at_element is not None:
+        assert match_at_s is None
+
+    if match_at_s is not None:
+        # Match at a position where there is no marker and backtrack to the previous marker
+        assert at_element is None
+        at_element = np.where(np.array(
+            tracker.line.get_s_elements())<=match_at_s)[0][-1]
+        import xtrack as xt
+        (tracker_rmat, names_inserted_markers
+            ) = xt.twiss_from_tracker._build_auxiliary_tracker_with_extra_markers(
+                tracker=tracker, at_s=match_at_s, marker_prefix='xpart_rmat_')
+        at_element_rmat = tracker_rmat.line.element_names.index('xpart_rmat_0')
+    else:
+        tracker_rmat = tracker
+        if isinstance(at_element, str):
+            at_element = tracker_rmat.line.element_names.index(at_element)
+        at_element_rmat = at_element
 
     if mode == 'normalized_transverse':
         if particle_on_co is None:
@@ -216,17 +236,15 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         assert particle_on_co.s[0] == 0
         assert particle_on_co.state[0] == 1
 
-        if at_element != 0:
+        if at_element_rmat is not None:
             # Match in a different position of the line
-            if isinstance(at_element, str):
-                at_element = tracker.line.element_names.index(at_element)
-            assert at_element > 0
-            part_co_ctx = particle_on_co.copy(_context=tracker._buffer.context)
-            tracker.track(part_co_ctx, num_elements=at_element)
+            assert at_element_rmat > 0
+            part_co_ctx = particle_on_co.copy(_context=tracker_rmat._buffer.context)
+            tracker_rmat.track(part_co_ctx, num_elements=at_element_rmat)
             particle_on_co = part_co_ctx.copy(_context=xo.ContextCpu())
 
         if R_matrix is None:
-            R_matrix = tracker.compute_one_turn_matrix_finite_differences(
+            R_matrix = tracker_rmat.compute_one_turn_matrix_finite_differences(
                 particle_on_co=particle_on_co, steps_r_matrix=steps_r_matrix)
 
         num_particles = _check_lengths(num_particles=num_particles,
@@ -331,7 +349,15 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if weight is not None:
         particles.weight[:num_particles] = weight
 
-    if at_element != 0:
+    if match_at_s is not None:
+        # Backtrack to at_element
+        length_aux_drift = -match_at_s + tracker.line.get_s_position(at_element)
+        assert length_aux_drift <= 0
+        auxdrift = xt.Drift(length=length_aux_drift,
+                            _context=tracker._buffer.context)
+        auxdrift.track(particles)
+
+    if at_element is not None:
         assert particle_on_co.at_element[0] == at_element
         particles.s[:num_particles] = particle_on_co.s[0]
         particles.at_element[:num_particles] = at_element
