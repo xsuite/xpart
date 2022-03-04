@@ -33,6 +33,10 @@ assert np.isclose(
 tracker.track(particles, turn_by_turn_monitor='ONE_TURN_EBE',
              ele_start=particles.at_element[0])
 mon = tracker.record_last_track
+i_ele_start = tracker.line.element_names.index(at_element)
+assert np.all(mon.at_element[:, :i_ele_start] == 0)
+assert np.all(mon.at_element[:, i_ele_start] == i_ele_start)
+assert np.all(mon.at_element[:, -1] == len(tracker.line.element_names) -1)
 
 tw0 = tracker.twiss(at_elements=[0])
 assert np.isclose(
