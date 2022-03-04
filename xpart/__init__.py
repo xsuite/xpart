@@ -19,3 +19,7 @@ def enable_pyheadtail_interface():
     import xpart.pyheadtail_interface.pyhtxtparticles as pp
     import xpart as xp
     xp.Particles = pp.PyHtXtParticles
+
+def disable_pyheadtail_interface():
+    import xpart as xp
+    xp.Particles = xp.particles.Particles

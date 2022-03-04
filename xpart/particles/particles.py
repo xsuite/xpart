@@ -254,7 +254,7 @@ class Particles(xo.dress(ParticlesData, rename={
         if remove_unused_space:
             p_for_dict = p_for_dict.remove_unused_space()
 
-        dct = super(p_for_dict.__class__, p_for_dict).to_dict()
+        dct = Particles.__base__.to_dict(p_for_dict)
         dct['delta'] = p_for_dict.delta
         dct['psigma'] = p_for_dict.psigma
         dct['rvv'] = p_for_dict.rvv
