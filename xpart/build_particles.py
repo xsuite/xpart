@@ -334,6 +334,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if at_element != 0:
         assert particle_on_co.at_element[0] == at_element
         particles.s[:num_particles] = particle_on_co.s[0]
-        particles.at_element[:num_particles] = -at_element # Minus sign tells the tracker where to start tracking
+        particles.at_element[:num_particles] = at_element
 
     return particles
