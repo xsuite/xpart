@@ -222,7 +222,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       all([isinstance(tracker.line.element_dict[nn], xt.Drift)
                 for nn in tracker.line.element_names[at_element:expected_at_element]])), (
             "`match_at_s` can only be placed in the drifts upstream of the "
-            "specified `at_element`. No active element can be present in between.
+            "specified `at_element`. No active element can be present in between."
             )
         (tracker_rmat, _
             ) = xt.twiss_from_tracker._build_auxiliary_tracker_with_extra_markers(
