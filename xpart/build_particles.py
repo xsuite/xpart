@@ -259,6 +259,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             particle_on_co = part_co_ctx.copy(_context=xo.ContextCpu())
 
         if R_matrix is None:
+            # R matrix at location defined by particle_on_co.at_element
             R_matrix = tracker_rmat.compute_one_turn_matrix_finite_differences(
                 particle_on_co=particle_on_co, steps_r_matrix=steps_r_matrix)
 
