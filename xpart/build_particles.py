@@ -111,6 +111,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
           transverse normalized emittances used to rescale the provided
           transverse normalized coordinates (x, px, y, py).
         - weight: weights to be assigned to the particles.
+        - at_element: location within the line at which particles are generated.
+          It can be an index or an element name. It can be given  only if
+          `at_tracker` is provided and `transverse_mode` is "normalized".
+        - match_at_s: s coordinate of a location in the drifts downstream the
+          specified `at_element` at which the particles are generated before
+          being backdrifted to the location specified by `at_element`.
+          No active element can be present in between.
         - _context: xobjects context in which the particle object is allocated.
 
     """
@@ -213,7 +220,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         assert at_element == expected_at_element or (
                 at_element < expected_at_element and
                       all([isinstance(tracker.line.element_dict[nn], xt.Drift)
-                for nn in tracker.line.element_names[at_element:expected_at_element]]))
+                for nn in tracker.line.element_names[at_element:expected_at_element]])), (
+            "`match_at_s` can only be placed in the drifts upstream of the "
+            "specified `at_element`. No active element can be present in between.
+            )
         (tracker_rmat, _
             ) = xt.twiss_from_tracker._build_auxiliary_tracker_with_extra_markers(
                 tracker=tracker, at_s=[match_at_s], marker_prefix='xpart_rmat_')
