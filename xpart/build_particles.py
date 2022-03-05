@@ -198,25 +198,27 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Only this case is covered if not starting at element 0
         assert tracker is not None
         assert mode == 'normalized_transverse'
-
-    if at_element is not None:
-        assert match_at_s is None
+        if isinstance(at_element, str):
+            at_element = tracker.line.element_names.index(at_element)
 
     if match_at_s is not None:
+        assert at_element is not None, (
+            'If `match_at_s` is provided, `at_element` needs to be provided and'
+            'needs to correspond to the corresponding element in the sequence'
+        )
         # Match at a position where there is no marker and backtrack to the previous marker
-        assert at_element is None
-        at_element = np.where(np.array(
+        expected_at_element = np.where(np.array(
             tracker.line.get_s_elements())<=match_at_s)[0][-1]
+        assert at_element == expected_at_element
         import xtrack as xt
-        (tracker_rmat, names_inserted_markers
+        (tracker_rmat, _
             ) = xt.twiss_from_tracker._build_auxiliary_tracker_with_extra_markers(
                 tracker=tracker, at_s=match_at_s, marker_prefix='xpart_rmat_')
-        at_element_rmat = tracker_rmat.line.element_names.index('xpart_rmat_0')
+        at_element_tracker_rmat = tracker_rmat.line.element_names.index(
+                                                                 'xpart_rmat_0')
     else:
         tracker_rmat = tracker
-        if isinstance(at_element, str):
-            at_element = tracker_rmat.line.element_names.index(at_element)
-        at_element_rmat = at_element
+        at_element_tracker_rmat = at_element
 
     if mode == 'normalized_transverse':
         if particle_on_co is None:
@@ -236,11 +238,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         assert particle_on_co.s[0] == 0
         assert particle_on_co.state[0] == 1
 
-        if at_element_rmat is not None:
+        if at_element_tracker_rmat is not None:
             # Match in a different position of the line
-            assert at_element_rmat > 0
+            assert at_element_tracker_rmat > 0
             part_co_ctx = particle_on_co.copy(_context=tracker_rmat._buffer.context)
-            tracker_rmat.track(part_co_ctx, num_elements=at_element_rmat)
+            tracker_rmat.track(part_co_ctx, num_elements=at_element_tracker_rmat)
             particle_on_co = part_co_ctx.copy(_context=xo.ContextCpu())
 
         if R_matrix is None:
