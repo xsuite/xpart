@@ -16,6 +16,7 @@ tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data['line']),
 assert not tracker.iscollective
 tracker.line.particle_ref = xp.Particles.from_dict(input_data['particle'])
 
+# Check matching of a one-sigma circle in ip2
 r_sigma = 1
 theta = np.linspace(0, 2*np.pi, 1000)
 
@@ -31,6 +32,7 @@ assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
 
+# Check that tracking starts from the right place
 tracker.track(particles, turn_by_turn_monitor='ONE_TURN_EBE')
 mon = tracker.record_last_track
 i_ele_start = tracker.line.element_names.index(at_element)
@@ -38,6 +40,7 @@ assert np.all(mon.at_element[:, :i_ele_start] == 0)
 assert np.all(mon.at_element[:, i_ele_start] == i_ele_start)
 assert np.all(mon.at_element[:, -1] == len(tracker.line.element_names) -1)
 
+# Check that distribution is matched at the end of the turn
 tw0 = tracker.twiss(at_elements=[0])
 assert np.isclose(
     np.sqrt(tw0['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
@@ -75,7 +78,6 @@ assert tracker.iscollective
 tracker.line.particle_ref = xp.Particles.from_dict(input_data['particle'])
 assert len(tracker._parts) == 16
 
-
 at_element = 'ip2'
 particles = xp.build_particles(tracker=tracker,
                    x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
@@ -97,7 +99,7 @@ assert np.isclose(
 assert np.all(particles.at_turn==3)
 assert np.allclose(particles.s, 3*tracker.line.get_length(), rtol=0, atol=1e-7)
 
-# Check match at s
+# Check match_at_s
 at_element = 'ip6'
 particles = xp.build_particles(tracker=tracker,
                    x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
