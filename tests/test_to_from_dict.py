@@ -10,10 +10,10 @@ def test_to_from_dict():
 
         part = xp.Particles(_context=context, x=[1,2,3])
 
-        # Save particles to dict 
+        # Save particles to dict
         dct = part.to_dict()
 
-        # Load particles from dict 
+        # Load particles from dict
         part_from_dict = xp.Particles.from_dict(dct, _context=context)
 
         #!end-doc-part
@@ -21,6 +21,20 @@ def test_to_from_dict():
         for nn in 'x px y py zeta delta psigma rpp rvv gamma0 p0c'.split():
             assert isinstance(dct[nn], np.ndarray)
             assert isinstance(getattr(part_from_dict, nn), context.nplike_array_type)
+
+def test_to_dict_pyheadtail_interface():
+
+    xp.enable_pyheadtail_interface()
+    assert xp.Particles.__name__ == 'PyHtXtParticles'
+    xp.disable_pyheadtail_interface()
+    assert xp.Particles.__name__ == 'Particles'
+
+    p = xp.pyheadtail_interface.pyhtxtparticles.PyHtXtParticles(x=[1,2,3])
+
+    dct = p.to_dict()
+    p1 = xp.Particles.from_dict(dct)
+
+    assert p1.x[1] == 2
 
 def test_to_pandas():
     for context in xo.context.get_test_contexts():
