@@ -202,6 +202,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             at_element = tracker.line.element_names.index(at_element)
 
     if match_at_s is not None:
+        import xtrack as xt
         assert at_element is not None, (
             'If `match_at_s` is provided, `at_element` needs to be provided and'
             'needs to correspond to the corresponding element in the sequence'
@@ -209,11 +210,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Match at a position where there is no marker and backtrack to the previous marker
         expected_at_element = np.where(np.array(
             tracker.line.get_s_elements())<=match_at_s)[0][-1]
-        assert at_element == expected_at_element
-        import xtrack as xt
+        assert at_element == expected_at_element or (
+                at_element < expected_at_element and
+                      all([isinstance(tracker.line.element_dict[nn], xt.Drift)
+                for nn in tracker.line.element_names[at_element:expected_at_element]]))
         (tracker_rmat, _
             ) = xt.twiss_from_tracker._build_auxiliary_tracker_with_extra_markers(
-                tracker=tracker, at_s=match_at_s, marker_prefix='xpart_rmat_')
+                tracker=tracker, at_s=[match_at_s], marker_prefix='xpart_rmat_')
         at_element_tracker_rmat = tracker_rmat.line.element_names.index(
                                                                  'xpart_rmat_0')
     else:
@@ -360,8 +363,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         auxdrift.track(particles)
 
     if at_element is not None:
-        assert particle_on_co.at_element[0] == at_element
-        particles.s[:num_particles] = particle_on_co.s[0]
+        if match_at_s is not None:
+            particles.s[:num_particles] = particle_on_co.s[0] + length_aux_drift
+        else:
+            assert particle_on_co.at_element[0] == at_element
+            particles.s[:num_particles] = particle_on_co.s[0]
         particles.at_element[:num_particles] = at_element
         particles.start_tracking_at_element = at_element
 

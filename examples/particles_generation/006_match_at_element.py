@@ -96,3 +96,27 @@ assert np.isclose(
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=2e-3, atol=0)
 assert np.all(particles.at_turn==3)
 assert np.allclose(particles.s, 3*tracker.line.get_length(), rtol=0, atol=1e-7)
+
+# Check match at s
+at_element = 'ip6'
+particles = xp.build_particles(tracker=tracker,
+                   x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
+                   scale_with_transverse_norm_emitt=(2.5e-6, 2.5e-6),
+                   at_element=at_element,
+                   match_at_s=tracker.line.get_s_position('ip6') + 120)
+
+tw = tracker.twiss(at_elements=[at_element])
+
+assert np.isclose(
+    np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
+    np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
+assert np.allclose(particles.s, tw['s'][0], atol=1e-8, rtol=0)
+
+tracker.track(particles, num_turns=3)
+
+tw0 = tracker.twiss(at_elements=[0])
+assert np.isclose(
+    np.sqrt(tw0['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
+    np.max(np.abs(particles.x - np.mean(particles.x))), rtol=2e-3, atol=0)
+assert np.all(particles.at_turn==3)
+assert np.allclose(particles.s, 3*tracker.line.get_length(), rtol=0, atol=1e-7)
