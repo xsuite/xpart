@@ -13,7 +13,7 @@ extensions = []
 
 setup(
     name='xpart',
-    version='0.5.5',
+    version='0.5.6',
     description='Generation of Particle Ensembles',
     url='https://github.com/xsuite/xpart',
     packages=find_packages(),
