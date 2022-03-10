@@ -3,7 +3,7 @@ import logging
 import numpy as np
 
 import xobjects as xo
-from xtrack.linear_normal_form import compute_linear_normal_form
+import xtrack.linear_normal_form as lnf
 
 from .particles import Particles
 
@@ -40,6 +40,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       x=None, px=None, y=None, py=None, zeta=None, delta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
                       tracker=None,
+                      at_element=None,
+                      match_at_s=None,
                       particle_on_co=None,
                       R_matrix=None,
                       scale_with_transverse_norm_emitt=None,
@@ -47,9 +49,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       particle_class=Particles,
                       co_search_settings=None,
                       steps_r_matrix=None,
+                      matrix_responsiveness_tol=None,
+                      matrix_stability_tol=None,
                       symplectify=False,
-                      at_element=None,
-                      match_at_s=None
                     ):
 
     """
@@ -159,6 +161,16 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         logger.warning('Ignoring collective elements in particles generation.')
         tracker = tracker._supertracker
 
+    if tracker is not None:
+        if matrix_responsiveness_tol is None:
+            matrix_responsiveness_tol = tracker.matrix_responsiveness_tol
+        if matrix_stability_tol is None:
+            matrix_stability_tol = tracker.matrix_stability_tol
+
+    if matrix_responsiveness_tol is None:
+        matrix_responsiveness_tol=lnf.DEFAULT_MATRIX_RESPONSIVENESS_TOL
+    if matrix_stability_tol is None:
+        matrix_stability_tol=lnf.DEFAULT_MATRIX_STABILITY_TOL
 
     if zeta is None:
         zeta = 0
@@ -286,9 +298,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             y_norm_scaled = y_norm
             py_norm_scaled = py_norm
 
-        WW, WWinv, Rot = compute_linear_normal_form(R_matrix,
-                                                    symplectify=symplectify)
-
+        WW, WWinv, Rot = lnf.compute_linear_normal_form(R_matrix,
+                symplectify=symplectify,
+                responsiveness_tol=matrix_responsiveness_tol,
+                stability_tol=matrix_stability_tol)
 
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)

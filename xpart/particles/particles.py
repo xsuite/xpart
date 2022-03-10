@@ -313,7 +313,7 @@ class Particles(xo.dress(ParticlesData, rename={
         # Move everything to cpu
         cpu_lst = []
         for pp in lst:
-            assert isinstance(pp, cls)
+            assert isinstance(pp, Particles)
             if isinstance(pp._buffer.context, xo.ContextCpu):
                 cpu_lst.append(pp)
             else:
