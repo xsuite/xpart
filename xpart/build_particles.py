@@ -49,8 +49,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       particle_class=Particles,
                       co_search_settings=None,
                       steps_r_matrix=None,
-                      matrix_responsiveness_tol=lnf.DEFAULT_MATRIX_RESPONSIVENESS_TOL,
-                      matrix_stability_tol=lnf.DEFAULT_MATRIX_STABILITY_TOL,
+                      matrix_responsiveness_tol=None,
+                      matrix_stability_tol=None,
                       symplectify=False,
                     ):
 
@@ -161,6 +161,16 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         logger.warning('Ignoring collective elements in particles generation.')
         tracker = tracker._supertracker
 
+    if tracker is not None:
+        if matrix_responsiveness_tol is None:
+            matrix_responsiveness_tol = tracker.matrix_responsiveness_tol
+        if matrix_stability_tol is None:
+            matrix_stability_tol = tracker.matrix_stability_tol
+
+    if matrix_responsiveness_tol is None:
+        matrix_responsiveness_tol=lnf.DEFAULT_MATRIX_RESPONSIVENESS_TOL
+    if matrix_stability_tol is None:
+        matrix_stability_tol=lnf.DEFAULT_MATRIX_STABILITY_TOL
 
     if zeta is None:
         zeta = 0
