@@ -556,6 +556,23 @@ class Particles(xo.dress(ParticlesData, rename={
         self._delta[indx] = val
         self.update_delta(self._delta)
 
+
+    def update_psigma(self, new_psigma):
+        beta0 = self.beta0
+        p0c = self.p0c
+
+        ptau = new_psigma * beta0
+        irpp = np.sqrt(ptau*ptau + 2*ptau/beta0 +1)
+        new_rpp = 1./irpp
+
+        new_rvv = irpp/(1 + beta0*ptau)
+        self.zeta *= new_rvv/self._rvv
+
+        self._delta = irpp - 1.
+        self._rvv = new_rvv
+        self._psigma = ptau/beta0
+        self._rpp = new_rpp
+
     @property
     def psigma(self):
         return self._buffer.context.linked_array_type.from_array(
