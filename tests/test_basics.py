@@ -56,3 +56,10 @@ def test_linked_arrays():
         assert particles.rpp[2] == particles.rpp[1]
         assert particles.rvv[2] == particles.rvv[1]
 
+        particles.psigma[0] = particles.psigma[2]
+
+        assert particles.delta[2] == particles.delta[0]
+        assert particles.psigma[2] == particles.psigma[0]
+        assert particles.rpp[2] == particles.rpp[0]
+        assert particles.rvv[2] == particles.rvv[0]
+

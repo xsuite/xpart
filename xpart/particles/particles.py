@@ -562,7 +562,7 @@ class Particles(xo.dress(ParticlesData, rename={
         p0c = self.p0c
 
         ptau = new_psigma * beta0
-        irpp = np.sqrt(ptau*ptau + 2*ptau/beta0 +1)
+        irpp = (ptau*ptau + 2*ptau/beta0 +1)**0.5
         new_rpp = 1./irpp
 
         new_rvv = irpp/(1 + beta0*ptau)
