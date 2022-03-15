@@ -573,11 +573,20 @@ class Particles(xo.dress(ParticlesData, rename={
         self._psigma = ptau/beta0
         self._rpp = new_rpp
 
+    def _psigma_setitem(self, indx, val):
+        self._psigma[indx] = val
+        self.update_psigma(self._psigma)
+
     @property
     def psigma(self):
         return self._buffer.context.linked_array_type.from_array(
-                                            self._psigma, mode='readonly',
-                                            container=self)
+                                        self._psigma,
+                                        mode='setitem_from_container',
+                                        container=self,
+                                        container_setitem_name='_psigma_setitem')
+    @psigma.setter
+    def psigma(self, value):
+        self.psigma[:] = value
 
     @property
     def rvv(self):
