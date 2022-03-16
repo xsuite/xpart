@@ -554,6 +554,46 @@ class Particles(xo.dress(ParticlesData, rename={
         else:
             return ctx.nplike_lib.any(self.state <= 0)
 
+
+    def update_delta(self, new_delta_value):
+
+        ctx = self._buffer.context
+
+        if (self._contains_lost_or_unallocated_particles()
+                or _contains_nan(new_delta_value, ctx)):
+            if isinstance(self._buffer.context, xo.ContextPyopencl):
+                raise NotImplementedError # Because masking of arrays does not work in pyopencl
+            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
+        else:
+            mask = None
+
+        if mask is not None:
+            beta0 = self.beta0[mask]
+            new_delta_value = new_delta_value[mask]
+        else:
+            beta0 = self.beta0
+
+        new_delta_beta0 = new_delta_value * beta0
+        new_ptau_beta0 = (new_delta_beta0 * new_delta_beta0
+                        + 2. * new_delta_beta0 * beta0 + 1.)**0.5 - 1.
+
+        new_one_plus_delta = 1. + new_delta_value
+        new_rvv = ( new_one_plus_delta ) / ( 1. + new_ptau_beta0 )
+        new_rpp = 1. / new_one_plus_delta
+        new_psigma = new_ptau_beta0 / ( beta0 * beta0 )
+
+        if mask is not None:
+            self._delta[mask] = new_delta_value
+            self._rvv[mask] = new_rvv
+            self._psigma[mask] = new_psigma
+            self._rpp[mask] = new_rpp
+        else:
+            self._delta = new_delta_value
+            self._rvv = new_rvv
+            self._psigma = new_psigma
+            self._rpp = new_rpp
+
+
     @property
     def delta(self):
         return self._buffer.context.linked_array_type.from_array(
@@ -567,9 +607,9 @@ class Particles(xo.dress(ParticlesData, rename={
         self.delta[:] = value
 
     def _delta_setitem(self, indx, val):
-        self._delta[indx] = val
-        self.update_delta(self._delta)
-
+        temp_delta = self.delta.copy()
+        temp_delta[indx] = val
+        self.update_delta(temp_delta)
 
     def update_psigma(self, new_psigma):
 
@@ -618,8 +658,9 @@ class Particles(xo.dress(ParticlesData, rename={
             self.zeta = zeta
 
     def _psigma_setitem(self, indx, val):
-        self._psigma[indx] = val
-        self.update_psigma(self._psigma)
+        temp_psigma = self.psigma.copy()
+        temp_psigma[indx] = val
+        self.update_psigma(temp_psigma)
 
     @property
     def psigma(self):
