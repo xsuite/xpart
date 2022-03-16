@@ -23,4 +23,18 @@ double LocalParticle_generate_random_double_exp(LocalParticle* part)
   return -log(LocalParticle_generate_random_double(part));
 }
 
+/*gpufun*/
+double LocalParticle_generate_random_double_gauss(LocalParticle* part)
+{
+    double x1 = LocalParticle_generate_random_double(part);
+    while(x1==0.0){
+        x1 = LocalParticle_generate_random_double(part);
+    }
+    x1 = sqrt(-2.0*log(x1));
+	double x2 = LocalParticle_generate_random_double(part);
+    x2 = 2.0*3.1415926535897932384626433832795028841971693993751*x2;
+    double r = x1*sin(x2);
+    return r;
+}
+
 #endif
