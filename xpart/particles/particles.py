@@ -660,7 +660,9 @@ class Particles(xo.dress(ParticlesData, rename={
             self.zeta = zeta
 
     def _psigma_setitem(self, indx, val):
-        temp_psigma = self.psigma.copy()
+        ctx = self._buffer.context
+        temp_psigma = ctx.zeros(shape=self._psigma.shape, dtype=np.float64)
+        temp_psigma[:] = np.nan
         temp_psigma[indx] = val
         self.update_psigma(temp_psigma)
 
