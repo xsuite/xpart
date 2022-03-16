@@ -607,7 +607,9 @@ class Particles(xo.dress(ParticlesData, rename={
         self.delta[:] = value
 
     def _delta_setitem(self, indx, val):
-        temp_delta = self.delta.copy()
+        ctx = self._buffer.context
+        temp_delta = ctx.zeros(shape=self._delta.shape, dtype=np.float64)
+        temp_delta[:] = np.nan
         temp_delta[indx] = val
         self.update_delta(temp_delta)
 

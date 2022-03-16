@@ -41,6 +41,9 @@ def test_linked_arrays():
     for context in xo.context.get_test_contexts():
         print(f"Test {context.__class__}")
 
+        if isinstance(context, xo.ContextPyopencl):
+            continue # Not supported
+
         ctx2np = context.nparray_from_context_array
         np2ctx = context.nparray_to_context_array
         particles = xp.Particles(_context=context, p0c=26e9, delta=[1,2,3])
@@ -64,28 +67,26 @@ def test_linked_arrays():
         assert particles.rpp[2] == particles.rpp[0]
         assert particles.rvv[2] == particles.rvv[0]
 
-        # Test masking of nans and lost particles
-        if not isinstance(context, xo.ContextPyopencl):
-            particles = xp.Particles(_context=context, p0c=26e9,
-                                     delta=[1,2,3,4,100,0])
-            p0 = particles.copy()
-            particles.state = np2ctx(np.array([1,1,1,1,0,1]))
-            particles.delta[3:] = np2ctx([np.nan, 2, 3])
+        particles = xp.Particles(_context=context, p0c=26e9,
+                                 delta=[1,2,3,4,100,0])
+        p0 = particles.copy()
+        particles.state = np2ctx(np.array([1,1,1,1,0,1]))
+        particles.delta[3:] = np2ctx([np.nan, 2, 3])
 
-            assert particles.delta[5] == particles.delta[2]
-            assert particles.psigma[5] == particles.psigma[2]
-            assert particles.rvv[5] == particles.rvv[2]
-            assert particles.rpp[5] == particles.rpp[2]
+        assert particles.delta[5] == particles.delta[2]
+        assert particles.psigma[5] == particles.psigma[2]
+        assert particles.rvv[5] == particles.rvv[2]
+        assert particles.rpp[5] == particles.rpp[2]
 
-            assert particles.delta[4] == p0.delta[4]
-            assert particles.psigma[4] == p0.psigma[4]
-            assert particles.rvv[4] == p0.rvv[4]
-            assert particles.rpp[4] == p0.rpp[4]
+        assert particles.delta[4] == p0.delta[4]
+        assert particles.psigma[4] == p0.psigma[4]
+        assert particles.rvv[4] == p0.rvv[4]
+        assert particles.rpp[4] == p0.rpp[4]
 
-            assert particles.delta[3] == p0.delta[3]
-            assert particles.psigma[3] == p0.psigma[3]
-            assert particles.rvv[3] == p0.rvv[3]
-            assert particles.rpp[3] == p0.rpp[3]
+        assert particles.delta[3] == p0.delta[3]
+        assert particles.psigma[3] == p0.psigma[3]
+        assert particles.rvv[3] == p0.rvv[3]
+        assert particles.rpp[3] == p0.rpp[3]
 
 
 
