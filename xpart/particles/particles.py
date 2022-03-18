@@ -236,9 +236,6 @@ class Particles(xo.dress(ParticlesData, rename={
             else:
                 self.reorganize()
 
-
-
-
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
                 remove_unused_space=None,
@@ -452,9 +449,10 @@ class Particles(xo.dress(ParticlesData, rename={
          context.kernels.Particles_initialize_rand_gen(particles=self,
              seeds=seeds_dev, n_init=self._capacity)
 
-    def hide_lost_particles(self):
+    def hide_lost_particles(self, _assume_reorganized=False):
          self._lim_arrays_name = '_num_active_particles'
-         self.reorganize()
+         if not _assume_reorganized:
+            self.reorganize()
 
     def unhide_lost_particles(self):
          del(self._lim_arrays_name)
@@ -495,7 +493,7 @@ class Particles(xo.dress(ParticlesData, rename={
             self._num_lost_particles = n_lost
 
         if restore_hidden:
-            self.hide_lost_particles()
+            self.hide_lost_particles(_assume_reorganized=True)
 
         return n_active, n_lost
 
