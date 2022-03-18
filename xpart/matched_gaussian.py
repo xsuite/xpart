@@ -29,9 +29,13 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                 " cannot be provided at the same time")
 
     if particle_ref is None:
-        assert particle_on_co is not None, (
-            "`particle_ref` or `particle_on_co` must be provided!")
-        particle_ref = particle_on_co
+        if particle_on_co is not None:
+            particle_ref = particle_on_co
+        elif tracker is not None and tracker.line.particle_ref is not None:
+            particle_ref = tracker.line.particle_ref
+        else:
+            raise ValueError(
+                "`particle_ref` or `particle_on_co` must be provided!")
 
     zeta, delta = generate_longitudinal_coordinates(
             distribution='gaussian',
