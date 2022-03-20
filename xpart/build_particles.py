@@ -5,8 +5,7 @@ import numpy as np
 import xobjects as xo
 import xtrack.linear_normal_form as lnf
 
-from .particles import Particles
-
+import xpart as xp # To get the right Particles class depending on pyheatail interface state
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       R_matrix=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
-                      particle_class=Particles,
+                      particles_class=None,
                       co_search_settings=None,
                       steps_r_matrix=None,
                       matrix_responsiveness_tol=None,
@@ -125,6 +124,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     """
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
+    Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
+
+    if particles_class is not None:
+        raise NotImplementedError
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"

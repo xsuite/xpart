@@ -2,9 +2,10 @@ import numpy as np
 
 from .longitudinal import generate_longitudinal_coordinates
 from .build_particles import build_particles
-from .particles import Particles
 
 from xtrack.linear_normal_form import compute_linear_normal_form
+
+import xpart as xp # To get the right Particles class depending on pyheatail interface state
 
 def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     nemitt_x, nemitt_y, sigma_z,
@@ -18,11 +19,13 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
                                     p_increment=0.,
                                     tracker=None,
                                     particle_ref=None,
-                                    particle_class=Particles,
+                                    particles_class=None,
                                     co_search_settings=None,
                                     steps_r_matrix=None,
                                     _context=None, _buffer=None, _offset=None,
                                     ):
+
+    Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"
@@ -61,7 +64,7 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
 
     part = build_particles(_context=_context, _buffer=_buffer, _offset=_offset,
                       R_matrix=R_matrix,
-                      particle_class=particle_class,
+                      particles_class=particles_class,
                       particle_on_co=particle_on_co,
                       particle_ref=(
                           particle_ref if particle_on_co is  None else None),
