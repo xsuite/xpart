@@ -15,6 +15,8 @@ from .longitudinal import generate_longitudinal_coordinates
 
 from .constants import PROTON_MASS_EV, ELECTRON_MASS_EV
 
+from .monitors import PhaseMonitor
+
 def enable_pyheadtail_interface():
     import xpart.pyheadtail_interface.pyhtxtparticles as pp
     import xpart as xp
