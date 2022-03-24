@@ -5,8 +5,9 @@ class PhaseMonitor:
        self.twiss = twiss
        self.phase_x = []
        self.phase_y = []
+       import xtrack as xt # Avoid circular dependency between xtrack as xpart
        self._monitor = xt.ParticlesMonitor(_context=tracker._buffer.context,
-                                        num_particles=particles._capacity,
+                                        num_particles=num_particles,
                                         start_at_turn=0,
                                         stop_at_turn=1)
 
