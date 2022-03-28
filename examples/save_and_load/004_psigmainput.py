@@ -10,7 +10,7 @@ cav.track(part)
 
 part2 = xp.Particles(**part.to_dict())
 
-assert np.all(part2.psigma == part.psigma)
+assert np.all(part2.ptau == part.ptau)
 assert np.all(part2.delta == part.delta)
 assert np.all(part2.rpp == part.rpp)
 assert np.all(part2.rvv == part.rvv)

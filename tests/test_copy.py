@@ -21,7 +21,7 @@ def test_copy():
         dct2 = p2.to_dict()
         dct3 = p2.to_dict()
         dct4 = p3.to_dict()
-        for nn in 'x px y py zeta delta psigma rpp rvv gamma0 p0c'.split():
+        for nn in 'x px y py zeta delta ptau rpp rvv gamma0 p0c'.split():
             for dct in [dct2, dct3, dct4]:
                 assert np.all(dct[nn] == dct1[nn])
 

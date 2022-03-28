@@ -34,7 +34,7 @@ def test_build_particles_normalized():
             dct = particles.to_dict() # transfers it to cpu
             assert np.allclose(dct['x'], [-0.0003883 , -0.0006076 , -0.00082689],
                                rtol=0, atol=1e-7)
-            assert np.isclose(dct['psigma'][1], 1e-3, rtol=0, atol=1e-9)
+            assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
             assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
             assert np.all(dct['p0c'] == 7e12)
 
@@ -70,5 +70,5 @@ def test_build_particles_normalized_closed_orbit():
             dct = particles.to_dict()
             dct_co = particle_on_co.to_dict()
 
-            for nn in 'x px y py zeta delta psigma rvv rpp gamma0 beta0 p0c'.split():
+            for nn in 'x px y py zeta delta ptau rvv rpp gamma0 beta0 p0c'.split():
                 assert np.allclose(dct[nn], dct_co[nn], atol=1e-15, rtol=0)

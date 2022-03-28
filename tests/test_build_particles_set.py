@@ -18,8 +18,8 @@ def test_build_set():
                                            delta=[0, 1e-4, -1e-4])
 
             dct = particles.to_dict() # transfers it to cpu
-            assert dct['psigma'][0] == 0
-            assert np.isclose(dct['psigma'][1], 1e-4, rtol=0, atol=1e-9)
+            assert dct['ptau'][0] == 0
+            assert np.isclose(dct['ptau'][1], 1e-4, rtol=0, atol=1e-9)
             assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-4, rtol=0, atol=1e-14)
             assert np.all(dct['p0c'] == 7e12)
             assert dct['x'][1] == 0.0

@@ -25,7 +25,7 @@ for df in [df_part, df_part_compact]:
     assert np.all([nn.startswith('_rng') for nn in ltest])
 
 for nn in ['_rng_s1', '_rng_s2', '_rng_s3', '_rng_s4',
-            'beta0', 'gamma0', 'psigma', 'rpp', 'rvv']:
+            'beta0', 'gamma0', 'ptau', 'rpp', 'rvv']:
     assert nn in df_part.keys()
     assert nn not in df_part_compact.keys()
 
@@ -50,5 +50,5 @@ for fname in[
     else:
         pref = part
     part_from_pdhdf = xp.Particles.from_pandas(pd.read_hdf(fname +'.hdf'))
-    for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'psigma', 'gamma0']:
+    for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'ptau', 'gamma0']:
         assert np.all(getattr(pref, kk) == getattr(part_from_pdhdf, kk))

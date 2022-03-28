@@ -18,7 +18,7 @@ def test_to_from_dict():
 
         #!end-doc-part
         dct = part.to_dict()
-        for nn in 'x px y py zeta delta psigma rpp rvv gamma0 p0c'.split():
+        for nn in 'x px y py zeta delta ptau rpp rvv gamma0 p0c'.split():
             assert isinstance(dct[nn], np.ndarray)
             assert isinstance(getattr(part_from_dict, nn), context.nplike_array_type)
 
@@ -61,7 +61,7 @@ def test_to_pandas():
             assert np.all([nn.startswith('_rng') for nn in ltest])
 
         for nn in ['_rng_s1', '_rng_s2', '_rng_s3', '_rng_s4',
-                    'beta0', 'gamma0', 'psigma', 'rpp', 'rvv']:
+                    'beta0', 'gamma0', 'ptau', 'rpp', 'rvv']:
             assert nn in df_part.keys()
             assert nn not in df_part_compact.keys()
 
@@ -69,5 +69,5 @@ def test_to_pandas():
         for df, pref in zip([df_part, df_part_compact],
                             [part, part.remove_unused_space()]):
             part_test = xp.Particles.from_pandas(df)
-            for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'psigma', 'gamma0']:
+            for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'ptau', 'gamma0']:
                 assert np.all(pref.to_dict()[kk] == part_test.to_dict()[kk])

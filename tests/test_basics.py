@@ -13,8 +13,8 @@ def test_basics():
 
         dct = particles.to_dict() # transfers it to cpu
         assert dct['x'][0] == 1e-3
-        assert dct['psigma'][0] == 0
-        assert np.isclose(dct['psigma'][1], 1e-4, rtol=0, atol=1e-9)
+        assert dct['ptau'][0] == 0
+        assert np.isclose(dct['ptau'][1], 1e-4, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-4, rtol=0, atol=1e-14)
 
 def test_unallocated_particles():
@@ -29,8 +29,8 @@ def test_unallocated_particles():
 
         dct = particles.to_dict() # transfers it to cpu
         assert dct['x'][0] == 1e-3
-        assert dct['psigma'][0] == 0
-        assert np.isclose(dct['psigma'][1], 1e-4, rtol=0, atol=1e-9)
+        assert dct['ptau'][0] == 0
+        assert np.isclose(dct['ptau'][1], 1e-4, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-4, rtol=0, atol=1e-14)
 
         particles2 = xp.Particles.from_dict(dct, _context=context)
@@ -51,19 +51,19 @@ def test_linked_arrays():
         assert ctx2np(particles.delta[2]) == 3
         assert np.isclose(ctx2np(particles.rvv[2]), 1.00061, rtol=0, atol=1e-5)
         assert np.isclose(ctx2np(particles.rpp[2]), 0.25, rtol=0, atol=1e-10)
-        assert np.isclose(ctx2np(particles.psigma[2]), 3.001464, rtol=0, atol=1e-6)
+        assert np.isclose(ctx2np(particles.ptau[2]), 2.9995115176, rtol=0, atol=1e-6)
 
         particles.delta[1] = particles.delta[2]
 
         assert particles.delta[2] == particles.delta[1]
-        assert particles.psigma[2] == particles.psigma[1]
+        assert particles.ptau[2] == particles.ptau[1]
         assert particles.rpp[2] == particles.rpp[1]
         assert particles.rvv[2] == particles.rvv[1]
 
-        particles.psigma[0] = particles.psigma[2]
+        particles.ptau[0] = particles.ptau[2]
 
         assert particles.delta[2] == particles.delta[0]
-        assert particles.psigma[2] == particles.psigma[0]
+        assert particles.ptau[2] == particles.ptau[0]
         assert particles.rpp[2] == particles.rpp[0]
         assert particles.rvv[2] == particles.rvv[0]
 
@@ -74,17 +74,17 @@ def test_linked_arrays():
         particles.delta[3:] = np2ctx([np.nan, 2, 3])
 
         assert particles.delta[5] == particles.delta[2]
-        assert particles.psigma[5] == particles.psigma[2]
+        assert particles.ptau[5] == particles.ptau[2]
         assert particles.rvv[5] == particles.rvv[2]
         assert particles.rpp[5] == particles.rpp[2]
 
         assert particles.delta[4] == p0.delta[4]
-        assert particles.psigma[4] == p0.psigma[4]
+        assert particles.ptau[4] == p0.ptau[4]
         assert particles.rvv[4] == p0.rvv[4]
         assert particles.rpp[4] == p0.rpp[4]
 
         assert particles.delta[3] == p0.delta[3]
-        assert particles.psigma[3] == p0.psigma[3]
+        assert particles.ptau[3] == p0.ptau[3]
         assert particles.rvv[3] == p0.rvv[3]
         assert particles.rpp[3] == p0.rpp[3]
 

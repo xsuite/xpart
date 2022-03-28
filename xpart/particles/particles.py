@@ -31,7 +31,7 @@ scalar_vars = (
     )
 
 part_energy_vars = (
-    (xo.Float64, 'psigma'),
+    (xo.Float64, 'ptau'),
     (xo.Float64, 'delta'),
     (xo.Float64, 'rpp'),
     (xo.Float64, 'rvv'),
@@ -99,7 +99,7 @@ def _contains_nan(arr, ctx):
 
 class Particles(xo.dress(ParticlesData, rename={
                              'delta': '_delta',
-                             'psigma': '_psigma',
+                             'ptau': '_ptau',
                              'rvv': '_rvv',
                              'rpp': '_rpp'})):
 
@@ -265,7 +265,7 @@ class Particles(xo.dress(ParticlesData, rename={
 
         dct = Particles.__base__.to_dict(p_for_dict)
         dct['delta'] = p_for_dict.delta
-        dct['psigma'] = p_for_dict.psigma
+        dct['ptau'] = p_for_dict.ptau
         dct['rvv'] = p_for_dict.rvv
         dct['rpp'] = p_for_dict.rpp
         dct['start_tracking_at_element'] = p_for_dict.start_tracking_at_element
@@ -278,7 +278,7 @@ class Particles(xo.dress(ParticlesData, rename={
                     del(dct[kk])
 
         if remove_redundant_variables:
-            for kk in ['psigma', 'rpp', 'rvv', 'gamma0', 'beta0']:
+            for kk in ['ptau', 'rpp', 'rvv', 'gamma0', 'beta0']:
                 del(dct[kk])
 
         return dct
@@ -578,17 +578,17 @@ class Particles(xo.dress(ParticlesData, rename={
         new_one_plus_delta = 1. + new_delta_value
         new_rvv = ( new_one_plus_delta ) / ( 1. + new_ptau_beta0 )
         new_rpp = 1. / new_one_plus_delta
-        new_psigma = new_ptau_beta0 / ( beta0 * beta0 )
+        new_ptau = new_ptau_beta0 / beta0
 
         if mask is not None:
             self._delta[mask] = new_delta_value
             self._rvv[mask] = new_rvv
-            self._psigma[mask] = new_psigma
+            self._ptau[mask] = new_ptau
             self._rpp[mask] = new_rpp
         else:
             self._delta = new_delta_value
             self._rvv = new_rvv
-            self._psigma = new_psigma
+            self._ptau = new_ptau
             self._rpp = new_rpp
 
 
@@ -611,15 +611,15 @@ class Particles(xo.dress(ParticlesData, rename={
         temp_delta[indx] = val
         self.update_delta(temp_delta)
 
-    def update_psigma(self, new_psigma):
+    def update_ptau(self, new_ptau):
 
         ctx = self._buffer.context
 
         if (self._contains_lost_or_unallocated_particles()
-                or _contains_nan(new_psigma, ctx)):
+                or _contains_nan(new_ptau, ctx)):
             if isinstance(self._buffer.context, xo.ContextPyopencl):
                 raise NotImplementedError # Because masking of arrays does not work in pyopencl
-            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_psigma)))
+            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
         else:
             mask = None
 
@@ -627,7 +627,7 @@ class Particles(xo.dress(ParticlesData, rename={
             beta0 = self.beta0[mask]
             p0c = self.p0c[mask]
             zeta = self.zeta[mask]
-            new_psigma = new_psigma[mask]
+            new_ptau = new_ptau[mask]
             old_rvv = self._rvv[mask]
         else:
             beta0 = self.beta0
@@ -635,7 +635,7 @@ class Particles(xo.dress(ParticlesData, rename={
             zeta = self.zeta
             old_rvv = self._rvv
 
-        ptau = new_psigma * beta0
+        ptau = new_ptau
         irpp = (ptau*ptau + 2*ptau/beta0 +1)**0.5
         new_rpp = 1./irpp
 
@@ -647,33 +647,33 @@ class Particles(xo.dress(ParticlesData, rename={
         if mask is not None:
             self._delta[mask] = new_delta
             self._rvv[mask] = new_rvv
-            self._psigma[mask] = new_psigma
+            self._ptau[mask] = new_ptau
             self._rpp[mask] = new_rpp
             self.zeta[mask] = zeta
         else:
             self._delta = new_delta
             self._rvv = new_rvv
-            self._psigma = new_psigma
+            self._ptau = new_ptau
             self._rpp = new_rpp
             self.zeta = zeta
 
-    def _psigma_setitem(self, indx, val):
+    def _ptau_setitem(self, indx, val):
         ctx = self._buffer.context
-        temp_psigma = ctx.zeros(shape=self._psigma.shape, dtype=np.float64)
-        temp_psigma[:] = np.nan
-        temp_psigma[indx] = val
-        self.update_psigma(temp_psigma)
+        temp_ptau = ctx.zeros(shape=self._ptau.shape, dtype=np.float64)
+        temp_ptau[:] = np.nan
+        temp_ptau[indx] = val
+        self.update_ptau(temp_ptau)
 
     @property
-    def psigma(self):
+    def ptau(self):
         return self._buffer.context.linked_array_type.from_array(
-                                        self._psigma,
+                                        self._ptau,
                                         mode='setitem_from_container',
                                         container=self,
-                                        container_setitem_name='_psigma_setitem')
-    @psigma.setter
-    def psigma(self, value):
-        self.psigma[:] = value
+                                        container_setitem_name='_ptau_setitem')
+    @ptau.setter
+    def ptau(self, value):
+        self.ptau[:] = value
 
     @property
     def rvv(self):
@@ -688,19 +688,12 @@ class Particles(xo.dress(ParticlesData, rename={
                                             container=self)
 
     @property
-    def ptau(self):
-        return (
-            np.sqrt(self.delta ** 2 + 2 * self.delta + 1 / self.beta0 ** 2)
-            - 1 / self.beta0
-        )
-
-    @property
     def energy0(self):
         return np.sqrt( self.p0c * self.p0c + self.mass0 * self.mass0 )
 
     @property
     def energy(self):
-        return self.energy0 + self.psigma * self.p0c * self.beta0 # eV
+        return self.energy0 + self.ptau * self.p0c  # eV
 
     def add_to_energy(self, delta_energy):
         beta0 = self.beta0.copy()
@@ -712,14 +705,13 @@ class Particles(xo.dress(ParticlesData, rename={
                     + 1. ) - 1.)
 
         ptau   = ptau_beta0 / beta0
-        psigma = ptau / beta0
-        delta = np.sqrt( ptau * ptau + 2. * psigma + 1 ) - 1
+        delta = np.sqrt( ptau * ptau + 2. * ptau / beta0 + 1 ) - 1
 
         one_plus_delta = delta + 1.
         rvv = one_plus_delta / ( 1. + ptau_beta0 )
 
         self._delta = delta
-        self._psigma = psigma
+        self._ptau = ptau
         self._zeta *= rvv / self.rvv
 
         self._rvv = rvv
@@ -901,11 +893,9 @@ double LocalParticle_get_energy0(LocalParticle* part){
 /*gpufun*/
 void LocalParticle_add_to_energy(LocalParticle* part, double delta_energy, int pz_only ){
 
-    double const psigma = LocalParticle_get_psigma(part);
+    double ptau = LocalParticle_get_ptau(part);
     double const beta0 = LocalParticle_get_beta0(part);
     double const p0c = LocalParticle_get_p0c(part);
-
-    double ptau = psigma * beta0;
 
     ptau += delta_energy/p0c;
 
@@ -918,7 +908,7 @@ void LocalParticle_add_to_energy(LocalParticle* part, double delta_energy, int p
     LocalParticle_scale_zeta(part,
         new_rvv / LocalParticle_get_rvv(part));
     LocalParticle_set_rvv(part, new_rvv);
-    LocalParticle_set_psigma(part, ptau/beta0);
+    LocalParticle_set_ptau(part, ptau);
 
     if (!pz_only) {
         double const old_rpp = LocalParticle_get_rpp(part);
@@ -939,13 +929,13 @@ void LocalParticle_update_delta(LocalParticle* part, double new_delta_value){
     double const one_plus_delta = 1. + new_delta_value;
     double const rvv    = ( one_plus_delta ) / ( 1. + ptau_beta0 );
     double const rpp    = 1. / one_plus_delta;
-    double const psigma = ptau_beta0 / ( beta0 * beta0 );
+    double const ptau = ptau_beta0 / beta0;
 
     LocalParticle_set_delta(part, new_delta_value);
 
     LocalParticle_set_rvv(part, rvv );
     LocalParticle_set_rpp(part, rpp );
-    LocalParticle_set_psigma(part, psigma );
+    LocalParticle_set_ptau(part, ptau );
 
 }
 

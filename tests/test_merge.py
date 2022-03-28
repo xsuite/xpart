@@ -17,7 +17,7 @@ def test_merge():
         assert particles._buffer.context == context
         assert particles.mass0 == xp.ELECTRON_MASS_EV
         tocpu = context.nparray_from_context_array
-        for nn in 'x px y py zeta delta psigma rpp rvv gamma0 p0c'.split():
+        for nn in 'x px y py zeta delta ptau rpp rvv gamma0 p0c'.split():
             assert np.all(tocpu(getattr(particles, nn)[0:3]) ==
                           p1.to_dict()[nn])
             assert np.all(tocpu(getattr(particles, nn)[3:5]) ==
