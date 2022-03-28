@@ -176,6 +176,9 @@ class Particles(xo.dress(ParticlesData, rename={
             kwargs.update(
                     {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
 
+            if 'psigma' in kwargs.keys():
+                del(kwargs['psigma']) # handled in part_dict
+
             # Initialize xobject
             self.xoinitialize(**kwargs)
 
