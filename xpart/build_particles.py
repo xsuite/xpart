@@ -373,6 +373,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
 
+    if _context is None and _buffer is None and tracker is not None:
+        _context = tracker._buffer.context
+
     particles = Particles(_context=_context, _buffer=_buffer, _offset=_offset,
                           _capacity=_capacity,**part_dict)
 
