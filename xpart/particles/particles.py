@@ -213,31 +213,31 @@ class Particles(xo.dress(ParticlesData, rename={
                             value = 0.
                         getattr(self, kk)[:] = value
 
-        self._num_active_particles = -1 # To be filled in only on CPU
-        self._num_lost_particles = -1 # To be filled in only on CPU
+            self._num_active_particles = -1 # To be filled in only on CPU
+            self._num_lost_particles = -1 # To be filled in only on CPU
 
-        # Force values provided by user if compatible
-        for nn in part_energy_varnames():
-            vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
-            if nn in input_kwargs.keys():
-                if hasattr(input_kwargs[nn], '__len__'):
-                    ll = len(input_kwargs[nn]) # in case there is unallocated space
+            # Force values provided by user if compatible
+            for nn in part_energy_varnames():
+                vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
+                if nn in input_kwargs.keys():
+                    if hasattr(input_kwargs[nn], '__len__'):
+                        ll = len(input_kwargs[nn]) # in case there is unallocated space
+                    else:
+                        ll = len(vvv)
+
+                    if np.isscalar(input_kwargs[nn]):
+                        getattr(self, "_"+nn)[:] = input_kwargs[nn]
+                    else:
+                        getattr(self, "_"+nn)[:ll] = (
+                                context.nparray_to_context_array(
+                                    np.array(input_kwargs[nn])))
+
+            if isinstance(self._buffer.context, xo.ContextCpu):
+                # Particles always need to be organized to run on CPU
+                if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
+                    pass
                 else:
-                    ll = len(vvv)
-
-                if np.isscalar(input_kwargs[nn]):
-                    getattr(self, "_"+nn)[:] = input_kwargs[nn]
-                else:
-                    getattr(self, "_"+nn)[:ll] = (
-                            context.nparray_to_context_array(
-                                np.array(input_kwargs[nn])))
-
-        if isinstance(self._buffer.context, xo.ContextCpu):
-            # Particles always need to be organized to run on CPU
-            if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
-                pass
-            else:
-                self.reorganize()
+                    self.reorganize()
 
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
