@@ -733,6 +733,8 @@ class Particles(xo.dress(ParticlesData, rename={
                 continue
             getattr(self, kk)[index] = part_dict[kk][0]
 
+ParticlesData._DressingClass = Particles
+
 
 
 def _str_in_list(string, str_list):
