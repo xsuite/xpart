@@ -7,8 +7,9 @@ from xtrack.linear_normal_form import compute_linear_normal_form
 
 import xpart as xp # To get the right Particles class depending on pyheatail interface state
 
-def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
+def generate_matched_gaussian_bunch(num_particles,
                                     nemitt_x, nemitt_y, sigma_z,
+                                    total_intensity_particles=None,
                                     particle_on_co=None,
                                     R_matrix=None,
                                     circumference=None,
@@ -60,6 +61,10 @@ def generate_matched_gaussian_bunch(num_particles, total_intensity_particles,
     px_norm = np.random.normal(size=num_particles)
     y_norm = np.random.normal(size=num_particles)
     py_norm = np.random.normal(size=num_particles)
+
+    if total_intensity_particles is None:
+        # go to particles.weight = 1
+        total_intensity_particles = num_particles
 
 
     part = build_particles(_context=_context, _buffer=_buffer, _offset=_offset,

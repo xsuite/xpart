@@ -130,7 +130,9 @@ class Particles(xo.dress(ParticlesData, rename={
              - charge_ratio [1]:  q / q0
              - particle_id [int]: Identifier of the particle
              - at_turn [int]:  Number of tracked turns
-             - state [int]:  It is ``0`` if the particle is lost, ``1`` otherwise
+             - state [int]: It is <= 0 if the particle is lost, > 0 otherwise
+                            (different values are used to record information
+                            on how the particle is lost or generated).
              - weight [int]:  Particle weight in number of particles
                               (for collective sims.)
              - at_element [int]: Identifier of the last element through which
