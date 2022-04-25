@@ -101,7 +101,7 @@ def generate_longitudinal_coordinates(
     rfbucket = RFBucket(circumference=circumference,
                         gamma=gamma0,
                         mass_kg=mass0/(clight**2)*qe,
-                        charge_coulomb=q0*qe,
+                        charge_coulomb=np.abs(q0)*qe,
                         alpha_array=np.atleast_1d(momentum_compaction_factor),
                         harmonic_list=np.atleast_1d(rf_harmonic),
                         voltage_list=np.atleast_1d(rf_voltage),
