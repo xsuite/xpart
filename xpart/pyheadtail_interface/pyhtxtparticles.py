@@ -7,10 +7,11 @@ from xpart import Particles as XtParticles
 
 class PyHtXtParticles(XtParticles,PyHtParticles):
 
-    def __init__(self,circumference=None,particlenumber_per_mp=1.0, **kwargs):
+    def __init__(self,circumference=None,particlenumber_per_mp=None, **kwargs):
         super(PyHtXtParticles,self).__init__(**kwargs)
         self.circumference = circumference
-        self.particlenumber_per_mp = particlenumber_per_mp
+        if particlenumber_per_mp is not None:
+            self.particlenumber_per_mp = particlenumber_per_mp
         self._slice_sets = {}
         self.coords_n_momenta = set(['x','xp','y','yp','z','dp'])
 
