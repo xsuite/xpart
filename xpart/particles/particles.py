@@ -124,9 +124,12 @@ class Particles(xo.dress(ParticlesData, rename={
              - p0c [eV]: Reference momentum
              - energy0 [eV]: Reference energy
              - gamma0 [1]:  Reference relativistic gamma
-             - beta0 [1]:  Reference relativistix beta
+             - beta0 [1]:  Reference relativistic beta
+             - mass_ratio [1]:  mass/mass0 (this is used to track particled of
+                                different species. Note that mass is the rest mass
+                                of the considered particle species and not the
+                                relativistic mass)
              - chi [1]:  q/ q0 * m0/m = qratio / mratio
-             - mass_ratio [1]:  mass/mass0
              - charge_ratio [1]:  q / q0
              - particle_id [int]: Identifier of the particle
              - at_turn [int]:  Number of tracked turns
