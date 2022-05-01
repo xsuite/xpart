@@ -441,34 +441,48 @@ class Particles(xo.dress(ParticlesData, rename={
             return True
 
     def _init_random_number_generator(self, seeds=None):
+        
+        self.compile_custom_kernels(only_if_needed=True)
 
-         self.compile_custom_kernels(only_if_needed=True)
-
-         if seeds is None:
+        if seeds is None:
             seeds = np.random.randint(low=1, high=4e9,
                         size=self._capacity, dtype=np.uint32)
-         else:
+        else:
             assert len(seeds) == self._capacity
             if not hasattr(seeds, 'dtype') or seeds.dtype != np.uint32:
                 seeds = np.array(seeds, dtype=np.uint32)
 
-         context = self._buffer.context
-         seeds_dev = context.nparray_to_context_array(seeds)
-         context.kernels.Particles_initialize_rand_gen(particles=self,
+        context = self._buffer.context
+        seeds_dev = context.nparray_to_context_array(seeds)
+        context.kernels.Particles_initialize_rand_gen(particles=self,
              seeds=seeds_dev, n_init=self._capacity)
 
     def hide_lost_particles(self, _assume_reorganized=False):
-         self._lim_arrays_name = '_num_active_particles'
-         if not _assume_reorganized:
+        self._lim_arrays_name = '_num_active_particles'
+        if not _assume_reorganized:
             self.reorganize()
 
     def unhide_lost_particles(self):
-         del(self._lim_arrays_name)
+        del(self._lim_arrays_name)
 
     @property
     def lost_particles_are_hidden(self):
-         return (hasattr(self, '_lim_arrays_name') and
+        return (hasattr(self, '_lim_arrays_name') and
                  self._lim_arrays_name == '_num_active_particles')
+
+    def reshuffle(self):
+        assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
+                'Masking does not work with pyopencl')
+
+        if self.lost_particles_are_hidden:
+            self.unhide_lost_particles()
+
+        sort = np.argsort(self.particle_id)
+        with self._bypass_linked_vars():
+            for tt, nn in self._structure['per_particle_vars']:
+                vv = getattr(self, nn)
+                vv[:] = vv[sort]
+        return
 
     def reorganize(self):
         assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
