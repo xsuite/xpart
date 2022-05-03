@@ -784,7 +784,6 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     ''')
 
     # Particles_to_LocalParticle
-    src_lines = []
     src_lines.append('''
     /*gpufun*/
     void Particles_to_LocalParticle(ParticlesData source,
