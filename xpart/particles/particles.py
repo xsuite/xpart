@@ -769,6 +769,7 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     for tt, vv in per_particle_vars:
         src_lines.append('    /*gpuglmem*/ ' + tt._c_type + '* '+vv+';')
     src_lines.append(    '                 int64_t ipart;')
+    src_lines.append('    /*gpuglmem*/ int8_t* io_buffer;')
     src_lines.append('}LocalParticle;')
     src_typedef = '\n'.join(src_lines)
 
