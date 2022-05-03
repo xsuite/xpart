@@ -773,6 +773,16 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     src_lines.append('}LocalParticle;')
     src_typedef = '\n'.join(src_lines)
 
+    # Get io buffer
+    src_lines = []
+    src_lines.append('''
+    /*gpufun*/
+    int8_t* LocalParticle_get_io_buffer(LocalParticle* part){
+        return part->io_buffer;
+    }
+
+    ''')
+
     # Particles_to_LocalParticle
     src_lines = []
     src_lines.append('''
