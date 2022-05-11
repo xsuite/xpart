@@ -777,7 +777,7 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     src_lines = []
     src_lines.append('''
     /*gpufun*/
-    int8_t* LocalParticle_get_io_buffer(LocalParticle* part){
+    /*gpuglmem*/ int8_t* LocalParticle_get_io_buffer(LocalParticle* part){
         return part->io_buffer;
     }
 
