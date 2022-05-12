@@ -470,20 +470,6 @@ class Particles(xo.dress(ParticlesData, rename={
         return (hasattr(self, '_lim_arrays_name') and
                  self._lim_arrays_name == '_num_active_particles')
 
-    # def reshuffle(self):
-    #     assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
-    #             'Masking does not work with pyopencl')
-
-    #     if self.lost_particles_are_hidden:
-    #         self.unhide_lost_particles()
-
-    #     sort = np.argsort(self.particle_id)
-    #     with self._bypass_linked_vars():
-    #         for tt, nn in self._structure['per_particle_vars']:
-    #             vv = getattr(self, nn)
-    #             vv[:] = vv[sort]
-    #     return
-
     def sort(self, by='particle_id', interleave_lost_particles=False):
 
         if not isinstance(self._buffer.context, xo.ContextCpu):
