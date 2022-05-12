@@ -102,6 +102,8 @@ def test_linked_arrays():
 
 def test_sort():
 
+    # Sorting available only on CPU for now
+
     p = xp.Particles(x=[0, 1, 2, 3, 4, 5, 6], _capacity=10)
     p.state[[0,3,4]] = 0
 
