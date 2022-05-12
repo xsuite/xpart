@@ -74,5 +74,3 @@ assert np.all(p.state == np.array([1, 1, 0, 0, 1, 1, 0,
                                   -999999999, -999999999, -999999999]))
 assert p._num_active_particles == -2
 assert p._num_lost_particles == -2
-
-#p.reorganize()
