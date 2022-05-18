@@ -113,12 +113,11 @@ class Particles(xo.dress(ParticlesData, rename={
              - py [1]:  Py / (m/m0 * p0c)
              - delta[1]:  Pc / (m/m0 * p0c) - 1
              - ptau [1]:  Energy / (m/m0 * p0c) - 1
-             - psigma [1]:  ptau/beta0
+             - pzeta [1]:  ptau/beta0
              - rvv [1]:  beta/beta0
              - rpp [1]:  1/(1+delta) = (m/m0 * p0c) / Pc
-             - zeta [m]:  beta (s/beta0 - ct )
-             - tau [m]:
-             - sigma [m]:  s - beta0 ct = rvv * zeta
+             - zeta [m]: s - beta0 ct
+             - tau [m]: s/bet0 - ct
              - mass0 [eV]:
              - q0 [e]:  Reference charge
              - p0c [eV]: Reference momentum
@@ -181,8 +180,8 @@ class Particles(xo.dress(ParticlesData, rename={
             kwargs.update(
                     {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
 
-            if 'psigma' in kwargs.keys():
-                del(kwargs['psigma']) # handled in part_dict
+            if 'pzeta' in kwargs.keys():
+                del(kwargs['pzeta']) # handled in part_dict
 
             # Initialize xobject
             self.xoinitialize(**kwargs)
@@ -666,22 +665,17 @@ class Particles(xo.dress(ParticlesData, rename={
 
         if mask is not None:
             beta0 = self.beta0[mask]
-            p0c = self.p0c[mask]
             zeta = self.zeta[mask]
             new_ptau = new_ptau[mask]
-            old_rvv = self._rvv[mask]
         else:
             beta0 = self.beta0
-            p0c = self.p0c
             zeta = self.zeta
-            old_rvv = self._rvv
 
         ptau = new_ptau
         irpp = (ptau*ptau + 2*ptau/beta0 +1)**0.5
         new_rpp = 1./irpp
 
         new_rvv = irpp/(1 + beta0*ptau)
-        zeta *= new_rvv/old_rvv
 
         new_delta =  irpp - 1.
 
@@ -753,7 +747,6 @@ class Particles(xo.dress(ParticlesData, rename={
 
         self._delta = delta
         self._ptau = ptau
-        self._zeta *= rvv / self.rvv
 
         self._rvv = rvv
         self._rpp = 1. / one_plus_delta
@@ -958,8 +951,6 @@ void LocalParticle_add_to_energy(LocalParticle* part, double delta_energy, int p
     LocalParticle_set_delta(part, irpp - 1.);
 
     double const new_rvv = irpp/(1 + beta0*ptau);
-    LocalParticle_scale_zeta(part,
-        new_rvv / LocalParticle_get_rvv(part));
     LocalParticle_set_rvv(part, new_rvv);
     LocalParticle_set_ptau(part, ptau);
 
