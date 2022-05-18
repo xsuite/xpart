@@ -116,8 +116,8 @@ class Pyparticles:
                         beta0  = {beta0}"""
                         )
 
-    def __init__delta(self, delta, ptau, psigma, mask_check=None):
-        not_none = count_not_none(delta, ptau, psigma)
+    def __init__delta(self, delta, ptau, pzeta, mask_check=None):
+        not_none = count_not_none(delta, ptau, pzeta)
         if not_none == 0:
             self.delta = 0.0
         elif not_none >= 1:
@@ -125,11 +125,11 @@ class Pyparticles:
                 self.delta = delta
             elif ptau is not None:
                 self.ptau = ptau
-            elif psigma is not None:
-                self.psigma = psigma
+            elif pzeta is not None:
+                self.pzeta = pzeta
 
             if not_none>1:
-                ddd = {'delta': delta, 'ptau': ptau, 'psigma': psigma}
+                ddd = {'delta': delta, 'ptau': ptau, 'pzeta': pzeta}
                 for nn, vv in ddd.items():
                     if vv is None:
                         continue
@@ -146,7 +146,7 @@ class Pyparticles:
                         Particles defined with inconsistent energy deviations:
                         delta  = {delta},
                         ptau     = {ptau},
-                        psigma = {psigma}"""
+                        pzeta = {pzeta}"""
                         )
 
     def __init__zeta(self, zeta, tau):
@@ -225,7 +225,7 @@ class Pyparticles:
         py = kwargs.get('py', 0.0)
         delta = kwargs.get('delta', None)
         ptau = kwargs.get('ptau', None)
-        psigma = kwargs.get('psigma', None)
+        pzeta = kwargs.get('pzeta', None)
         rvv = kwargs.get('rvv', None)
         zeta = kwargs.get('zeta', None)
         tau = kwargs.get('tau', None)
@@ -264,7 +264,7 @@ class Pyparticles:
         else:
             mask_check = None
         self.__init__ref(p0c, energy0, gamma0, beta0, mask_check=mask_check)
-        self.__init__delta(delta, ptau, psigma, mask_check=mask_check)
+        self.__init__delta(delta, ptau, pzeta, mask_check=mask_check)
         self.__init__zeta(zeta, tau)
         self.__init__chi(chi=chi, mass_ratio=mass_ratio, charge_ratio=charge_ratio)
         self._update_coordinates = True
@@ -351,11 +351,11 @@ class Pyparticles:
         self._rvv = (1 + self.delta) / (1 + ptaubeta0)
         self._rpp = 1 / (1 + self.delta)
 
-    psigma = property(lambda self: self.ptau / self.beta0)
+    pzeta = property(lambda self: self.ptau / self.beta0)
 
-    @psigma.setter
-    def psigma(self, psigma):
-        self.ptau = psigma * self.beta0
+    @pzeta.setter
+    def pzeta(self, pzeta):
+        self.ptau = pzeta * self.beta0
 
     tau = property(lambda self: self.zeta / self.beta0)
 
