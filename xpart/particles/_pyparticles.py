@@ -149,8 +149,8 @@ class Pyparticles:
                         psigma = {psigma}"""
                         )
 
-    def __init__zeta(self, zeta, tau, sigma):
-        not_none = count_not_none(zeta, tau, sigma)
+    def __init__zeta(self, zeta, tau):
+        not_none = count_not_none(zeta, tau)
         if not_none == 0:
             self.zeta = 0.0
         elif not_none == 1:
@@ -158,15 +158,13 @@ class Pyparticles:
                 self.zeta = zeta
             elif tau is not None:
                 self.tau = tau
-            elif sigma is not None:
-                self.sigma = sigma
         else:
             raise ValueError(
                 f"""\
             Particles defined with multiple time deviations:
             zeta  = {zeta},
             tau   = {tau},
-            sigma = {sigma}"""
+            """
             )
 
     def __init__chi(self, mass_ratio, charge_ratio, chi):
@@ -231,7 +229,6 @@ class Pyparticles:
         rvv = kwargs.get('rvv', None)
         zeta = kwargs.get('zeta', None)
         tau = kwargs.get('tau', None)
-        sigma = kwargs.get('sigma', None)
         mass0 = kwargs.get('mass0', pmass)
         q0 = kwargs.get('q0', 1.0)
         p0c = kwargs.get('p0c', None)
@@ -268,7 +265,7 @@ class Pyparticles:
             mask_check = None
         self.__init__ref(p0c, energy0, gamma0, beta0, mask_check=mask_check)
         self.__init__delta(delta, ptau, psigma, mask_check=mask_check)
-        self.__init__zeta(zeta, tau, sigma)
+        self.__init__zeta(zeta, tau)
         self.__init__chi(chi=chi, mass_ratio=mass_ratio, charge_ratio=charge_ratio)
         self._update_coordinates = True
         length = self._check_array_length()
@@ -337,7 +334,6 @@ class Pyparticles:
         self._delta = sqrt(ptau ** 2 + 2 * ptau / self.beta0 + 1) - 1
         self._rvv = (1 + self.delta) / (1 + ptaubeta0)
         self._rpp = 1 / (1 + self.delta)
-        self.zeta *= self._rvv / oldrvv
 
     delta = property(lambda self: self._delta)
 
@@ -354,8 +350,6 @@ class Pyparticles:
         ptaubeta0 = sqrt(deltabeta0 ** 2 + 2 * deltabeta0 * self.beta0 + 1) - 1
         self._rvv = (1 + self.delta) / (1 + ptaubeta0)
         self._rpp = 1 / (1 + self.delta)
-        if oldrvv is not None:
-            self.zeta *= self._rvv / oldrvv
 
     psigma = property(lambda self: self.ptau / self.beta0)
 
@@ -363,17 +357,11 @@ class Pyparticles:
     def psigma(self, psigma):
         self.ptau = psigma * self.beta0
 
-    tau = property(lambda self: self.zeta / self.beta)
+    tau = property(lambda self: self.zeta / self.beta0)
 
     @tau.setter
     def tau(self, tau):
-        self.zeta = self.beta * tau
-
-    sigma = property(lambda self: (self.beta0 / self.beta) * self.zeta)
-
-    @sigma.setter
-    def sigma(self, sigma):
-        self.zeta = self.beta / self.beta0 * sigma
+        self.zeta = self.beta0 * tau
 
     @property
     def ptau(self):
