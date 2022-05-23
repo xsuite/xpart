@@ -4,6 +4,8 @@ import numpy as np
 from scipy.constants import c as clight
 from scipy.constants import e as qe
 
+import xobjects as xo
+
 from .rfbucket_matching import RFBucketMatcher
 from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
@@ -17,18 +19,19 @@ def _characterize_tracker(tracker, particle_ref):
         tracker = tracker._supertracker
 
     line = tracker.line
-    T_rev = line.get_length()/(particle_ref.beta0[0]*clight)
+    T_rev = line.get_length()/(particle_ref._xobject.beta0[0]*clight)
     freq_list = []
     lag_list_deg = []
     voltage_list = []
     h_list = []
     for ee in tracker.line.elements:
         if ee.__class__.__name__ == 'Cavity':
+            eecp = ee.copy(_context=xo.ContextCpu())
             if ee.voltage != 0:
-                freq_list.append(ee.frequency)
-                lag_list_deg.append(ee.lag)
-                voltage_list.append(ee.voltage)
-                h_list.append(ee.frequency*T_rev)
+                freq_list.append(eecp.frequency)
+                lag_list_deg.append(eecp.lag)
+                voltage_list.append(eecp.voltage)
+                h_list.append(eecp.frequency*T_rev)
 
     tw = tracker.twiss(particle_ref=particle_ref, at_elements=[line.element_names[0]])
 
@@ -71,7 +74,7 @@ def generate_longitudinal_coordinates(
 
     if gamma0 is None:
         assert particle_ref is not None
-        gamma0 = particle_ref.gamma0[0]
+        gamma0 = particle_ref._xobject.gamma0[0]
 
     if circumference is None:
         assert tracker is not None
@@ -97,7 +100,6 @@ def generate_longitudinal_coordinates(
         raise NotImplementedError
 
     assert sigma_z is not None
-
     rfbucket = RFBucket(circumference=circumference,
                         gamma=gamma0,
                         mass_kg=mass0/(clight**2)*qe,
