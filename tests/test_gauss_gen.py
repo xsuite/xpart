@@ -25,16 +25,20 @@ def test_gaussian_bunch_generation():
         with open(filename, 'r') as fid:
             ddd = json.load(fid)
         line = xt.Line.from_dict(ddd['line'])
-        line.particle_ref = xp.Particles.from_dict(ddd['particle'])
+        line.particle_ref = xp.Particles.from_dict(ddd['particle'],
+                               _context=context # for testing purposes
+                               )
 
         tracker = xt.Tracker(line=line, _context=context)
 
         part_on_co = tracker.find_closed_orbit()
 
+        import pdb; pdb.set_trace()
         part = xp.generate_matched_gaussian_bunch(
                  _context=context,
                  tracker=tracker,
-                 num_particles=n_part, total_intensity_particles=bunch_intensity,
+                 num_particles=n_part,
+                 total_intensity_particles=bunch_intensity,
                  nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z)
 
         tw = tracker.twiss()
