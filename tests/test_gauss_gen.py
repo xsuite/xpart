@@ -33,7 +33,6 @@ def test_gaussian_bunch_generation():
 
         part_on_co = tracker.find_closed_orbit()
 
-        import pdb; pdb.set_trace()
         part = xp.generate_matched_gaussian_bunch(
                  _context=context,
                  tracker=tracker,
