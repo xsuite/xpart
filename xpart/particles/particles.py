@@ -1035,7 +1035,7 @@ double LocalParticle_get_pzeta(LocalParticle* part){
 }
 
 /*gpufun*/
-double LocalParticle_update_pzeta(LocalParticle* part, double new_pzeta_value){
+void LocalParticle_update_pzeta(LocalParticle* part, double new_pzeta_value){
 
     double const beta0 = LocalParticle_get_beta0(part);
     LocalParticle_update_ptau(part, beta0*new_pzeta_value);
