@@ -163,8 +163,7 @@ class Pyparticles:
                 f"""\
             Particles defined with multiple time deviations:
             zeta  = {zeta},
-            tau   = {tau},
-            """
+            tau   = {tau}"""
             )
 
     def __init__chi(self, mass_ratio, charge_ratio, chi):
@@ -437,7 +436,7 @@ class Pyparticles:
         self._chi = chi
 
     def _get_absolute(self):
-        return self.Px, self.Py, self.pc, self.energy
+        return self.Px, self.Py, self.pc, self.energy, self.tau
 
     def _update_ref(self, mass0, beta0, gamma0, p0c, energy0):
         self._mass0 = mass0
@@ -446,7 +445,7 @@ class Pyparticles:
         self._p0c = p0c
         self._energy0 = energy0
 
-    def _update_particles_from_absolute(self, Px, Py, pc, energy):
+    def _update_particles_from_absolute(self, Px, Py, pc, energy, tau):
         if self._update_coordinates:
             mass_ratio = self.mass / self.mass0
             norm = mass_ratio * self.p0c
@@ -456,6 +455,7 @@ class Pyparticles:
             self._delta = pc / norm - 1
             self.px = Px / norm
             self.py = Py / norm
+            self.zeta = tau * self.beta0
 
     def __repr__(self):
         out = f"""\
