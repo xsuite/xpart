@@ -3,6 +3,22 @@ import xpart as xp
 import xobjects as xo
 import xtrack as xt
 
+def _check_consistency_energy_variables(particles):
+
+    # Check consistency between beta0 and gamma0
+    assert np.allclose(particles.gamma0, 1/np.sqrt(1 + particles.beta0**2),
+                       rtol=0, atol=1e-14)
+
+    # Check consistency of rpp and delta
+    assert np.allclose(particles.rpp, 1./(particles.delta + 1),
+                       rtol=0, atol=1e-14)
+
+    # Check energy0 property (consistency of p0c and gamma0)
+    assert np.allclose(particles.energy0, particles.mass0 * particles.gamma0,
+                       atol=1e-14, rtol=0)
+
+
+
 def test_basics():
     for context in xo.context.get_test_contexts():
         print(f"Test {context.__class__}")
