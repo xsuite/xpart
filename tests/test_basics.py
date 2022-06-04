@@ -6,21 +6,21 @@ import xtrack as xt
 def _check_consistency_energy_variables(particles):
 
     # Check consistency between beta0 and gamma0
-    assert np.allclose(particles.gamma0, 1/np.sqrt(1 + particles.beta0**2),
-                       rtol=0, atol=1e-14)
+    assert np.allclose(particles.gamma0, 1/np.sqrt(1 - particles.beta0**2),
+                       rtol=1e-14, atol=1e-14)
 
     # Assert consistency of p0c
     assert np.allclose(particles.p0c,
                        particles.mass0 * particles.beta0 * particles.gamma0,
-                       rtol=0, atol=1e-14)
+                       rtol=1e-14, atol=1e-14)
 
     # Check energy0 property (consistency of p0c and gamma0)
     assert np.allclose(particles.energy0, particles.mass0 * particles.gamma0,
-                       atol=1e-14, rtol=0)
+                       atol=1e-14, rtol=1e-14)
 
     # Check consistency of rpp and delta
     assert np.allclose(particles.rpp, 1./(particles.delta + 1),
-                       rtol=0, atol=1e-14)
+                       rtol=1e-14, atol=1e-14)
 
     beta = particles.beta0 * particles.rvv
     gamma = 1/np.sqrt(1 - beta**2)
@@ -28,15 +28,15 @@ def _check_consistency_energy_variables(particles):
 
     # Check consistency of delta with rvv
     assert np.allclose(particles.delta, (pc-particles.p0c)/(particles.p0c),
-                       rtol=0, atol=1e-14)
+                       rtol=1e-14, atol=1e-14)
 
     # Check consistency of ptau with rvv
     energy = particles.mass0 * gamma
     assert np.allclose(particles.ptau, (energy - particles.energy0)/particles.p0c,
-                       rtol=0, atol=1e-14)
+                       rtol=1e-14, atol=1e-14)
 
     # Check energy property
-    assert np.allclose(particles.energy, energy, rtol=0, atol=1e-14)
+    assert np.allclose(particles.energy, energy, rtol=1e-14, atol=1e-14)
 
 
 def test_basics():
@@ -64,6 +64,9 @@ def test_basics():
         assert np.isclose(dct['ptau'][0], 0, atol=1e-14, rtol=0)
         assert np.isclose(dct['ptau'][1]/dct['beta0'][1], 1e-4, rtol=0, atol=1e-9)
         assert np.isclose(dct['delta'][1], 9.99995545e-05, rtol=0, atol=1e-13)
+
+        particles._move_to(_context=xo.ContextCpu())
+        _check_consistency_energy_variables(particles)
 
 
 def test_unallocated_particles():
