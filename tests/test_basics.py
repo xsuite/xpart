@@ -266,7 +266,7 @@ def test_LocalParticle_add_to_energy():
         telem = TestElement(_context=ctx, value=1e6, pz_only=1)
 
         particles = xp.Particles(_context=ctx, p0c=1.4e9, delta=[0, 1e-3],
-                                px = [1e-6, -1e-6], py = [2e-6, 0])
+                                px = [1e-6, -1e-6], py = [2e-6, 0], zeta = 0.1)
         _check_consistency_energy_variables(
                                     particles.copy(_context=xo.ContextCpu()))
         energy_before = particles.copy(_context=xo.ContextCpu()).energy
@@ -289,7 +289,7 @@ def test_LocalParticle_add_to_energy():
         telem = TestElement(_context=ctx, value=1e6, pz_only=0)
 
         particles = xp.Particles(_context=ctx, p0c=1.4e9, delta=[0, 1e-3],
-                                 px = [1e-6, -1e-6], py = [2e-6, 0])
+                                 px = [1e-6, -1e-6], py = [2e-6, 0], zeta=0.1)
         _check_consistency_energy_variables(
                                     particles.copy(_context=xo.ContextCpu()))
         energy_before = particles.copy(_context=xo.ContextCpu()).energy
