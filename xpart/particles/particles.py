@@ -106,25 +106,25 @@ class Particles(xo.dress(ParticlesData, rename={
     """
         Particle objects have the following fields:
 
-             - s [m]:  Reference accumulated pathlength
+             - s [m]:  Reference accumulated path length
              - x [m]:  Horizontal position
              - px[1]:  Px / (m/m0 * p0c) = beta_x gamma /(beta0 gamma0)
              - y [m]:  Vertical position
              - py [1]:  Py / (m/m0 * p0c)
-             - delta[1]:  Pc / (m/m0 * p0c) - 1
-             - ptau [1]:  Energy / (m/m0 * p0c) - 1
-             - pzeta [1]:  ptau/beta0
-             - rvv [1]:  beta/beta0
-             - rpp [1]:  1/(1+delta) = (m/m0 * p0c) / Pc
-             - zeta [m]: s - beta0 ct
-             - tau [m]: s/bet0 - ct
-             - mass0 [eV]:
+             - delta[1]:  (Pc m0/m - p0c) /p0c
+             - ptau [1]:  (Energy m0/m - Energy0) / p0c
+             - pzeta [1]:  ptau / beta0
+             - rvv [1]:  beta / beta0
+             - rpp [1]:  m/m0 P0c / Pc = 1/(1+delta)
+             - zeta [m]:  (s - beta0 c t )
+             - tau [m]: (s - ct)
+             - mass0 [eV]: Reference rest mass
              - q0 [e]:  Reference charge
              - p0c [eV]: Reference momentum
              - energy0 [eV]: Reference energy
              - gamma0 [1]:  Reference relativistic gamma
              - beta0 [1]:  Reference relativistic beta
-             - mass_ratio [1]:  mass/mass0 (this is used to track particled of
+             - mass_ratio [1]:  mass/mass0 (this is used to track particles of
                                 different species. Note that mass is the rest mass
                                 of the considered particle species and not the
                                 relativistic mass)
