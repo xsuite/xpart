@@ -216,3 +216,25 @@ def test_sort():
                                     -999999999, -999999999, -999999999]))
     assert p._num_active_particles == -2
     assert p._num_lost_particles == -2
+
+def test_python_energy_manipulations():
+
+    for context in xo.context.get_test_contexts():
+        print(f"Test {context.__class__}")
+
+        particles = xp.Particles(_context=context,
+        mass0=xp.PROTON_MASS_EV, q0=1, p0c=1.4e9,
+        x=[1e-3, 0], px=[1e-6, -1e-6], y=[0, 1e-3], py=[2e-6, 0],
+        zeta=[1e-2, 2e-2], delta=[0, 1e-4])
+
+        energy_before = particles.copy(_context=xo.ContextCpu()).energy
+
+        particles.add_to_energy(3e6)
+
+        expected_energy = energy_before + 3e6
+        particles._move_to(_context=xo.ContextCpu())
+        assert np.allclose(particles.energy, expected_energy,
+                           atol=1e-14, rtol=1e-14)
+
+        _check_consistency_energy_variables(particles)
+
