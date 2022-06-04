@@ -217,7 +217,7 @@ def test_sort():
     assert p._num_active_particles == -2
     assert p._num_lost_particles == -2
 
-def test_python_energy_manipulations():
+def test_python_add_to_energy():
 
     for context in xo.context.get_test_contexts():
         print(f"Test {context.__class__}")
@@ -228,6 +228,7 @@ def test_python_energy_manipulations():
         zeta=[1e-2, 2e-2], delta=[0, 1e-4])
 
         energy_before = particles.copy(_context=xo.ContextCpu()).energy
+        zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
 
         particles.add_to_energy(3e6)
 
@@ -238,3 +239,75 @@ def test_python_energy_manipulations():
 
         _check_consistency_energy_variables(particles)
 
+        assert np.all(particles.zeta == zeta_before)
+
+def test_LocalParticle_add_to_energy():
+    for ctx in xo.context.get_test_contexts():
+        print(f'{ctx}')
+
+        class TestElement(xt.BeamElement):
+             _xofields={
+                'value': xo.Float64,
+                'pz_only': xo.Int64,
+                }
+        TestElement.XoStruct.extra_sources.append('''
+        /*gpufun*/
+        void TestElement_track_local_particle(
+                  TestElementData el, LocalParticle* part0){
+            double const value = TestElementData_get_value(el);
+            int const pz_only = (int) TestElementData_get_pz_only(el);
+            //start_per_particle_block (part0->part)
+                LocalParticle_add_to_energy(part, value, pz_only);
+            //end_per_particle_block
+        }
+        ''')
+
+        # pz_only = 1
+        telem = TestElement(_context=ctx, value=1e6, pz_only=1)
+
+        particles = xp.Particles(_context=ctx, p0c=1.4e9, delta=[0, 1e-3],
+                                px = [1e-6, -1e-6], py = [2e-6, 0])
+        _check_consistency_energy_variables(
+                                    particles.copy(_context=xo.ContextCpu()))
+        energy_before = particles.copy(_context=xo.ContextCpu()).energy
+        px_before = particles.copy(_context=xo.ContextCpu()).px
+        py_before = particles.copy(_context=xo.ContextCpu()).py
+        zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        telem.track(particles)
+
+        particles._move_to(_context=xo.ContextCpu())
+        assert np.allclose(particles.energy, energy_before + 1e6,
+                           atol=1e-14, rtol=1e-14)
+
+        _check_consistency_energy_variables(particles)
+
+        assert np.all(particles.zeta == zeta_before)
+        assert np.all(particles.px == px_before)
+        assert np.all(particles.py == py_before)
+
+        # pz_only = 0
+        telem = TestElement(_context=ctx, value=1e6, pz_only=0)
+
+        particles = xp.Particles(_context=ctx, p0c=1.4e9, delta=[0, 1e-3],
+                                 px = [1e-6, -1e-6], py = [2e-6, 0])
+        _check_consistency_energy_variables(
+                                    particles.copy(_context=xo.ContextCpu()))
+        energy_before = particles.copy(_context=xo.ContextCpu()).energy
+        px_before = particles.copy(_context=xo.ContextCpu()).px
+        py_before = particles.copy(_context=xo.ContextCpu()).py
+        rpp_before = particles.copy(_context=xo.ContextCpu()).rpp
+        zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        telem.track(particles)
+
+        particles._move_to(_context=xo.ContextCpu())
+        assert np.allclose(particles.energy, energy_before + 1e6,
+                           atol=1e-14, rtol=1e-14)
+
+        _check_consistency_energy_variables(particles)
+
+        rpp_after = particles.copy(_context=xo.ContextCpu()).rpp
+        assert np.all(particles.zeta == zeta_before)
+        assert np.allclose(particles.px, px_before*rpp_before/rpp_after,
+                           atol=1e-14, rtol=1e-14)
+        assert np.allclose(particles.py, py_before*rpp_before/rpp_after,
+                           atol=1e-14, rtol=1e-14)
