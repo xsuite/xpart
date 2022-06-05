@@ -331,7 +331,6 @@ def test_LocalParticle_update_delta():
         }
         ''')
 
-        # pz_only = 1
         telem = TestElement(_context=ctx, value=-2e-3)
 
         particles = xp.Particles(_context=ctx, p0c=1.4e9, delta=[0, 1e-3],
@@ -345,6 +344,45 @@ def test_LocalParticle_update_delta():
 
         particles._move_to(_context=xo.ContextCpu())
         assert np.allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
+
+        _check_consistency_energy_variables(particles)
+
+        assert np.all(particles.zeta == zeta_before)
+        assert np.all(particles.px == px_before)
+        assert np.all(particles.py == py_before)
+
+def test_LocalParticle_update_ptau():
+    for ctx in xo.context.get_test_contexts():
+        print(f'{ctx}')
+
+        class TestElement(xt.BeamElement):
+             _xofields={
+                'value': xo.Float64,
+                }
+        TestElement.XoStruct.extra_sources.append('''
+        /*gpufun*/
+        void TestElement_track_local_particle(
+                  TestElementData el, LocalParticle* part0){
+            double const value = TestElementData_get_value(el);
+            //start_per_particle_block (part0->part)
+                LocalParticle_update_ptau(part, value);
+            //end_per_particle_block
+        }
+        ''')
+
+        telem = TestElement(_context=ctx, value=-2e-3)
+
+        particles = xp.Particles(_context=ctx, p0c=1.4e9, delta=[0, 1e-3],
+                                px = [1e-6, -1e-6], py = [2e-6, 0], zeta = 0.1)
+        _check_consistency_energy_variables(
+                                    particles.copy(_context=xo.ContextCpu()))
+        px_before = particles.copy(_context=xo.ContextCpu()).px
+        py_before = particles.copy(_context=xo.ContextCpu()).py
+        zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        telem.track(particles)
+
+        particles._move_to(_context=xo.ContextCpu())
+        assert np.allclose(particles.ptau, -2e-3, atol=1e-14, rtol=1e-14)
 
         _check_consistency_energy_variables(particles)
 
