@@ -273,6 +273,7 @@ def test_LocalParticle_add_to_energy():
         px_before = particles.copy(_context=xo.ContextCpu()).px
         py_before = particles.copy(_context=xo.ContextCpu()).py
         zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
         particles._move_to(_context=xo.ContextCpu())
@@ -281,6 +282,7 @@ def test_LocalParticle_add_to_energy():
 
         _check_consistency_energy_variables(particles)
 
+        assert np.all(particles.gamma0 == gamma0_before)
         assert np.all(particles.zeta == zeta_before)
         assert np.all(particles.px == px_before)
         assert np.all(particles.py == py_before)
@@ -297,6 +299,7 @@ def test_LocalParticle_add_to_energy():
         py_before = particles.copy(_context=xo.ContextCpu()).py
         rpp_before = particles.copy(_context=xo.ContextCpu()).rpp
         zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
         particles._move_to(_context=xo.ContextCpu())
@@ -306,6 +309,7 @@ def test_LocalParticle_add_to_energy():
         _check_consistency_energy_variables(particles)
 
         rpp_after = particles.copy(_context=xo.ContextCpu()).rpp
+        assert np.all(particles.gamma0 == gamma0_before)
         assert np.all(particles.zeta == zeta_before)
         assert np.allclose(particles.px, px_before*rpp_before/rpp_after,
                            atol=1e-14, rtol=1e-14)
@@ -340,6 +344,7 @@ def test_LocalParticle_update_delta():
         px_before = particles.copy(_context=xo.ContextCpu()).px
         py_before = particles.copy(_context=xo.ContextCpu()).py
         zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
         particles._move_to(_context=xo.ContextCpu())
@@ -347,6 +352,7 @@ def test_LocalParticle_update_delta():
 
         _check_consistency_energy_variables(particles)
 
+        assert np.all(particles.gamma0 == gamma0_before)
         assert np.all(particles.zeta == zeta_before)
         assert np.all(particles.px == px_before)
         assert np.all(particles.py == py_before)
@@ -379,6 +385,7 @@ def test_LocalParticle_update_ptau():
         px_before = particles.copy(_context=xo.ContextCpu()).px
         py_before = particles.copy(_context=xo.ContextCpu()).py
         zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
         particles._move_to(_context=xo.ContextCpu())
@@ -386,6 +393,7 @@ def test_LocalParticle_update_ptau():
 
         _check_consistency_energy_variables(particles)
 
+        assert np.all(particles.gamma0 == gamma0_before)
         assert np.all(particles.zeta == zeta_before)
         assert np.all(particles.px == px_before)
         assert np.all(particles.py == py_before)
@@ -421,6 +429,7 @@ def test_LocalParticle_update_pzeta():
         py_before = particles.copy(_context=xo.ContextCpu()).py
         ptau_before  = particles.copy(_context=xo.ContextCpu()).ptau
         zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
         particles._move_to(_context=xo.ContextCpu())
@@ -429,6 +438,7 @@ def test_LocalParticle_update_pzeta():
 
         _check_consistency_energy_variables(particles)
 
+        assert np.all(particles.gamma0 == gamma0_before)
         assert np.all(particles.zeta == zeta_before)
         assert np.all(particles.px == px_before)
         assert np.all(particles.py == py_before)
