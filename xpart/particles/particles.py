@@ -183,6 +183,14 @@ class Particles(xo.dress(ParticlesData, rename={
             if 'pzeta' in kwargs.keys():
                 del(kwargs['pzeta']) # handled in part_dict
 
+            if 'sigma' in kwargs.keys():
+                raise NameError(
+                    '`sigma` is not supported anymore. Please use `zeta` instead.')
+
+            if 'psigma' in kwargs.keys():
+                raise NameError(
+                    '`psigma` is not supported anymore. Please use `pzeta` instead.')
+
             # Initialize xobject
             self.xoinitialize(**kwargs)
 
