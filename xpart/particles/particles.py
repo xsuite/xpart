@@ -587,7 +587,7 @@ class Particles(xo.dress(ParticlesData, rename={
         return np.min(ids_active_particles), np.max(ids_active_particles)+1
 
     def _set_p0c(self):
-        energy0 = np.sqrt(self.p0c ** 2 + self.mass0 ** 2)
+        energy0 = (self.p0c ** 2 + self.mass0 ** 2)**2
         self.beta0 = self.p0c / energy0
         self.gamma0 = energy0 / self.mass0
 
