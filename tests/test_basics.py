@@ -241,6 +241,32 @@ def test_python_add_to_energy():
 
         assert np.all(particles.zeta == zeta_before)
 
+def test_python_delta_setter():
+
+    for ctx in xo.context.get_test_contexts():
+        print(f"Test {ctx.__class__}")
+
+        particles = xp.Particles(_context=ctx, p0c=1.4e9, delta=[0, 1e-3],
+                                px = [1e-6, -1e-6], py = [2e-6, 0], zeta = 0.1)
+        _check_consistency_energy_variables(
+                                    particles.copy(_context=xo.ContextCpu()))
+        px_before = particles.copy(_context=xo.ContextCpu()).px
+        py_before = particles.copy(_context=xo.ContextCpu()).py
+        zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
+        gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
+
+        particles.delta = -2e-3
+
+        particles._move_to(_context=xo.ContextCpu())
+        assert np.allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
+
+        _check_consistency_energy_variables(particles)
+
+        assert np.all(particles.gamma0 == gamma0_before)
+        assert np.all(particles.zeta == zeta_before)
+        assert np.all(particles.px == px_before)
+        assert np.all(particles.py == py_before)
+
 def test_LocalParticle_add_to_energy():
     for ctx in xo.context.get_test_contexts():
         print(f'{ctx}')
