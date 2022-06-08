@@ -732,7 +732,7 @@ class Particles(xo.dress(ParticlesData, rename={
 
     @property
     def energy0(self):
-        return np.sqrt( self.p0c * self.p0c + self.mass0 * self.mass0 )
+        return ( self.p0c * self.p0c + self.mass0 * self.mass0 )**0.5
 
     @property
     def energy(self):
@@ -744,11 +744,11 @@ class Particles(xo.dress(ParticlesData, rename={
 
         ptau_beta0 = (
             delta_energy / self.energy0.copy() +
-            np.sqrt( delta_beta0 * delta_beta0 + 2.0 * delta_beta0 * beta0
-                    + 1. ) - 1.)
+            ( delta_beta0 * delta_beta0 + 2.0 * delta_beta0 * beta0
+                    + 1. )**0.5 - 1.)
 
         ptau   = ptau_beta0 / beta0
-        delta = np.sqrt( ptau * ptau + 2. * ptau / beta0 + 1 ) - 1
+        delta = ( ptau * ptau + 2. * ptau / beta0 + 1 )**0.5 - 1
 
         one_plus_delta = delta + 1.
         rvv = one_plus_delta / ( 1. + ptau_beta0 )
