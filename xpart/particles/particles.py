@@ -586,11 +586,6 @@ class Particles(xo.dress(ParticlesData, rename={
         # Behaves as python range (+1)
         return np.min(ids_active_particles), np.max(ids_active_particles)+1
 
-    def _set_p0c(self):
-        energy0 = (self.p0c ** 2 + self.mass0 ** 2)**2
-        self.beta0 = self.p0c / energy0
-        self.gamma0 = energy0 / self.mass0
-
     def _contains_lost_or_unallocated_particles(self):
         ctx = self._buffer.context
         # TODO: check and handle behavior with hidden lost particles
