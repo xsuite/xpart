@@ -1,0 +1,10 @@
+The following people contributed to the development of this package:
+
+CERN contributors:
+ - X. Buffat
+ - R. De Maria
+ - G. Iadarola
+ - A. Latina
+ - K. Paraschou
+
+The longitudinal matching module is derived from the one of PyHEADTAIL (https://github.com/pycomplete/PyHEADTAIL).

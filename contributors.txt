@@ -1,5 +1,0 @@
-The following people contributed to the development of this package:
-
-CERN contributors:
-
-External contributors:
