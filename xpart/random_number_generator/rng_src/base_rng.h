@@ -1,3 +1,8 @@
+// copyright ############################### //
+// This file is part of the Xpart Package.   //
+// Copyright (c) CERN, 2021.                 //
+// ######################################### //
+
 #ifndef XTRACK_RNG_H
 #define XTRACK_RNG_H
 
