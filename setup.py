@@ -20,7 +20,7 @@ setup(
     name='xpart',
     version='0.7.1',
     description='Generation of Particle Ensembles',
-    description=('Tools for the generation of particle ensembles'
+    long_description=('Tools for the generation of particle ensembles'
                 'in beam dynamics simulations.\n\n'
                 'This package is part of the Xsuite collection.'),
     url='https://xsuite.readthedocs.io/',
