@@ -1,3 +1,8 @@
+# copyright ############################### #
+# This file is part of the Xpart Package.   #
+# Copyright (c) CERN, 2021.                 #
+# ######################################### #
+
 '''
 @author Kevin Li, Adrian Oeftiger
 @date 21.06.2017
