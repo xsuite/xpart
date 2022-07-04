@@ -186,6 +186,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if delta is None:
         delta = 0
 
+    if not np.isscalar(delta):
+        delta = np.array(delta)
+
+    if not np.isscalar(zeta):
+        zeta = np.array(zeta)
+
     # Compute ptau from delta
     beta0 = particle_ref._xobject.beta0[0]
     delta_beta0 = delta * beta0
@@ -338,7 +344,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[2, :] += particle_on_co.y
         XX[3, :] += particle_on_co.py
         XX[4, :] += particle_on_co.zeta
-        XX[5, :] += particle_on_co.ptau/beta0
+        XX[5, :] += particle_on_co.ptau / beta0
 
     elif mode == 'set':
 
