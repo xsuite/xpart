@@ -191,7 +191,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     delta_beta0 = delta * beta0
     ptau_beta0 = (delta_beta0 * delta_beta0
                         + 2. * delta_beta0 * beta0 + 1.)**0.5 - 1.
-    ptau = ptau_beta0 / beta0
+    pzeta = ptau_beta0 / beta0 / beta0
 
     if (x_norm is not None or px_norm is not None
         or y_norm is not None or py_norm is not None):
@@ -321,7 +321,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
         XX_long[4, :] = zeta - particle_on_co.zeta
-        XX_long[5, :] = ptau - particle_on_co.ptau
+        XX_long[5, :] = pzeta - particle_on_co.ptau / beta0
 
         XX_norm_scaled = np.dot(WWinv, XX_long)
 
@@ -338,7 +338,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[2, :] += particle_on_co.y
         XX[3, :] += particle_on_co.py
         XX[4, :] += particle_on_co.zeta
-        XX[5, :] += particle_on_co.ptau
+        XX[5, :] += particle_on_co.ptau/beta0
 
     elif mode == 'set':
 
@@ -355,7 +355,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[2, :] = y
         XX[3, :] = py
         XX[4, :] = zeta
-        XX[5, :] = ptau
+        XX[5, :] = pzeta
 
     elif mode == "shift":
 
@@ -372,7 +372,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[2, :] = y + particle_ref.y
         XX[3, :] = py + particle_ref.py
         XX[4, :] = zeta + particle_ref.zeta
-        XX[5, :] = ptau + particle_ref.ptau
+        XX[5, :] = pzeta + particle_ref.ptau / beta0
     else:
         raise ValueError('What?!')
 
@@ -381,7 +381,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     part_dict['y'] = XX[2, :]
     part_dict['py'] = XX[3, :]
     part_dict['zeta'] = XX[4, :]
-    part_dict['ptau'] = XX[5, :]
+    part_dict['ptau'] = XX[5, :] * beta0
 
     part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
 
