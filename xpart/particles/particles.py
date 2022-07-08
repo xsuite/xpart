@@ -102,6 +102,11 @@ def _contains_nan(arr, ctx):
     else:
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
+class PipelineID:
+    def __init__(self,rank,number=0):
+        self.number = number
+        self.rank = rank
+
 class Particles(xo.dress(ParticlesData, rename={
                              'delta': '_delta',
                              'ptau': '_ptau',
@@ -153,7 +158,10 @@ class Particles(xo.dress(ParticlesData, rename={
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def __init__(self, **kwargs):
+    def __init__(self, rank=None,pipeline_number=0,**kwargs):
+
+        if rank is not None:
+            self.pipeline_ID = PipelineID(rank=rank,number=pipeline_number)
 
         input_kwargs = kwargs.copy()
 
@@ -255,6 +263,7 @@ class Particles(xo.dress(ParticlesData, rename={
                     pass
                 else:
                     self.reorganize()
+
 
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
