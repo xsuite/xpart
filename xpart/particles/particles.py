@@ -761,19 +761,8 @@ class Particles(xo.dress(ParticlesData, rename={
 
     def set_particle(self, index, set_scalar_vars=False,
                     **kwargs):
-        # TODO: review this function
 
-        # Needed to generate consistent longitudinal variables
-        pyparticles = Pyparticles(**kwargs)
-        part_dict = _pyparticles_to_xpart_dict(pyparticles)
-        if set_scalar_vars:
-            for tt, kk in list(scalar_vars):
-                setattr(self, kk, part_dict[kk])
-
-        for tt, kk in list(per_particle_vars):
-            if kk.startswith('_rng') and kk not in part_dict.keys():
-                continue
-            getattr(self, kk)[index] = part_dict[kk][0]
+        raise NotImplementedError('This functionality has been removed')
 
 ParticlesData._DressingClass = Particles
 
