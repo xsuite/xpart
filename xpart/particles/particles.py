@@ -136,6 +136,11 @@ class Particles(xo.DressedStruct):
             'rvv': '_rvv',
             'rpp': '_rpp'}
 
+    extra_sources = [
+    _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
+    _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h')]
+
+
     _structure = {
             'size_vars': size_vars,
             'scalar_vars': scalar_vars,
@@ -753,9 +758,6 @@ class Particles(xo.DressedStruct):
         raise NotImplementedError('This functionality has been removed')
 
 
-Particles.XoStruct.extra_sources = [
-    _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
-    _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h')]
 Particles.XoStruct.custom_kernels = {
     'Particles_initialize_rand_gen': xo.Kernel(
         args=[
