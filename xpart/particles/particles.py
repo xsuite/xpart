@@ -86,7 +86,7 @@ def _contains_nan(arr, ctx):
     else:
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
-class Particles(xo.DressedStruct):
+class Particles(xo.HybridClass):
 
     """
         Particle objects have the following fields:

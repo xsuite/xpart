@@ -11,13 +11,7 @@ from xpart import Particles as XtParticles
 
 import xobjects as xo
 
-# To avoid triggering the metaclass of xo.DressedStruct
-class NoMeta(xo.MetaDressedStruct):
-    def __new__(cls, name, bases, data):
-        return type.__new__(cls, name, bases, data)
-
-
-class PyHtXtParticles(XtParticles, PyHtParticles, metaclass=NoMeta):
+class PyHtXtParticles(XtParticles, PyHtParticles):
 
     def __init__(self,circumference=None, particlenumber_per_mp=None, **kwargs):
         XtParticles.__init__(self, **kwargs)
