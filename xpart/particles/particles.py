@@ -79,22 +79,6 @@ for tt, nn in size_vars + scalar_vars:
 for tt, nn in per_particle_vars:
     fields[nn] = tt[:]
 
-ParticlesData = type(
-        'ParticlesData',
-        (xo.Struct,),
-        fields)
-
-ParticlesData.extra_sources = [
-    _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
-    _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h')]
-ParticlesData.custom_kernels = {
-    'Particles_initialize_rand_gen': xo.Kernel(
-        args=[
-            xo.Arg(ParticlesData, name='particles'),
-            xo.Arg(xo.UInt32, pointer=True, name='seeds'),
-            xo.Arg(xo.Int32, name='n_init')],
-        n_threads='n_init')}
-
 def _contains_nan(arr, ctx):
     if isinstance(ctx, xo.ContextPyopencl):
         nparr = ctx.nparray_from_context_array(arr)
@@ -102,11 +86,7 @@ def _contains_nan(arr, ctx):
     else:
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
-class Particles(xo.dress(ParticlesData, rename={
-                             'delta': '_delta',
-                             'ptau': '_ptau',
-                             'rvv': '_rvv',
-                             'rpp': '_rpp'})):
+class Particles(xo.HybridClass):
 
     """
         Particle objects have the following fields:
@@ -147,6 +127,19 @@ class Particles(xo.dress(ParticlesData, rename={
              - parent_particle_id [int]: Identifier of the parent particle
                                          (secondary production processes)
     """
+
+    _xofields = fields
+
+    _rename = {
+            'delta': '_delta',
+            'ptau': '_ptau',
+            'rvv': '_rvv',
+            'rpp': '_rpp'}
+
+    extra_sources = [
+    _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
+    _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h')]
+
 
     _structure = {
             'size_vars': size_vars,
@@ -764,7 +757,14 @@ class Particles(xo.dress(ParticlesData, rename={
 
         raise NotImplementedError('This functionality has been removed')
 
-ParticlesData._DressingClass = Particles
+
+Particles.XoStruct.custom_kernels = {
+    'Particles_initialize_rand_gen': xo.Kernel(
+        args=[
+            xo.Arg(Particles.XoStruct, name='particles'),
+            xo.Arg(xo.UInt32, pointer=True, name='seeds'),
+            xo.Arg(xo.Int32, name='n_init')],
+        n_threads='n_init')}
 
 
 
