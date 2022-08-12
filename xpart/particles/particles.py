@@ -136,10 +136,18 @@ class Particles(xo.HybridClass):
             'rvv': '_rvv',
             'rpp': '_rpp'}
 
-    _extra_c_source = [
-    _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
-    _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h')]
+    _extra_c_sources = [
+        _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
+        _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h')]
 
+    _kernels = {
+        'Particles_initialize_rand_gen': xo.Kernel(
+            args=[
+                xo.Arg(xo.ThisClass, name='particles'),
+                xo.Arg(xo.UInt32, pointer=True, name='seeds'),
+                xo.Arg(xo.Int32, name='n_init')],
+            n_threads='n_init')
+        }
 
     _structure = {
             'size_vars': size_vars,
@@ -447,7 +455,7 @@ class Particles(xo.HybridClass):
 
     def _init_random_number_generator(self, seeds=None):
 
-        self.compile_custom_kernels(only_if_needed=True)
+        self.compile_kernels(only_if_needed=True)
 
         if seeds is None:
             seeds = np.random.randint(low=1, high=4e9,
@@ -756,16 +764,6 @@ class Particles(xo.HybridClass):
                     **kwargs):
 
         raise NotImplementedError('This functionality has been removed')
-
-
-Particles.XoStruct.custom_kernels = {
-    'Particles_initialize_rand_gen': xo.Kernel(
-        args=[
-            xo.Arg(Particles.XoStruct, name='particles'),
-            xo.Arg(xo.UInt32, pointer=True, name='seeds'),
-            xo.Arg(xo.Int32, name='n_init')],
-        n_threads='n_init')}
-
 
 
 def _str_in_list(string, str_list):

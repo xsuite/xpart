@@ -281,7 +281,7 @@ def test_LocalParticle_add_to_energy():
                 'value': xo.Float64,
                 'pz_only': xo.Int64,
                 }
-            _extra_c_source = ['''
+            _extra_c_sources = ['''
                 /*gpufun*/
                 void TestElement_track_local_particle(
                         TestElementData el, LocalParticle* part0){
@@ -356,7 +356,7 @@ def test_LocalParticle_update_delta():
                 'value': xo.Float64,
                 }
 
-            _extra_c_source =['''
+            _extra_c_sources =['''
                 /*gpufun*/
                 void TestElement_track_local_particle(
                         TestElementData el, LocalParticle* part0){
@@ -398,7 +398,7 @@ def test_LocalParticle_update_ptau():
                 'value': xo.Float64,
                 }
 
-            _extra_c_source = ['''
+            _extra_c_sources = ['''
                 /*gpufun*/
                 void TestElement_track_local_particle(
                         TestElementData el, LocalParticle* part0){
@@ -440,7 +440,7 @@ def test_LocalParticle_update_pzeta():
             _xofields={
                 'value': xo.Float64,
                 }
-            _extra_c_source = ['''
+            _extra_c_sources = ['''
                 /*gpufun*/
                 void TestElement_track_local_particle(
                         TestElementData el, LocalParticle* part0){
@@ -484,7 +484,7 @@ def test_LocalParticle_update_p0c():
             _xofields={
                 'value': xo.Float64,
                 }
-            _extra_c_source = ['''
+            _extra_c_sources = ['''
                 /*gpufun*/
                 void TestElement_track_local_particle(
                         TestElementData el, LocalParticle* part0){
