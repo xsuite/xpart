@@ -277,21 +277,21 @@ def test_LocalParticle_add_to_energy():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 'pz_only': xo.Int64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            int const pz_only = (int) TestElementData_get_pz_only(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_add_to_energy(part, value, pz_only);
-            //end_per_particle_block
-        }
-        ''')
+            _extra_c_source = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    int const pz_only = (int) TestElementData_get_pz_only(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_add_to_energy(part, value, pz_only);
+                    //end_per_particle_block
+                }
+                ''']
 
         # pz_only = 1
         telem = TestElement(_context=ctx, value=1e6, pz_only=1)
@@ -352,19 +352,20 @@ def test_LocalParticle_update_delta():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_update_delta(part, value);
-            //end_per_particle_block
-        }
-        ''')
+
+            _extra_c_source =['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_update_delta(part, value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=-2e-3)
 
@@ -393,19 +394,20 @@ def test_LocalParticle_update_ptau():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_update_ptau(part, value);
-            //end_per_particle_block
-        }
-        ''')
+
+            _extra_c_source = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_update_ptau(part, value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=-2e-3)
 
@@ -435,20 +437,20 @@ def test_LocalParticle_update_pzeta():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                double const pzeta = LocalParticle_get_pzeta(part);
-                LocalParticle_update_pzeta(part, pzeta+value);
-            //end_per_particle_block
-        }
-        ''')
+            _extra_c_source = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        double const pzeta = LocalParticle_get_pzeta(part);
+                        LocalParticle_update_pzeta(part, pzeta+value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=-2e-3)
 
@@ -479,19 +481,19 @@ def test_LocalParticle_update_p0c():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_update_p0c(part, value);
-            //end_per_particle_block
-        }
-        ''')
+            _extra_c_source = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_update_p0c(part, value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=1.5e9)
 
