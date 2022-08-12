@@ -34,11 +34,11 @@ particles = xp.build_particles(tracker=tracker, _context=ctx,
 
 tw = tracker.twiss(at_elements=[at_element])
 
-particles._move_to(_context=xo.context_default) # To easily do the checks with numpy
+particles.move(_context=xo.context_default) # To easily do the checks with numpy
 assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
-particles._move_to(_context=ctx)
+particles.move(_context=ctx)
 
 # Check that tracking starts from the right place
 tracker.track(particles, turn_by_turn_monitor='ONE_TURN_EBE')
@@ -50,7 +50,7 @@ assert np.all(mon.at_element[:, -1] == len(tracker.line.element_names) -1)
 
 # Check that distribution is matched at the end of the turn
 tw0 = tracker.twiss(at_elements=[0])
-particles._move_to(_context=xo.context_default)
+particles.move(_context=xo.context_default)
 assert np.isclose(
     np.sqrt(tw0['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=2e-3, atol=0)
@@ -64,16 +64,16 @@ particles = xp.build_particles(tracker=tracker, _context=ctx,
 
 tw = tracker.twiss(at_elements=[at_element])
 
-particles._move_to(_context=xo.context_default)
+particles.move(_context=xo.context_default)
 assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
-particles._move_to(_context=ctx)
+particles.move(_context=ctx)
 
 tracker.track(particles, num_turns=3)
 
 tw0 = tracker.twiss(at_elements=[0])
-particles._move_to(_context=xo.context_default)
+particles.move(_context=xo.context_default)
 assert np.isclose(
     np.sqrt(tw0['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=2e-3, atol=0)
@@ -99,16 +99,16 @@ particles = xp.build_particles(tracker=tracker, _context=ctx,
 
 tw = tracker.twiss(at_elements=[at_element])
 
-particles._move_to(_context=xo.context_default)
+particles.move(_context=xo.context_default)
 assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
-particles._move_to(_context=ctx)
+particles.move(_context=ctx)
 
 tracker.track(particles, num_turns=3)
 
 tw0 = tracker.twiss(at_elements=[0])
-particles._move_to(_context=xo.context_default)
+particles.move(_context=xo.context_default)
 assert np.isclose(
     np.sqrt(tw0['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=2e-3, atol=0)
@@ -126,7 +126,7 @@ particles = xp.build_particles(tracker=tracker, _context=ctx,
 
 tw = tracker.twiss(at_elements=[at_element])
 
-particles._move_to(_context=xo.context_default)
+particles.move(_context=xo.context_default)
 assert np.isclose(
     np.sqrt(tw['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=1e-3, atol=0)
@@ -141,12 +141,12 @@ mu_at_element = tracker.twiss(at_elements=[at_element])['mux'][0]
 
 assert np.isclose(phasex_first_part, (mu_at_element - mu_at_s)*2*np.pi,
                   atol=0, rtol=0.02)
-particles._move_to(_context=ctx)
+particles.move(_context=ctx)
 
 tracker.track(particles, num_turns=3)
 
 tw0 = tracker.twiss(at_elements=[0])
-particles._move_to(_context=xo.context_default)
+particles.move(_context=xo.context_default)
 assert np.isclose(
     np.sqrt(tw0['betx'][0]*2.5e-6/particles.beta0[0]/particles.gamma0[0]),
     np.max(np.abs(particles.x - np.mean(particles.x))), rtol=2e-3, atol=0)
