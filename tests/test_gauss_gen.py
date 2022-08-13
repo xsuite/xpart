@@ -55,7 +55,7 @@ def test_gaussian_bunch_generation():
         delta_rms = np.std(context.nparray_from_context_array(part.delta))
         zeta_rms = np.std(context.nparray_from_context_array(part.zeta))
 
-        part_on_co._move_to(_context=xo.ContextCpu())
+        part_on_co.move(_context=xo.ContextCpu())
         gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
         gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
         assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)

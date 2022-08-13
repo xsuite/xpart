@@ -19,25 +19,26 @@ def test_random_generation():
         part._init_random_number_generator()
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'dummy': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources = [
-            xp._pkg_root.joinpath(
-                'random_number_generator/rng_src/base_rng.h'),
-            xp._pkg_root.joinpath(
-                'random_number_generator/rng_src/local_particle_rng.h'),
-            ]
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            //start_per_particle_block (part0->part)
-                double rr = LocalParticle_generate_random_double_gauss(part);
-                LocalParticle_set_x(part, rr);
-            //end_per_particle_block
-        }
-        ''')
+
+            _extra_c_sources = [
+                xp._pkg_root.joinpath(
+                    'random_number_generator/rng_src/base_rng.h'),
+                xp._pkg_root.joinpath(
+                    'random_number_generator/rng_src/local_particle_rng.h'),
+
+                '''
+                    /*gpufun*/
+                    void TestElement_track_local_particle(
+                            TestElementData el, LocalParticle* part0){
+                        //start_per_particle_block (part0->part)
+                            double rr = LocalParticle_generate_random_double_gauss(part);
+                            LocalParticle_set_x(part, rr);
+                        //end_per_particle_block
+                    }
+                ''']
 
         telem = TestElement(_context=ctx)
 

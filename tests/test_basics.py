@@ -70,7 +70,7 @@ def test_basics():
         assert np.isclose(dct['ptau'][1]/dct['beta0'][1], 1e-4, rtol=0, atol=1e-9)
         assert np.isclose(dct['delta'][1], 9.99995545e-05, rtol=0, atol=1e-13)
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         _check_consistency_energy_variables(particles)
 
 
@@ -238,7 +238,7 @@ def test_python_add_to_energy():
         particles.add_to_energy(3e6)
 
         expected_energy = energy_before + 3e6
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose(particles.energy, expected_energy,
                            atol=1e-14, rtol=1e-14)
 
@@ -262,7 +262,7 @@ def test_python_delta_setter():
 
         particles.delta = -2e-3
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
 
         _check_consistency_energy_variables(particles)
@@ -277,21 +277,21 @@ def test_LocalParticle_add_to_energy():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 'pz_only': xo.Int64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            int const pz_only = (int) TestElementData_get_pz_only(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_add_to_energy(part, value, pz_only);
-            //end_per_particle_block
-        }
-        ''')
+            _extra_c_sources = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    int const pz_only = (int) TestElementData_get_pz_only(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_add_to_energy(part, value, pz_only);
+                    //end_per_particle_block
+                }
+                ''']
 
         # pz_only = 1
         telem = TestElement(_context=ctx, value=1e6, pz_only=1)
@@ -307,7 +307,7 @@ def test_LocalParticle_add_to_energy():
         gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose(particles.energy, energy_before + 1e6,
                            atol=1e-14, rtol=1e-14)
 
@@ -333,7 +333,7 @@ def test_LocalParticle_add_to_energy():
         gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose(particles.energy, energy_before + 1e6,
                            atol=1e-14, rtol=1e-14)
 
@@ -352,19 +352,20 @@ def test_LocalParticle_update_delta():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_update_delta(part, value);
-            //end_per_particle_block
-        }
-        ''')
+
+            _extra_c_sources =['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_update_delta(part, value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=-2e-3)
 
@@ -378,7 +379,7 @@ def test_LocalParticle_update_delta():
         gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
 
         _check_consistency_energy_variables(particles)
@@ -393,19 +394,20 @@ def test_LocalParticle_update_ptau():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_update_ptau(part, value);
-            //end_per_particle_block
-        }
-        ''')
+
+            _extra_c_sources = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_update_ptau(part, value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=-2e-3)
 
@@ -419,7 +421,7 @@ def test_LocalParticle_update_ptau():
         gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose(particles.ptau, -2e-3, atol=1e-14, rtol=1e-14)
 
         _check_consistency_energy_variables(particles)
@@ -435,20 +437,20 @@ def test_LocalParticle_update_pzeta():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                double const pzeta = LocalParticle_get_pzeta(part);
-                LocalParticle_update_pzeta(part, pzeta+value);
-            //end_per_particle_block
-        }
-        ''')
+            _extra_c_sources = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        double const pzeta = LocalParticle_get_pzeta(part);
+                        LocalParticle_update_pzeta(part, pzeta+value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=-2e-3)
 
@@ -463,7 +465,7 @@ def test_LocalParticle_update_pzeta():
         gamma0_before = particles.copy(_context=xo.ContextCpu()).gamma0
         telem.track(particles)
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose((particles.ptau - ptau_before)/particles.beta0,
                            -2e-3, atol=1e-14, rtol=1e-14)
 
@@ -479,19 +481,19 @@ def test_LocalParticle_update_p0c():
         print(f'{ctx}')
 
         class TestElement(xt.BeamElement):
-             _xofields={
+            _xofields={
                 'value': xo.Float64,
                 }
-        TestElement.XoStruct.extra_sources.append('''
-        /*gpufun*/
-        void TestElement_track_local_particle(
-                  TestElementData el, LocalParticle* part0){
-            double const value = TestElementData_get_value(el);
-            //start_per_particle_block (part0->part)
-                LocalParticle_update_p0c(part, value);
-            //end_per_particle_block
-        }
-        ''')
+            _extra_c_sources = ['''
+                /*gpufun*/
+                void TestElement_track_local_particle(
+                        TestElementData el, LocalParticle* part0){
+                    double const value = TestElementData_get_value(el);
+                    //start_per_particle_block (part0->part)
+                        LocalParticle_update_p0c(part, value);
+                    //end_per_particle_block
+                }
+                ''']
 
         telem = TestElement(_context=ctx, value=1.5e9)
 
@@ -507,7 +509,7 @@ def test_LocalParticle_update_p0c():
         zeta_before = particles.copy(_context=xo.ContextCpu()).zeta
         telem.track(particles)
 
-        particles._move_to(_context=xo.ContextCpu())
+        particles.move(_context=xo.ContextCpu())
         assert np.allclose(particles.p0c, 1.5e9, atol=1e-14, rtol=1e-14)
         assert np.allclose(particles.energy, energy_before, atol=1e-14, rtol=1e-14)
 
