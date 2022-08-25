@@ -9,11 +9,12 @@ from scipy.constants import e,c
 from PyHEADTAIL.particles.particles import Particles as PyHtParticles
 from xpart import Particles as XtParticles
 
+import xobjects as xo
 
-class PyHtXtParticles(XtParticles,PyHtParticles):
+class PyHtXtParticles(XtParticles, PyHtParticles):
 
-    def __init__(self,circumference=None,particlenumber_per_mp=None, **kwargs):
-        super(PyHtXtParticles,self).__init__(**kwargs)
+    def __init__(self,circumference=None, particlenumber_per_mp=None, **kwargs):
+        XtParticles.__init__(self, **kwargs)
         self.circumference = circumference
         if particlenumber_per_mp is not None:
             self.particlenumber_per_mp = particlenumber_per_mp
