@@ -154,7 +154,7 @@ class Particles(xo.HybridClass):
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def __init__(self,name=None,**kwargs):
+    def __init__(self,**kwargs):
 
         input_kwargs = kwargs.copy()
 
