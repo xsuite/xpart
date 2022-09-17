@@ -154,7 +154,7 @@ class Particles(xo.HybridClass):
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def __init__(self, **kwargs):
+    def __init__(self,**kwargs):
 
         input_kwargs = kwargs.copy()
 
@@ -256,6 +256,9 @@ class Particles(xo.HybridClass):
                     pass
                 else:
                     self.reorganize()
+
+    def init_pipeline(self,name):
+        self.name = name
 
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
