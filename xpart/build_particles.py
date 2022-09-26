@@ -48,6 +48,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       match_at_s=None,
                       particle_on_co=None,
                       R_matrix=None,
+                      W_matrix=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
                       particles_class=None,
@@ -113,6 +114,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         - R_matrix: 6x6 matrix defining the linearized one-turn map to be used
           for the transformation of the normalized coordinates into physical
           space.
+        - W_matrix: 6x6 matrix with the eigenvalues of the one-turn map
+          (R_matrix). If provided, the R_matrix can be omitted.
         - scale_with_transverse_norm_emitt: Tuple of two elements defining the
           transverse normalized emittances used to rescale the provided
           transverse normalized coordinates (x, px, y, py).
@@ -291,7 +294,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             tracker_rmat.track(part_co_ctx, num_elements=at_element_tracker_rmat)
             particle_on_co = part_co_ctx.copy(_context=xo.ContextCpu())
 
-        if R_matrix is None:
+        if R_matrix is None and W_matrix is None:
             # R matrix at location defined by particle_on_co.at_element
             R_matrix = tracker_rmat.compute_one_turn_matrix_finite_differences(
                 particle_on_co=particle_on_co, steps_r_matrix=steps_r_matrix)
@@ -319,10 +322,16 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             y_norm_scaled = y_norm
             py_norm_scaled = py_norm
 
-        WW, WWinv, Rot = lnf.compute_linear_normal_form(R_matrix,
-                symplectify=symplectify,
-                responsiveness_tol=matrix_responsiveness_tol,
-                stability_tol=matrix_stability_tol)
+        if W_matrix is not None:
+            WW = W_matrix
+            WWinv = np.linalg.inv(WW)
+            assert R_matrix is None, (
+                'If `W_matrix` is provided, `R_matrix` cannot be provided')
+        else:
+            WW, WWinv, _ = lnf.compute_linear_normal_form(R_matrix,
+                    symplectify=symplectify,
+                    responsiveness_tol=matrix_responsiveness_tol,
+                    stability_tol=matrix_stability_tol)
 
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
