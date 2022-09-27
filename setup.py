@@ -18,7 +18,7 @@ extensions = []
 
 setup(
     name='xpart',
-    version='0.8.3',
+    version='0.8.4',
     description='Generation of Particle Ensembles',
     long_description=('Tools for the generation of particle ensembles'
                 'in beam dynamics simulations.\n\n'
