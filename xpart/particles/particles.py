@@ -40,7 +40,7 @@ part_energy_vars = (
     (xo.Float64, 'delta'),
     (xo.Float64, 'rpp'),
     (xo.Float64, 'rvv'),
-        )
+    )
 
 per_particle_vars = (
     (
@@ -138,7 +138,9 @@ class Particles(xo.HybridClass):
 
     _extra_c_sources = [
         _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
-        _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h')]
+        _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h'),
+        '\n /*placeholder_for_local_particle_src*/ \n'
+        ]
 
     _kernels = {
         'Particles_initialize_rand_gen': xo.Kernel(
