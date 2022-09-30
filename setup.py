@@ -18,14 +18,14 @@ extensions = []
 
 setup(
     name='xpart',
-    version='0.8.3',
+    version='0.8.4',
     description='Generation of Particle Ensembles',
     long_description=('Tools for the generation of particle ensembles'
                 'in beam dynamics simulations.\n\n'
                 'This package is part of the Xsuite collection.'),
     url='https://xsuite.readthedocs.io/',
     packages=find_packages(),
-    ext_modules = extensions,
+    ext_modules=extensions,
     include_package_data=True,
     install_requires=[
         'numpy>=1.0',
@@ -39,5 +39,8 @@ setup(
             "Bug Tracker": "https://github.com/xsuite/xsuite/issues",
             "Documentation": 'https://xsuite.readthedocs.io/',
             "Source Code": "https://github.com/xsuite/xpart",
+        },
+    extras_require={
+        'tests': ['cpymad', 'PyHEADTAIL'],
         },
     )
