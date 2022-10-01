@@ -283,8 +283,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         if not isinstance(particle_on_co._buffer.context, xo.ContextCpu):
             particle_on_co = particle_on_co.copy(_context=xo.ContextCpu())
 
-        assert particle_on_co.at_element[0] == 0
-        assert particle_on_co.s[0] == 0
+        if R_matrix is None and W_matrix is None:
+            assert particle_on_co.at_element[0] == 0
+            assert particle_on_co.s[0] == 0
         assert particle_on_co.state[0] == 1
 
         if at_element_tracker_rmat is not None:
