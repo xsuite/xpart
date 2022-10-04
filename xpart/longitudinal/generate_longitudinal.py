@@ -16,6 +16,7 @@ from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
 from ..particles import Particles
 from .single_rf_harmonic_matcher import SingleRFHarmonicMatcher
+from ..constants import PROTON_MASS_EV 
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,7 @@ def generate_longitudinal_coordinates(
             raise NotImplementedError
 
         # if not a proton
-        if q0 != 1.0 or particle_ref.chi != 1.0 or abs(mass0 - 938272088) > 1.:
+        if q0 != 1.0 or particle_ref.chi != 1.0 or abs(mass0 - PROTON_MASS_EV) > 1.:
             raise NotImplementedError
 
         sigma_tau = sigma_z/particle_ref.beta0[0]
