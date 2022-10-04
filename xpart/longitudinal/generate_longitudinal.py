@@ -68,11 +68,8 @@ def generate_longitudinal_coordinates(
                                     p_increment=0.,
                                     distribution='gaussian',
                                     sigma_z=None,
-<<<<<<< HEAD
+                                    engine="pyheadtail",
                                     **kwargs # passed to twiss
-=======
-                                    engine="pyheadtail"
->>>>>>> d9a79b9 (bring characterize tracker outside and correct bunch length)
                                     ):
 
     if tracker is not None:
@@ -163,15 +160,15 @@ def generate_longitudinal_coordinates(
         voltage = np.sum(rf_voltage)
 
         harmonic_number = np.round(rf_harmonic).astype(int)[0]
-        if not np.allclose(harmonic_number, rf_harmonic, atol=1.e-2, rtol=0.):
+        if not np.allclose(harmonic_number, rf_harmonic, atol=1.e-10, rtol=0.):
             raise Exception(f"Multiple harmonics detected in lattice: {rf_harmonic}")
 
-        matcher = SingleRFHarmonicMatcher(voltage=voltage,
+        matcher = SingleRFHarmonicMatcher(voltage=voltage, 
                                           length=circumference,
                                           freq=dct['freq_list'][0],
                                           p0c=particle_ref.p0c[0],
                                           slip_factor=eta,
-                                          rms_bunch_length=sigma_tau,
+                                          rms_bunch_length=sigma_tau, 
                                           distribution=distribution)
 
         tau, ptau = matcher.sample_tau_ptau(n_particles=num_particles)
