@@ -1,56 +1,62 @@
+# copyright ############################### #
+# This file is part of the Xpart Package.   #
+# Copyright (c) CERN, 2021.                 #
+# ######################################### #
+
 import numpy as np
 from scipy.constants import c
 import scipy.special
 
-from .generate_longitudinal import _characterize_tracker
 
 class SingleRFHarmonicMatcher:
-    def __init__(self, tracker=None, particle_ref=None,
+    def __init__(self,
+                 voltage=None,
+                 length=None,
+                 freq=None,
+                 p0c=None,
+                 slip_factor=None,
                  rms_bunch_length=None, distribution="parabolic",
-                 transformation_particles=400000, verbose=0):
+                 transformation_particles=400000, n_points_in_distribution=300,
+                 verbose=0):
 
-        assert tracker is not None
-        assert particle_ref is not None
-        
         self.verbose = verbose
         self.transformation_particles = transformation_particles
 
-        dct = _characterize_tracker(tracker, particle_ref)
-        atol = 1.e-10
-        voltage_list = dct["voltage_list"]
-        ## mean_voltage = np.mean(voltage_list)
-        ## if not np.allclose(mean_voltage, voltage_list, atol=atol, rtol=0.):
-        ##     raise Exception(f"Multiple harmonics detected in lattice: {voltage_list}")
-
-        harmonic_list = dct["h_list"]
-        harmonic_number = np.round(harmonic_list).astype(int)[0]
-        if not np.allclose(harmonic_number, harmonic_list, atol=atol, rtol=0.):
-            raise Exception(f"Multiple harmonics detected in lattice: {harmonic_list}")
-
-        freq = dct['freq_list'][0]
-        length = harmonic_number * particle_ref.beta0[0] * c / freq
-        p0c_eV = particle_ref.p0c[0]
-        V0 = np.sum(voltage_list)
-        eta = dct['slip_factor']
-
         # Hamoltonian: H = A cos(B tau) - C ptau^2
         # normalized Hamiltonian: m = ( sin(B/2*tau) )^2 + C/(2A) ptau^ 2
-        self.A = V0/(2.*np.pi*freq*p0c_eV/c*length)
+        self.A = voltage/(2.*np.pi*freq*p0c/c*length)
         self.B = 2*np.pi*freq/c
-        self.C = eta/2.
+        self.C = slip_factor/2.
 
         tau_ufp = self.get_unstable_fixed_point()
         dtau = 0.01*tau_ufp # don't get too close to the separatrix
+        tau_lim = tau_ufp - dtau
+        self.tau_distr_x = np.linspace(- tau_lim, tau_lim, n_points_in_distribution)
         if distribution == "parabolic":
             tau_max = np.sqrt(5)*rms_bunch_length
-            self.tau_distr_x = np.linspace(- tau_ufp + dtau, tau_ufp - dtau, 300)
-            self.tau_distr_y = 1 - (self.tau_distr_x/tau_max)**2
+            lambda_dist = lambda tau, tau_max: 1 - (tau/tau_max)**2
+            # correct bunch length (due to truncation at separatrix)
+            if tau_max > tau_lim:
+                # analytical_tau_max = np.sqrt((5*tau_lim**3*rms_bunch_length**2 - 3*tau_lim**5)/(15*tau_lim*rms_bunch_length**2 - 5*tau_lim**3))
+                func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max), -tau_lim, tau_lim))[0]
+                corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
+                tau_max = corrected_tau_max
+            self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
             self.tau_distr_y[abs(self.tau_distr_x) > tau_max] = 0
             if tau_max >= tau_ufp:
                 print(f"WARNING SingleRFHarmonicMatcher: longitudinal profile larger than bucket, truncating to unstable fixed point. tau_max = {tau_max:.4f}, tau_ufp = {tau_ufp:.4f} ")
+
+            print(f"SingleRFHarmonicMatcher: Parabolic parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         elif distribution == "gaussian":
-            self.tau_distr_x = np.linspace(- tau_ufp + dtau, tau_ufp - dtau, 300)
-            self.tau_distr_y = np.exp(-self.tau_distr_x**2/2./rms_bunch_length**2)
+            lambda_dist = lambda tau, rms: np.exp(-tau**2/2./rms**2)
+
+            # correct bunch length (due to truncation at separatrix)
+            func_to_solve = lambda new_rms: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_rms), -tau_lim, tau_lim))[0]
+            corrected_rms = scipy.optimize.fsolve(func_to_solve, x0=rms_bunch_length)[0]
+
+            print(f"SingleRFHarmonicMatcher: Gaussian parameter is equal to {corrected_rms:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
+
+            self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_rms)
         else:
             raise NotImplementedError
 
@@ -101,7 +107,7 @@ class SingleRFHarmonicMatcher:
 
     def get_separatrix(self):
         ufp = self.get_unstable_fixed_point()
-        xx = np.linspace(-ufp,ufp, 1000)
+        xx = np.linspace(-ufp, ufp, 1000)
         yy = np.sqrt(2*self.A/self.C) * np.cos(self.B/2.*xx)
         return xx, yy
 
@@ -152,3 +158,6 @@ class SingleRFHarmonicMatcher:
         print(f"SingleRFHarmonicMatcher: Sampled {n_particles} particles")
         
         return tau_new[:n_particles], ptau_new[:n_particles]
+
+    def generate(self, n_particles=20000):
+        tau, ptau = self.sample_tau_ptau(n_particles=n_particles)
