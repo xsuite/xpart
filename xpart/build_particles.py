@@ -261,7 +261,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             "specified `at_element`. No active element can be present in between."
             )
         (tracker_rmat, _
-            ) = xt.twiss_from_tracker._build_auxiliary_tracker_with_extra_markers(
+            ) = xt.twiss._build_auxiliary_tracker_with_extra_markers(
                 tracker=tracker, at_s=[match_at_s], marker_prefix='xpart_rmat_')
         at_element_tracker_rmat = tracker_rmat.line.element_names.index(
                                                                  'xpart_rmat_0')
