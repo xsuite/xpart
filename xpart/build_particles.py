@@ -263,8 +263,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             if twiss_args is None:
                 twiss_args = {}
             tw = tracker_rmat.twiss(particle_on_co=particle_on_co,
+                                    particle_ref=particle_ref,
                                     R_matrix=R_matrix, **twiss_args)
-            tw_state = tw.get_twiss_init(at_element=at_element_tracker_rmat)
+            tw_state = tw.get_twiss_init(at_element=
+                (at_element_tracker_rmat if at_element_tracker_rmat is not None else 0))
 
             WW = tw_state.W_matrix
             particle_on_co = tw_state.particle_on_co

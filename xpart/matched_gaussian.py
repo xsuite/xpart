@@ -26,12 +26,9 @@ def generate_matched_gaussian_bunch(num_particles,
                                     tracker=None,
                                     particle_ref=None,
                                     particles_class=None,
-                                    co_search_settings=None,
-                                    steps_r_matrix=None,
+                                    twiss_args=None,
                                     _context=None, _buffer=None, _offset=None,
                                     ):
-
-    Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"
@@ -84,6 +81,5 @@ def generate_matched_gaussian_bunch(num_particles,
                       y_norm=y_norm, py_norm=py_norm,
                       scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y),
                       weight=total_intensity_particles/num_particles,
-                      co_search_settings=co_search_settings,
-                      steps_r_matrix=steps_r_matrix)
+                      twiss_args=twiss_args)
     return part
