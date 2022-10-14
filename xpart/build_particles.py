@@ -168,17 +168,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         logger.warning('Ignoring collective elements in particles generation.')
         tracker = tracker._supertracker
 
-    # if tracker is not None:
-    #     if matrix_responsiveness_tol is None:
-    #         matrix_responsiveness_tol = tracker.matrix_responsiveness_tol
-    #     if matrix_stability_tol is None:
-    #         matrix_stability_tol = tracker.matrix_stability_tol
-
-    # if matrix_responsiveness_tol is None:
-    #     matrix_responsiveness_tol=lnf.DEFAULT_MATRIX_RESPONSIVENESS_TOL
-    # if matrix_stability_tol is None:
-    #     matrix_stability_tol=lnf.DEFAULT_MATRIX_STABILITY_TOL
-
     if zeta is None:
         zeta = 0
 
@@ -283,47 +272,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             WW = W_matrix
 
         WWinv = np.linalg.inv(WW)
-
-        # if particle_on_co is None:
-        #     assert tracker is not None
-        #     particle_on_co = tracker.find_closed_orbit(
-        #         particle_co_guess=Particles(
-        #             x=0, px=0, y=0, py=0, zeta=0, delta=0.,
-        #             **ref_dict),
-        #         co_search_settings=co_search_settings)
-        # else:
-        #     assert particle_on_co._capacity == 1
-
-        # if not isinstance(particle_on_co._buffer.context, xo.ContextCpu):
-        #     particle_on_co = particle_on_co.copy(_context=xo.ContextCpu())
-
-        # if R_matrix is None and W_matrix is None:
-        #     assert particle_on_co.at_element[0] == 0
-        #     assert particle_on_co.s[0] == 0
-        # assert particle_on_co.state[0] == 1
-
-        # if at_element_tracker_rmat is not None:
-        #     # Match in a different position of the line
-        #     assert at_element_tracker_rmat > 0
-        #     part_co_ctx = particle_on_co.copy(_context=tracker_rmat._buffer.context)
-        #     tracker_rmat.track(part_co_ctx, num_elements=at_element_tracker_rmat)
-        #     particle_on_co = part_co_ctx.copy(_context=xo.ContextCpu())
-
-        # if R_matrix is None and W_matrix is None:
-        #     # R matrix at location defined by particle_on_co.at_element
-        #     R_matrix = tracker_rmat.compute_one_turn_matrix_finite_differences(
-        #         particle_on_co=particle_on_co, steps_r_matrix=steps_r_matrix)
-
-        # if W_matrix is not None:
-        #     WW = W_matrix
-        #     WWinv = np.linalg.inv(WW)
-        #     assert R_matrix is None, (
-        #         'If `W_matrix` is provided, `R_matrix` cannot be provided')
-        # else:
-        #     WW, WWinv, _ = lnf.compute_linear_normal_form(R_matrix,
-        #             symplectify=symplectify,
-        #             responsiveness_tol=matrix_responsiveness_tol,
-        #             stability_tol=matrix_stability_tol)
 
         num_particles = _check_lengths(num_particles=num_particles,
             zeta=zeta, delta=delta, x_norm=x_norm, px_norm=px_norm,
