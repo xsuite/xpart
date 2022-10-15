@@ -315,7 +315,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
         XX_long[4, :] = zeta - particle_on_co._xobject.zeta[0]
-        XX_long[5, :] = pzeta - particle_on_co._xobjects.ptau[0] / beta0
+        XX_long[5, :] = pzeta - particle_on_co._xobject.ptau[0] / beta0
 
         XX_norm_scaled = np.dot(WWinv, XX_long)
 
@@ -404,7 +404,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         else:
             assert particle_on_co.at_element[0] == at_element
             particles.s[:num_particles] = particle_on_co._xobject.s[0]
-        particles.at_element[:num_particles] = at_element
+        particles.at_element[:num_particles] = at_element:318
+
         particles.start_tracking_at_element = at_element
 
     return particles
