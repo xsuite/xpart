@@ -42,6 +42,26 @@ def test_build_particles_normalized():
             assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
             assert np.all(dct['p0c'] == 7e12)
 
+            # Test the 4d mode
+            for ee in tracker.line.elements:
+                if isinstance(ee, xt.Cavity):
+                    ee.voltage = 0
+
+            # Built a set of three particles with different x coordinates
+            particles = xp.build_particles(_context=ctx, method='4d',
+                                           tracker=tracker, particle_ref=p0,
+                                           zeta=0, delta=1e-3,
+                                           x_norm=[1,0,-1], # in sigmas
+                                           px_norm=[0,1,0], # in sigmas
+                                           nemitt_x=3e-6, nemitt_y=3e-6)
+
+            dct = particles.to_dict() # transfers it to cpu
+            assert np.allclose(dct['x'], [-0.00038813 , -0.00060738 , -0.00082664],
+                               rtol=0, atol=1e-7)
+            assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
+            assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
+            assert np.all(dct['p0c'] == 7e12)
+
 def test_build_particles_normalized_closed_orbit():
     for ctx in xo.context.get_test_contexts():
         print(f"Test {ctx.__class__}")
