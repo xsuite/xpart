@@ -314,8 +314,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
-        XX_long[4, :] = zeta - particle_on_co.zeta
-        XX_long[5, :] = pzeta - particle_on_co.ptau / beta0
+        XX_long[4, :] = zeta - particle_on_co._xobject.zeta[0]
+        XX_long[5, :] = pzeta - particle_on_co._xobjects.ptau[0] / beta0
 
         XX_norm_scaled = np.dot(WWinv, XX_long)
 
@@ -327,12 +327,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Transform to physical coordinates
         XX = np.dot(WW, XX_norm_scaled)
 
-        XX[0, :] += particle_on_co.x
-        XX[1, :] += particle_on_co.px
-        XX[2, :] += particle_on_co.y
-        XX[3, :] += particle_on_co.py
-        XX[4, :] += particle_on_co.zeta
-        XX[5, :] += particle_on_co.ptau / beta0
+        XX[0, :] += particle_on_co._xobject.x[0]
+        XX[1, :] += particle_on_co._xobject.px[0]
+        XX[2, :] += particle_on_co._xobject.y[0]
+        XX[3, :] += particle_on_co._xobject.py[0]
+        XX[4, :] += particle_on_co._xobject.zeta[0]
+        XX[5, :] += particle_on_co._xobject.ptau[0] / beta0
 
     elif mode == 'set':
 
@@ -400,10 +400,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if at_element is not None:
         if match_at_s is not None:
-            particles.s[:num_particles] = particle_on_co.s[0] + length_aux_drift
+            particles.s[:num_particles] = particle_on_co._xobject.s[0] + length_aux_drift
         else:
             assert particle_on_co.at_element[0] == at_element
-            particles.s[:num_particles] = particle_on_co.s[0]
+            particles.s[:num_particles] = particle_on_co._xobject.s[0]
         particles.at_element[:num_particles] = at_element
         particles.start_tracking_at_element = at_element
 
