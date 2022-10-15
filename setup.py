@@ -4,6 +4,7 @@
 # ######################################### #
 
 from setuptools import setup, find_packages, Extension
+from pathlib import Path
 
 #######################################
 # Prepare list of compiled extensions #
@@ -16,9 +17,15 @@ extensions = []
 # Setup #
 #########
 
+version_file = Path(__file__).parent / 'xpart/_version.py'
+dd = {}
+with open(version_file.absolute(), 'r') as fp:
+    exec(fp.read(), dd)
+__version__ = dd['__version__']
+
 setup(
     name='xpart',
-    version='0.8.4',
+    version=__version__,
     description='Generation of Particle Ensembles',
     long_description=('Tools for the generation of particle ensembles'
                 'in beam dynamics simulations.\n\n'
@@ -41,6 +48,6 @@ setup(
             "Source Code": "https://github.com/xsuite/xpart",
         },
     extras_require={
-        'tests': ['cpymad', 'PyHEADTAIL'],
+        'tests': ['cpymad', 'PyHEADTAIL', 'pytest'],
         },
     )
