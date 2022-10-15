@@ -742,7 +742,10 @@ class Particles(xo.HybridClass):
 
     @property
     def energy(self):
-        return self.energy0 + self.ptau * self.p0c  # eV
+        energy = self.energy0 + self.ptau * self.p0c  # eV
+        return self._buffer.context.linked_array_type.from_array(
+                                            energy, mode='readonly',
+                                            container=self)
 
     def add_to_energy(self, delta_energy):
         beta0 = self.beta0.copy()
