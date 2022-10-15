@@ -11,7 +11,7 @@ import xtrack as xt
 import xobjects as xo
 
 ctx = xo.context_default
-ctx = xo.ContextPyopencl()
+#ctx = xo.ContextPyopencl()
 
 # Load machine model (from pymask)
 filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
@@ -29,7 +29,7 @@ theta = np.linspace(0, 2*np.pi, 1000)
 at_element = 'ip2'
 particles = xp.build_particles(tracker=tracker, _context=ctx,
                    x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
-                   scale_with_transverse_norm_emitt=(2.5e-6, 2.5e-6),
+                   nemitt_x=2.5e-6, nemitt_y=2.5e-6,
                    at_element=at_element)
 
 tw = tracker.twiss(at_elements=[at_element])
@@ -46,7 +46,7 @@ mon = tracker.record_last_track
 i_ele_start = tracker.line.element_names.index(at_element)
 assert np.all(mon.at_element[:, :i_ele_start] == 0)
 assert np.all(mon.at_element[:, i_ele_start] == i_ele_start)
-assert np.all(mon.at_element[:, -1] == len(tracker.line.element_names) -1)
+assert np.all(mon.at_element[:, -1] == len(tracker.line.element_names))
 
 # Check that distribution is matched at the end of the turn
 tw0 = tracker.twiss(at_elements=[0])
@@ -59,7 +59,7 @@ assert np.isclose(
 at_element = 'ip2'
 particles = xp.build_particles(tracker=tracker, _context=ctx,
                    x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
-                   scale_with_transverse_norm_emitt=(2.5e-6, 2.5e-6),
+                   nemitt_x=2.5e-6, nemitt_y=2.5e-6,
                    at_element=at_element)
 
 tw = tracker.twiss(at_elements=[at_element])
@@ -81,7 +81,6 @@ assert np.all(particles.at_turn==3)
 assert np.allclose(particles.s, 3*tracker.line.get_length(), rtol=0, atol=1e-7)
 
 # Check collective case
-import pdb; pdb.set_trace()
 line_w_collective = xt.Line.from_dict(input_data['line'], _context=ctx)
 for ip in range(8):
     line_w_collective.element_dict[f'ip{ip+1}'].iscollective = True
@@ -94,7 +93,7 @@ assert len(tracker._parts) == 16
 at_element = 'ip2'
 particles = xp.build_particles(tracker=tracker, _context=ctx,
                    x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
-                   scale_with_transverse_norm_emitt=(2.5e-6, 2.5e-6),
+                   nemitt_x=2.5e-6, nemitt_y=2.5e-6,
                    at_element=at_element)
 
 tw = tracker.twiss(at_elements=[at_element])
@@ -119,7 +118,7 @@ assert np.allclose(particles.s, 3*tracker.line.get_length(), rtol=0, atol=1e-7)
 at_element = 'ip6'
 particles = xp.build_particles(tracker=tracker, _context=ctx,
                    x_norm=r_sigma*np.cos(theta), px_norm=r_sigma*np.sin(theta),
-                   scale_with_transverse_norm_emitt=(2.5e-6, 2.5e-6),
+                   nemitt_x=2.5e-6, nemitt_y=2.5e-6,
                    at_element=at_element,
                    match_at_s=tracker.line.get_s_position('ip6') + 100
                    )

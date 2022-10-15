@@ -4,6 +4,7 @@
 # ######################################### #
 
 import logging
+import warnings
 
 import numpy as np
 
@@ -49,6 +50,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       particle_on_co=None,
                       R_matrix=None,
                       W_matrix=None,
+                      method=None,
+                      nemitt_x=None, nemitt_y=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
                       particles_class=None,
@@ -112,9 +115,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
           space.
         - W_matrix: 6x6 matrix with the eigenvalues of the one-turn map
           (R_matrix). If provided, the R_matrix can be omitted.
-        - scale_with_transverse_norm_emitt: Tuple of two elements defining the
-          transverse normalized emittances used to rescale the provided
-          transverse normalized coordinates (x, px, y, py).
+        - nemitt_x: transverse normalized emittance in x.
+        - nemitt_y: transverse normalized emittance in y.
         - weight: weights to be assigned to the particles.
         - at_element: location within the line at which particles are generated.
           It can be an index or an element name. It can be given  only if
@@ -132,6 +134,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if particles_class is not None:
         raise NotImplementedError
+
+    # Deprecation warning for scale_with_transverse_norm_emitt
+    if scale_with_transverse_norm_emitt is not None:
+        warnings.warn(
+            "scale_with_transverse_norm_emitt is deprecated. Use "
+            "nemitt_x and nemitt_y instead.",
+            DeprecationWarning)
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"
@@ -262,6 +271,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         if W_matrix is None:
             if twiss_args is None:
                 twiss_args = {}
+            if method is not None:
+                twiss_args['method'] = method
             tw = tracker_rmat.twiss(particle_on_co=particle_on_co,
                                     particle_ref=particle_ref,
                                     R_matrix=R_matrix, **twiss_args)
@@ -281,24 +292,25 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         if scale_with_transverse_norm_emitt is not None:
             assert len(scale_with_transverse_norm_emitt) == 2
+            assert nemitt_x is None and nemitt_y is None, (
+                "If `scale_with_transverse_norm_emitt` is provided, "
+                "`nemitt_x` and `nemitt_y` should not be provided.")
 
             nemitt_x = scale_with_transverse_norm_emitt[0]
             nemitt_y = scale_with_transverse_norm_emitt[1]
 
-            gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
-            gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
+        if nemitt_x is None:
+            nemitt_x = 1
+        if nemitt_y is None:
+            nemitt_y = 1
 
-            x_norm_scaled = np.sqrt(gemitt_x) * x_norm
-            px_norm_scaled = np.sqrt(gemitt_x) * px_norm
-            y_norm_scaled = np.sqrt(gemitt_y) * y_norm
-            py_norm_scaled = np.sqrt(gemitt_y) * py_norm
-        else:
-            x_norm_scaled = x_norm
-            px_norm_scaled = px_norm
-            y_norm_scaled = y_norm
-            py_norm_scaled = py_norm
+        gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
+        gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
 
-
+        x_norm_scaled = np.sqrt(gemitt_x) * x_norm
+        px_norm_scaled = np.sqrt(gemitt_x) * px_norm
+        y_norm_scaled = np.sqrt(gemitt_y) * y_norm
+        py_norm_scaled = np.sqrt(gemitt_y) * py_norm
 
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)

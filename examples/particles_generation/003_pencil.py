@@ -48,7 +48,7 @@ particles = xp.build_particles(
             zeta=zeta, delta=delta,
             x_norm=x_in_sigmas, px_norm=px_in_sigmas,
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
-            scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
+            nemitt_x=nemitt_x, nemitt_y=nemitt_y)
 
 # Absolute coordinates can be inspected in particle.x, particles.px, etc.
 

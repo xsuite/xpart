@@ -31,7 +31,7 @@ def test_phase_monitor():
 
         particles = xp.build_particles(tracker=tracker, x_norm=[0.1, 0.2],
                                        y_norm=[0.3, 0.4],
-                                       scale_with_transverse_norm_emitt=(2e-6,2e-6),
+                                       nemitt_x=2e-6, nemitt_y=2e-6,
                                        _context=context)
         phase_monitor = xp.PhaseMonitor(tracker=tracker, num_particles=2,
                                         twiss=tracker.twiss())

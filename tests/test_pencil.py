@@ -52,7 +52,7 @@ def test_pencil():
                     zeta=zeta, delta=delta,
                     x_norm=x_in_sigmas, px_norm=px_in_sigmas,
                     y_norm=y_in_sigmas, py_norm=py_in_sigmas,
-                    scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y))
+                    nemitt_x=nemitt_x, nemitt_y=nemitt_y)
 
         dct = particles.to_dict() # transfers it to cpu
         assert np.min(np.abs(dct['y'])) > 0.0018

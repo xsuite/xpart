@@ -33,8 +33,7 @@ def test_build_particles_normalized():
                                            zeta=0, delta=1e-3,
                                            x_norm=[1,0,-1], # in sigmas
                                            px_norm=[0,1,0], # in sigmas
-                                           scale_with_transverse_norm_emitt=(3e-6, 3e-6)
-                                           )
+                                           nemitt_x=3e-6, nemitt_y=3e-6)
 
             dct = particles.to_dict() # transfers it to cpu
             assert np.allclose(dct['x'], [-0.0003883 , -0.0006076 , -0.00082689],
@@ -69,8 +68,7 @@ def test_build_particles_normalized_closed_orbit():
                                            delta=particle_on_co._xobject.delta[0],
                                            x_norm=0, # in sigmas
                                            px_norm=0, # in sigmas
-                                           scale_with_transverse_norm_emitt=(3e-6, 3e-6)
-                                           )
+                                           nemitt_x=3e-6, nemitt_y=3e-6)
 
             dct = particles.to_dict()
             dct_co = particle_on_co.to_dict()

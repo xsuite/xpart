@@ -27,6 +27,6 @@ particles = xp.build_particles(_context=ctx,
                                zeta=0, delta=1e-3,
                                x_norm=[1,0,-1], # in sigmas
                                px_norm=[0,1,0], # in sigmas
-                               scale_with_transverse_norm_emitt=(3e-6, 3e-6)
-                               )
+                               nemitt_x=3e-6, nemitt_y=3e-6)
+
 #!end-doc-part
