@@ -27,7 +27,7 @@ def generate_matched_gaussian_bunch(num_particles,
                                     particle_ref=None,
                                     particles_class=None,
                                     _context=None, _buffer=None, _offset=None,
-                                    **kwargs,
+                                    **kwargs, # They are passed to build_particles
                                     ):
 
     if (particle_ref is not None and particle_on_co is not None):
