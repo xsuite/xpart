@@ -45,19 +45,6 @@ delta_rms = np.std(particles.delta)
 zeta_rms = np.std(particles.zeta)
 
 
-fopt = ('../../../xtrack/test_data/sps_w_spacecharge/'
-            'optics_and_co_at_start_ring.json')
-with open(fopt, 'r') as fid:
-    dopt = json.load(fid)
-gemitt_x = nemitt_x/part_ref.beta0/part_ref.gamma0
-gemitt_y = nemitt_y/part_ref.beta0/part_ref.gamma0
-assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
-assert np.isclose(x_rms,
-             np.sqrt(dopt['betx']*gemitt_x + dopt['dx']**2*delta_rms**2),
-             rtol=1e-2, atol=1e-15)
-assert np.isclose(y_rms,
-             np.sqrt(dopt['bety']*gemitt_y + dopt['dy']**2*delta_rms**2),
-             rtol=1e-2, atol=1e-15)
 
 import matplotlib.pyplot as plt
 plt.close('all')
