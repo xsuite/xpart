@@ -55,7 +55,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
                       particles_class=None,
-                      twiss_args=None,
+                      **kwargs, # They are passed to the twiss
                     ):
 
     """
@@ -269,13 +269,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if mode == 'normalized_transverse':
 
         if W_matrix is None:
-            if twiss_args is None:
-                twiss_args = {}
             if method is not None:
-                twiss_args['method'] = method
+                kwargs['method'] = method
             tw = tracker_rmat.twiss(particle_on_co=particle_on_co,
                                     particle_ref=particle_ref,
-                                    R_matrix=R_matrix, **twiss_args)
+                                    R_matrix=R_matrix, **kwargs)
             tw_state = tw.get_twiss_init(at_element=
                 (at_element_tracker_rmat if at_element_tracker_rmat is not None else 0))
 
