@@ -17,7 +17,9 @@ from .rf_bucket import RFBucket
 
 logger = logging.getLogger(__name__)
 
-def _characterize_tracker(tracker, particle_ref):
+def _characterize_tracker(tracker, particle_ref,
+                          **kwargs # passed to twiss
+                          ):
 
     if tracker.iscollective:
         logger.warning('Ignoring collective elements in particles generation.')
@@ -38,7 +40,8 @@ def _characterize_tracker(tracker, particle_ref):
                 voltage_list.append(eecp.voltage)
                 h_list.append(eecp.frequency*T_rev)
 
-    tw = tracker.twiss(particle_ref=particle_ref, at_elements=[line.element_names[0]])
+    tw = tracker.twiss(
+        particle_ref=particle_ref, at_elements=[line.element_names[0]], **kwargs)
 
     dct={}
     dct['T_rev'] = T_rev
@@ -62,12 +65,13 @@ def generate_longitudinal_coordinates(
                                     rf_phase=None,
                                     p_increment=0.,
                                     distribution='gaussian',
-                                    sigma_z=None
+                                    sigma_z=None,
+                                    **kwargs # passed to twiss
                                     ):
 
     if tracker is not None:
         assert particle_ref is not None
-        dct = _characterize_tracker(tracker, particle_ref)
+        dct = _characterize_tracker(tracker, particle_ref, **kwargs)
 
     if mass0 is None:
         assert particle_ref is not None

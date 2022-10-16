@@ -26,8 +26,8 @@ def generate_matched_gaussian_bunch(num_particles,
                                     tracker=None,
                                     particle_ref=None,
                                     particles_class=None,
-                                    twiss_args=None,
                                     _context=None, _buffer=None, _offset=None,
+                                    **kwargs,
                                     ):
 
     if (particle_ref is not None and particle_on_co is not None):
@@ -81,5 +81,5 @@ def generate_matched_gaussian_bunch(num_particles,
                       y_norm=y_norm, py_norm=py_norm,
                       scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y),
                       weight=total_intensity_particles/num_particles,
-                      twiss_args=twiss_args)
+                      **kwargs)
     return part
