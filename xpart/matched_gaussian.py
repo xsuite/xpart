@@ -55,7 +55,8 @@ def generate_matched_gaussian_bunch(num_particles,
             rf_voltage=rf_voltage,
             rf_phase=rf_phase,
             p_increment=p_increment,
-            sigma_z=sigma_z)
+            sigma_z=sigma_z,
+            **kwargs)
 
     assert len(zeta) == len(delta) == num_particles
 
