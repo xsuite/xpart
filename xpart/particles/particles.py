@@ -747,6 +747,13 @@ class Particles(xo.HybridClass):
                                             energy, mode='readonly',
                                             container=self)
 
+    @property
+    def pzeta(self):
+        pzeta = self.ptau / self.beta0
+        return self._buffer.context.linked_array_type.from_array(
+                                            pzeta, mode='readonly',
+                                            container=self)
+
     def add_to_energy(self, delta_energy):
         beta0 = self.beta0.copy()
         delta_beta0 = self.delta * beta0
