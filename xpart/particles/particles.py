@@ -102,7 +102,7 @@ class Particles(xo.HybridClass):
              - rvv [1]:  beta / beta0
              - rpp [1]:  m/m0 P0c / Pc = 1/(1+delta)
              - zeta [m]:  (s - beta0 c t )
-             - tau [m]: (s - ct)
+             - tau [m]: (s / beta0 - ct)
              - mass0 [eV]: Reference rest mass
              - q0 [e]:  Reference charge
              - p0c [eV]: Reference momentum
@@ -745,6 +745,13 @@ class Particles(xo.HybridClass):
         energy = self.energy0 + self.ptau * self.p0c  # eV
         return self._buffer.context.linked_array_type.from_array(
                                             energy, mode='readonly',
+                                            container=self)
+
+    @property
+    def pzeta(self):
+        pzeta = self.ptau / self.beta0
+        return self._buffer.context.linked_array_type.from_array(
+                                            pzeta, mode='readonly',
                                             container=self)
 
     def add_to_energy(self, delta_energy):

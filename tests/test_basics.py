@@ -40,6 +40,12 @@ def _check_consistency_energy_variables(particles):
     assert np.allclose(particles.ptau, (energy - particles.energy0)/particles.p0c,
                        rtol=1e-14, atol=1e-14)
 
+    # Check consistency of pzeta
+    energy = particles.mass0 * gamma
+    assert np.allclose(particles.pzeta, (energy - particles.energy0)/(particles.beta0 * particles.p0c),
+                       rtol=1e-14, atol=1e-14)
+
+
     # Check energy property
     assert np.allclose(particles.energy, energy, rtol=1e-14, atol=1e-14)
 
