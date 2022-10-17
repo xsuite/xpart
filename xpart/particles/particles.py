@@ -102,7 +102,7 @@ class Particles(xo.HybridClass):
              - rvv [1]:  beta / beta0
              - rpp [1]:  m/m0 P0c / Pc = 1/(1+delta)
              - zeta [m]:  (s - beta0 c t )
-             - tau [m]: (s - ct)
+             - tau [m]: (s / beta0 - ct)
              - mass0 [eV]: Reference rest mass
              - q0 [e]:  Reference charge
              - p0c [eV]: Reference momentum
