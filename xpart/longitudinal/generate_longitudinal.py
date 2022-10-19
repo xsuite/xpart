@@ -70,6 +70,7 @@ def generate_longitudinal_coordinates(
                                     distribution='gaussian',
                                     sigma_z=None,
                                     engine="pyheadtail",
+                                    return_matcher=False,
                                     **kwargs # passed to twiss
                                     ):
 
@@ -152,8 +153,8 @@ def generate_longitudinal_coordinates(
         if eta < 0:
             raise NotImplementedError
 
-        # if not a proton
-        if q0 != 1.0 or particle_ref.chi != 1.0 or abs(mass0 - PROTON_MASS_EV) > 1.:
+        # if fragment
+        if particle_ref.chi != 1.0:
             raise NotImplementedError
 
         sigma_tau = sigma_z/particle_ref.beta0[0]
@@ -161,10 +162,11 @@ def generate_longitudinal_coordinates(
         voltage = np.sum(rf_voltage)
 
         harmonic_number = np.round(rf_harmonic).astype(int)[0]
-        if not np.allclose(harmonic_number, rf_harmonic, atol=1.e-10, rtol=0.):
+        if not np.allclose(harmonic_number, rf_harmonic, atol=1.e-2, rtol=0.):
             raise Exception(f"Multiple harmonics detected in lattice: {rf_harmonic}")
 
-        matcher = SingleRFHarmonicMatcher(voltage=voltage, 
+        matcher = SingleRFHarmonicMatcher(q0=q0,
+                                          voltage=voltage,
                                           length=circumference,
                                           freq=dct['freq_list'][0],
                                           p0c=particle_ref.p0c[0],
@@ -179,4 +181,7 @@ def generate_longitudinal_coordinates(
         temp_particles = Particles(p0c=particle_ref.p0c, zeta=z_particles, ptau=ptau)
         delta_particles = np.array(temp_particles.delta)
 
-    return z_particles, delta_particles
+    if return_matcher:
+        return z_particles, delta_particles, matcher
+    else:
+        return z_particles, delta_particles

@@ -10,6 +10,7 @@ import scipy.special
 
 class SingleRFHarmonicMatcher:
     def __init__(self,
+                 q0=None,
                  voltage=None,
                  length=None,
                  freq=None,
@@ -24,7 +25,7 @@ class SingleRFHarmonicMatcher:
 
         # Hamoltonian: H = A cos(B tau) - C ptau^2
         # normalized Hamiltonian: m = ( sin(B/2*tau) )^2 + C/(2A) ptau^ 2
-        self.A = voltage/(2.*np.pi*freq*p0c/c*length)
+        self.A = q0*voltage/(2.*np.pi*freq*p0c/c*length)
         self.B = 2*np.pi*freq/c
         self.C = slip_factor/2.
 
