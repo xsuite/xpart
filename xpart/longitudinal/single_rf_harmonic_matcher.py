@@ -27,7 +27,10 @@ class SingleRFHarmonicMatcher:
         # normalized Hamiltonian: m = ( sin(B/2*tau) )^2 + C/(2A) ptau^ 2
         self.A = q0*voltage/(2.*np.pi*freq*p0c/c*length)
         self.B = 2*np.pi*freq/c
-        self.C = slip_factor/2.
+        self.C = abs(slip_factor)/2.
+        # the difference between above and below transition is that the Hamiltonian flips sign
+        # (considering always the absolute value of the slip factor)a. This is the same as if
+        # the particle goes back in turns. For the purpose of matching, this is of no concern. 
 
         tau_ufp = self.get_unstable_fixed_point()
         dtau = 0.01*tau_ufp # don't get too close to the separatrix

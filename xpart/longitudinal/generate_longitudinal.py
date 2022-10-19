@@ -149,10 +149,6 @@ def generate_longitudinal_coordinates(
         
         eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
 
-        # if below transition
-        if eta < 0:
-            raise NotImplementedError
-
         # if fragment
         if particle_ref.chi != 1.0:
             raise NotImplementedError
