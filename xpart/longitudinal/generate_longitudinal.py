@@ -75,8 +75,12 @@ def generate_longitudinal_coordinates(
                                     ):
 
     if tracker is not None:
+        if particle_ref is None:
+            particle_ref = tracker.line.particle_ref 
         assert particle_ref is not None
         dct = _characterize_tracker(tracker, particle_ref, **kwargs)
+
+    assert particle_ref is not None
 
     if mass0 is None:
         assert particle_ref is not None
@@ -158,7 +162,7 @@ def generate_longitudinal_coordinates(
         voltage = np.sum(rf_voltage)
 
         harmonic_number = np.round(rf_harmonic).astype(int)[0]
-        if not np.allclose(harmonic_number, rf_harmonic, atol=1.e-2, rtol=0.):
+        if not np.allclose(harmonic_number, rf_harmonic, atol=5.e-1, rtol=0.):
             raise Exception(f"Multiple harmonics detected in lattice: {rf_harmonic}")
 
         matcher = SingleRFHarmonicMatcher(q0=q0,
