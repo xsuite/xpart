@@ -9,6 +9,9 @@
 @brief module for matching longitudinal particle distributions to an RFBucket instance
 '''
 import numpy as np
+import logging
+import warnings
+
 from scipy.optimize import brentq, newton
 from scipy.integrate import fixed_quad
 from scipy.constants import e, c
@@ -16,6 +19,9 @@ from functools import partial
 from abc import abstractmethod
 
 from . import pdf_integrators_2d as integr
+
+logger = logging.getLogger(__name__)
+
 
 class RFBucketMatcher:
 
@@ -37,8 +43,8 @@ class RFBucketMatcher:
                  *args, **kwargs):
 
         if psi is not None:
-            self.warns('\n\n*** DEPRECATED: keyword argument "psi" will '
-                       'be removed in a future PyHEADTAIL release!')
+            warnings.warn('Keyword argument "psi" will be removed in a future '
+                          'PyHEADTAIL release!', DeprecationWarning)
             if distribution_type is not None:
                 raise TypeError('RFBucketMatcher accepts either '
                                 'distribution_type or psi as argument. ')
@@ -76,9 +82,9 @@ class RFBucketMatcher:
             self.rfbucket.circumference, from_variable='sigma')
         epsn_max = self._compute_emittance(self.rfbucket, self.psi)
         if epsn_z > epsn_max:
-            self.warns('Given RMS emittance does not fit into bucket. '
-                       'Using (maximum) full bucket emittance ' +
-                       str(epsn_max*0.99) + 'eV s instead.')
+            logger.warning('Given RMS emittance does not fit into bucket. '
+                           'Using (maximum) full bucket emittance ' +
+                           str(epsn_max*0.99) + 'eV s instead.')
             epsn_z = epsn_max*0.99
         print('*** Maximum RMS emittance ' + str(epsn_max) + 'eV s.')
 
@@ -98,7 +104,7 @@ class RFBucketMatcher:
             ec_bar = brentq(error_from_target_epsn, epsn_z/100, 2*epsn_max,
                             rtol=1e-5)
         except ValueError:
-            self.warns(
+            logger.warning(
                 'RFBucketMatcher: failed to converge with Brent method, '
                 'continuing with Newton-Raphson method.')
             ec_bar = newton(error_from_target_epsn, epsn_z, tol=1e-5)
@@ -116,9 +122,9 @@ class RFBucketMatcher:
             self.rfbucket.circumference, from_variable='sigma')
         sigma_max = self._compute_sigma(self.rfbucket, self.psi)
         if sigma > sigma_max:
-            self.warns('Given RMS bunch length does not fit into bucket. '
-                       'Using (maximum) full bucket RMS bunch length ' +
-                       str(sigma_max*0.99) + 'm instead.')
+            logger.warning('Given RMS bunch length does not fit into bucket. '
+                           'Using (maximum) full bucket RMS bunch length ' +
+                           str(sigma_max*0.99) + 'm instead.')
             sigma = sigma_max*0.99
         print('*** Maximum RMS bunch length ' + str(sigma_max) + 'm.')
 
@@ -139,7 +145,7 @@ class RFBucketMatcher:
             sc_bar = brentq(error_from_target_sigma, sigma/100, 2*sigma_max,
                             rtol=1e-5)
         except ValueError:
-            self.warns(
+            logger.warning(
                 'RFBucketMatcher: failed to converge with Brent method, '
                 'continuing with Newton-Raphson method.')
             sc_bar = newton(error_from_target_sigma, sigma, tol=1e-5)
