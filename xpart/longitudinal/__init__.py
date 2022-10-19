@@ -4,3 +4,4 @@
 # ######################################### #
 
 from .generate_longitudinal import generate_longitudinal_coordinates
+from .single_rf_harmonic_matcher import SingleRFHarmonicMatcher
