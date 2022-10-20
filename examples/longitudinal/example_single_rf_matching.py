@@ -18,7 +18,8 @@ ctx = xo.ContextCpu()
 scenario = 'protons' # can be "protons" or "ions"
 
 if scenario == 'protons':
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = xt._pkg_root.parent.joinpath(
+        'test_data/sps_w_spacecharge/line_no_spacecharge_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
         line = xt.Line.from_dict(input_data['line'])
@@ -32,7 +33,7 @@ elif scenario == 'ions':
 
 tracker = xt.Tracker(_context=ctx, line=line)
 
-rms_bunch_length=0.16
+rms_bunch_length=0.25
 distribution = "gaussian"
 n_particles = 100000
 zeta, delta, matcher = xp.generate_longitudinal_coordinates(tracker=tracker,
@@ -50,13 +51,16 @@ particles = xp.build_particles(_context=ctx,
                                scale_with_transverse_norm_emitt=(3e-6, 3e-6)
                                )
 
-x_sep, y_sep = matcher.get_separatrix()
+zeta_sep, delta_sep = matcher.get_separatrix()
 tau = zeta/tracker.line.particle_ref.beta0
 plt.close('all')
 plt.figure(1)
-plt.hist2d(zeta, delta, bins=100, range=((-0.7,0.7), (-0.001, 0.001)), cmin=0.001)
-plt.plot(x_sep, y_sep, 'r')
-plt.plot(x_sep, -y_sep, 'r')
+plt.hist2d(zeta, delta, bins=100,
+        range=((-1.05 * np.max(zeta_sep), 1.05 * np.max(zeta_sep)),
+               (-1.05*np.max(delta_sep), 1.05*np.max(delta_sep))),
+        cmin=0.001)
+plt.plot(zeta_sep, delta_sep, 'r')
+plt.plot(zeta_sep, -delta_sep, 'r')
 plt.xlabel('zeta [m]')
 plt.ylabel('delta')
 
