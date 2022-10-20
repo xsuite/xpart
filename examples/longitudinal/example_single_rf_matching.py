@@ -25,6 +25,9 @@ with open(filename, 'r') as fid:
     input_data = json.load(fid)
 tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data['line']))
 
+
+
+
 rms_bunch_length=0.14
 distribution = "gaussian"
 n_particles = 1000000
@@ -33,10 +36,10 @@ zeta, delta, matcher = xp.generate_longitudinal_coordinates(tracker=tracker, par
                                                  sigma_z=rms_bunch_length, distribution=distribution,
                                                  engine="single-rf-harmonic", return_matcher=True)
                                                  #engine="pyheadtail", return_matcher=True)
-    
+
 # Built a set of three particles with different x coordinates
 particles = xp.build_particles(_context=ctx,
-                               tracker=tracker, particle_ref=p0,
+                               tracker=tracker,
                                zeta=zeta, delta=delta,
                                x_norm=0, # in sigmas
                                px_norm=0, # in sigmas
@@ -44,6 +47,7 @@ particles = xp.build_particles(_context=ctx,
                                )
 
 x_sep, y_sep = matcher.get_separatrix()
+tau = zeta/tracker.line.particle_ref.beta0
 plt.figure(1)
 plt.hist2d(zeta, delta, bins=100, range=((-0.7,0.7), (-0.001, 0.001)), cmin=0.001)
 plt.plot(x_sep, y_sep, 'r')
@@ -54,7 +58,7 @@ plt.ylabel('delta')
 tau_distr_y = matcher.tau_distr_y
 tau_distr_x = matcher.tau_distr_x
 dx = tau_distr_x[1] - tau_distr_x[0]
-hist, _  = np.histogram(zeta, range=(tau_distr_x[0]-dx/2., tau_distr_x[-1]+dx/2.), bins=len(tau_distr_x))
+hist, _  = np.histogram(tau, range=(tau_distr_x[0]-dx/2., tau_distr_x[-1]+dx/2.), bins=len(tau_distr_x))
 hist = hist / sum(hist) * sum(tau_distr_y)
 plt.figure(2)
 plt.plot(tau_distr_x, hist, 'bo', label="sampled line density")

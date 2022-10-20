@@ -15,21 +15,32 @@ import time
 
 ctx = xo.ContextCpu()
 
-# Load machine model (from pymask)
-filename = xt._pkg_root.parent.joinpath('test_data/sps_ions/line.json')
-with open(filename, 'r') as fid:
-    input_data = json.load(fid)
-tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data))
+scenario = 'protons' # can be "protons" or "ions"
 
-rms_bunch_length=0.20
+if scenario == 'protons':
+    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    with open(filename, 'r') as fid:
+        input_data = json.load(fid)
+        line = xt.Line.from_dict(input_data['line'])
+        line.particle_ref = xp.Particles.from_dict(input_data['particle'])
+elif scenario == 'ions':
+    # Load machine model (from pymask)
+    filename = xt._pkg_root.parent.joinpath('test_data/sps_ions/line.json')
+    with open(filename, 'r') as fid:
+        input_data = json.load(fid)
+        line=xt.Line.from_dict(input_data)
+
+tracker = xt.Tracker(_context=ctx, line=line)
+
+rms_bunch_length=0.16
 distribution = "gaussian"
-n_particles = 1000000
+n_particles = 100000
 zeta, delta, matcher = xp.generate_longitudinal_coordinates(tracker=tracker,
                                                  num_particles=n_particles,
                                                  sigma_z=rms_bunch_length, distribution=distribution,
                                                  engine="single-rf-harmonic", return_matcher=True)
                                                  #engine="pyheadtail", return_matcher=True)
-    
+
 # Built a set of three particles with different x coordinates
 particles = xp.build_particles(_context=ctx,
                                tracker=tracker,
@@ -41,6 +52,7 @@ particles = xp.build_particles(_context=ctx,
 
 x_sep, y_sep = matcher.get_separatrix()
 tau = zeta/tracker.line.particle_ref.beta0
+plt.close('all')
 plt.figure(1)
 plt.hist2d(zeta, delta, bins=100, range=((-0.7,0.7), (-0.001, 0.001)), cmin=0.001)
 plt.plot(x_sep, y_sep, 'r')
