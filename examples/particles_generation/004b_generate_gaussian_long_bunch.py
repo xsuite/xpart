@@ -13,23 +13,21 @@ import xpart as xp
 import xtrack as xt
 
 bunch_intensity = 1e11
-sigma_z = 22.5e-2
+sigma_z = 25e-2
 n_part = int(5e5)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
-filename = ('../../../xtrack/test_data/sps_w_spacecharge'
-            '/line_no_spacecharge_and_particle.json')
+filename = ('../../../xtrack/test_data/sps_ions/line.json')
 with open(filename, 'r') as fid:
     ddd = json.load(fid)
-line = xt.Line.from_dict(ddd['line'])
-line.particle_ref = xp.Particles.from_dict(ddd['particle'])
-
+line = xt.Line.from_dict(ddd)
 tracker = line.build_tracker()
 
 particles = xp.generate_matched_gaussian_bunch(
          num_particles=n_part, total_intensity_particles=bunch_intensity,
          nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
+         engine='single-rf-harmonic',
          tracker=tracker)
 
 
