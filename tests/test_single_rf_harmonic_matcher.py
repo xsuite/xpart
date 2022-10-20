@@ -15,8 +15,8 @@ def test_single_rf_harmonic_matcher_rms_and_profile():
     for ctx in xo.context.get_test_contexts():
         print(f"Test {ctx.__class__}")
 
-        for type in ["ions",]:# "ions"]:
-            if type == "protons":
+        for scenario in ["ions", 'protons']:
+            if scenario == "protons":
                 # Build a reference particle
                 p0 = xp.Particles(mass0=xp.PROTON_MASS_EV, q0=1, p0c=7e12, x=1, y=3,
                                   delta=[10], _context=ctx)
@@ -28,8 +28,8 @@ def test_single_rf_harmonic_matcher_rms_and_profile():
                 tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data['line']))
                 tracker.line.particle_ref = p0
 
-            elif type == "ions":
-                # Load machine model (spsio)
+            elif scenario == "ions":
+                # Load machine model (spsion)
                 filename = xt._pkg_root.parent.joinpath('test_data/sps_ions/line.json')
                 with open(filename, 'r') as fid:
                     input_data = json.load(fid)
