@@ -15,7 +15,7 @@ import time
 
 ctx = xo.ContextCpu()
 
-scenario = 'protons' # can be "protons" or "ions"
+scenario = 'ions' # can be "protons" or "ions"
 
 if scenario == 'protons':
     filename = xt._pkg_root.parent.joinpath(
