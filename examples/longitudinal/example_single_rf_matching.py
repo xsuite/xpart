@@ -52,7 +52,7 @@ particles = xp.build_particles(_context=ctx,
                                )
 
 zeta_sep, delta_sep = matcher.get_separatrix()
-tau = zeta/tracker.line.particle_ref.beta0
+beta0 = tracker.line.particle_ref.beta0
 plt.close('all')
 plt.figure(1)
 plt.hist2d(zeta, delta, bins=100,
@@ -64,14 +64,14 @@ plt.plot(zeta_sep, -delta_sep, 'r')
 plt.xlabel('zeta [m]')
 plt.ylabel('delta')
 
-tau_distr_y = matcher.tau_distr_y
-tau_distr_x = matcher.tau_distr_x
-dx = tau_distr_x[1] - tau_distr_x[0]
-hist, _  = np.histogram(tau, range=(tau_distr_x[0]-dx/2., tau_distr_x[-1]+dx/2.), bins=len(tau_distr_x))
-hist = hist / sum(hist) * sum(tau_distr_y)
+zeta_distr_y = matcher.tau_distr_y
+zeta_distr_x = matcher.tau_distr_x * beta0
+dx = zeta_distr_x[1] - zeta_distr_x[0]
+hist, _  = np.histogram(zeta, range=(zeta_distr_x[0]-dx/2., zeta_distr_x[-1]+dx/2.), bins=len(zeta_distr_x))
+hist = hist / sum(hist) * sum(zeta_distr_y)
 plt.figure(2)
-plt.plot(tau_distr_x, hist, 'bo', label="sampled line density")
-plt.plot(tau_distr_x, tau_distr_y, 'r-', label="input line density")
+plt.plot(zeta_distr_x, hist, 'bo', label="sampled line density")
+plt.plot(zeta_distr_x, zeta_distr_y, 'r-', label="input line density")
 plt.xlabel('ζ [m]')
 plt.legend()
 
