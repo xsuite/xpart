@@ -16,7 +16,6 @@ from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
 from ..particles import Particles
 from .single_rf_harmonic_matcher import SingleRFHarmonicMatcher
-from ..constants import PROTON_MASS_EV 
 
 logger = logging.getLogger(__name__)
 
