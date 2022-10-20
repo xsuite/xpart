@@ -3,9 +3,6 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-import warnings
-warnings.simplefilter('always')
-
 from .general import _pkg_root
 from .particles import Particles, gen_local_particle_api, pmass
 

@@ -10,7 +10,6 @@ import numpy as np
 
 import xobjects as xo
 
-import pdb; pdb.set_trace()
 
 import xpart as xp
 import xtrack as xt
