@@ -75,7 +75,7 @@ def generate_longitudinal_coordinates(
 
     if tracker is not None:
         if particle_ref is None:
-            particle_ref = tracker.line.particle_ref 
+            particle_ref = tracker.line.particle_ref
         assert particle_ref is not None
         dct = _characterize_tracker(tracker, particle_ref, **kwargs)
 
@@ -149,7 +149,6 @@ def generate_longitudinal_coordinates(
     elif engine == "single-rf-harmonic":
         if distribution not in ["parabolic", "gaussian"]:
             raise NotImplementedError
-        
         eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
 
         # if fragment
@@ -170,7 +169,7 @@ def generate_longitudinal_coordinates(
                                           freq=dct['freq_list'][0],
                                           p0c=particle_ref.p0c[0],
                                           slip_factor=eta,
-                                          rms_bunch_length=sigma_tau, 
+                                          rms_bunch_length=sigma_tau,
                                           distribution=distribution)
 
         tau, ptau = matcher.sample_tau_ptau(n_particles=num_particles)
@@ -179,6 +178,8 @@ def generate_longitudinal_coordinates(
         z_particles = np.array(particle_ref.beta0[0]) * np.array(tau)  # zeta
         temp_particles = Particles(p0c=particle_ref.p0c, zeta=z_particles, ptau=ptau)
         delta_particles = np.array(temp_particles.delta)
+    else:
+        raise NotImplementedError # TODO better message
 
     if return_matcher:
         return z_particles, delta_particles, matcher

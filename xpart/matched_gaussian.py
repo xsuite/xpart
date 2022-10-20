@@ -26,6 +26,7 @@ def generate_matched_gaussian_bunch(num_particles,
                                     tracker=None,
                                     particle_ref=None,
                                     particles_class=None,
+                                    engine='pyheadtail',
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs, # They are passed to build_particles
                                     ):
@@ -56,6 +57,7 @@ def generate_matched_gaussian_bunch(num_particles,
             rf_phase=rf_phase,
             p_increment=p_increment,
             sigma_z=sigma_z,
+            engine=engine,
             **kwargs)
 
     assert len(zeta) == len(delta) == num_particles
