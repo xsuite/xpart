@@ -167,7 +167,7 @@ def generate_longitudinal_coordinates(
                                           voltage=voltage,
                                           length=circumference,
                                           freq=dct['freq_list'][0],
-                                          p0c=particle_ref.p0c[0],
+                                          p0c=particle_ref._xobject.p0c[0],
                                           slip_factor=eta,
                                           rms_bunch_length=sigma_tau,
                                           distribution=distribution)
