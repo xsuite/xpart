@@ -43,7 +43,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile():
                                                                  num_particles=1000000,
                                                                  sigma_z=rms_bunch_length, distribution=distribution,
                                                                  engine="single-rf-harmonic", return_matcher=True)
-                tau = zeta / tracker.line.particle_ref.beta0
+                tau = zeta / tracker.line.particle_ref._xobject.beta0[0]
                 tau_distr_y = matcher.tau_distr_y
                 tau_distr_x = matcher.tau_distr_x
                 dx = tau_distr_x[1] - tau_distr_x[0]
