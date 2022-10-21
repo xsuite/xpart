@@ -50,5 +50,5 @@ def test_single_rf_harmonic_matcher_rms_and_profile():
                 hist, _  = np.histogram(tau, range=(tau_distr_x[0]-dx/2., tau_distr_x[-1]+dx/2.), bins=len(tau_distr_x))
                 hist = hist / sum(hist) * sum(tau_distr_y)
 
-                assert np.isclose(rms_bunch_length, np.std(tau), rtol=1e-2, atol=1e-15)
+                assert np.isclose(rms_bunch_length, np.std(zeta), rtol=2e-2, atol=1e-15)
                 assert np.all(np.isclose(hist, tau_distr_y, atol=3.e-2, rtol=1.e-2))
