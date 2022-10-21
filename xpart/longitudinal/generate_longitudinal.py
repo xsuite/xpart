@@ -175,8 +175,9 @@ def generate_longitudinal_coordinates(
         tau, ptau = matcher.sample_tau_ptau(n_particles=num_particles)
 
         # convert (tau, ptau) to (zeta, delta)
-        z_particles = np.array(particle_ref.beta0[0]) * np.array(tau)  # zeta
-        temp_particles = Particles(p0c=particle_ref.p0c, zeta=z_particles, ptau=ptau)
+        z_particles = np.array(particle_ref._xobject.beta0[0]) * np.array(tau)  # zeta
+        temp_particles = Particles(p0c=particle_ref._xobject.p0c[0],
+                                   zeta=z_particles, ptau=ptau)
         delta_particles = np.array(temp_particles.delta)
     else:
         raise NotImplementedError # TODO better message
