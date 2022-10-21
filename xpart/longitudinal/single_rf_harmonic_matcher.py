@@ -30,7 +30,7 @@ class SingleRFHarmonicMatcher:
         self.C = abs(slip_factor)/2.
         # the difference between above and below transition is that the Hamiltonian flips sign
         # (considering always the absolute value of the slip factor)a. This is the same as if
-        # the particle goes back in turns. For the purpose of matching, this is of no concern. 
+        # the particle goes back in turns. For the purpose of matching, this is of no concern.
 
         tau_ufp = self.get_unstable_fixed_point()
         dtau = 0.01*tau_ufp # don't get too close to the separatrix
@@ -82,7 +82,7 @@ class SingleRFHarmonicMatcher:
                 continue
             if self.verbose:
                 print(f"tau = {tau:.3f}, f(tau) = {dens:.3f}")
-            
+
             m0 = self.get_m(tau=tau - dx/2.)
             m1 = self.get_m(tau=tau + dx/2.)
             dm = m1 - m0
@@ -93,7 +93,7 @@ class SingleRFHarmonicMatcher:
                         f'{round(ii/N*100):2d}%  ',end="\r", flush=True)
             tau_test, ptau_test = self.get_airbag_from_m(m=m, n_particles=self.transformation_particles)
             hist, bin_edges = np.histogram(tau_test, bins=len(xp), range=(min(xp)-dx/2., max(xp)+dx/2.))
-        
+
             hist = (hist + hist[::-1])/2.
             factor = dens/hist[jj]
             yp -= hist*factor
@@ -129,10 +129,10 @@ class SingleRFHarmonicMatcher:
         G = 2.*K/np.pi
         theta = np.random.uniform(size=n_particles)*2.*np.pi
         sn, cn, dn, ph = scipy.special.ellipj(G*theta,m)
-    
+
         tau = 2./self.B*np.arcsin(np.sqrt(m)*sn)
         ptau = np.sqrt(2*self.A*m/self.C)*cn
-    
+
         return tau, ptau
 
     def sample_tau_ptau(self, n_particles=20000):
@@ -144,23 +144,23 @@ class SingleRFHarmonicMatcher:
         chunk = 20000
         ### Acceptance-rejection algorithm sampling from distribution of m and a random "angle"
         ### The random angle is the conjugate variable to the action variable and is only
-        ### approximately equal to the angle in the tau-ptau space. 
+        ### approximately equal to the angle in the tau-ptau space.
         while counter < n_particles:
             m = np.random.random(size=chunk)*max_m
             rand_test = np.random.random(size=chunk)*max_y
             yy = np.interp(m, self.m_distr_x, self.m_distr_y)
-            
+
             tau, ptau = self.get_airbag_from_m(m, n_particles=None)
-            
+
             mask = rand_test < yy
-        
+
             tau_new.extend(list(tau[mask]))
             ptau_new.extend(list(ptau[mask]))
             counter += sum(mask)
             print('SingleRFHarmonicMatcher: Sampling particles: '
                         f'{round(counter/n_particles*100):2d}%  ',end="\r", flush=True)
         print(f"SingleRFHarmonicMatcher: Sampled {n_particles} particles")
-        
+
         return tau_new[:n_particles], ptau_new[:n_particles]
 
     def generate(self, n_particles=20000):

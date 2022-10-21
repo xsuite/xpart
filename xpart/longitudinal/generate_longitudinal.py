@@ -155,7 +155,7 @@ def generate_longitudinal_coordinates(
         if particle_ref.chi != 1.0:
             raise NotImplementedError
 
-        sigma_tau = sigma_z/particle_ref.beta0[0]
+        sigma_tau = sigma_z/particle_ref._xobject.beta0[0]
 
         voltage = np.sum(rf_voltage)
 

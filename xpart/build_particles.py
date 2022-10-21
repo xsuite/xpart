@@ -383,7 +383,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     particles = Particles(_context=_context, _buffer=_buffer, _offset=_offset,
                           _capacity=_capacity,**part_dict)
 
-    particles.particle_id = particles._buffer.context.nparray_to_context_array(
+    particles.particle_id[:num_particles] = particles._buffer.context.nparray_to_context_array(
                                    np.arange(0, num_particles, dtype=np.int64))
     if weight is not None:
         particles.weight[:num_particles] = weight
