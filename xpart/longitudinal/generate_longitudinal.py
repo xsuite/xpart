@@ -152,7 +152,7 @@ def generate_longitudinal_coordinates(
         eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
 
         # if fragment
-        if particle_ref.chi != 1.0:
+        if particle_ref._xobject.chi[0] != 1.0:
             raise NotImplementedError
 
         sigma_tau = sigma_z/particle_ref._xobject.beta0[0]
