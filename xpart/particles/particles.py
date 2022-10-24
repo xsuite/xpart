@@ -13,6 +13,7 @@ from ..general import _pkg_root
 from scipy.constants import m_p
 from scipy.constants import e as qe
 from scipy.constants import c as clight
+from scipy.constants import epsilon_0
 
 from xobjects import BypassLinked
 
@@ -323,6 +324,28 @@ class Particles(xo.HybridClass):
                     compact=compact)
         import pandas as pd
         return pd.DataFrame(dct)
+
+    def print_values(self):
+        """
+        Method to print particle properties
+        """
+        df = self.to_pandas()
+        dash = '-' * 55
+        print("PARTICLES:\n\n")
+        print('{:<27} {:>12}'.format("Property", "Value"))
+        print(dash)
+        for column in df:
+            print('{:<27} {:>12}'.format(df[column].name, df[column].values[0]))
+        print(dash)
+        print('\n')
+
+    def classical_particle_radius(self):
+        """ 
+        Method to calculate classical particle radius from particles
+        """
+        m0 = self.mass0*1.782661921e-36  # electron volt - kg conversion
+        r0 = (self.q0**qe)**2/(4*np.pi*epsilon_0*m0*clight**2)  #1.5347e-18 is default for protons
+        return r0
 
     @classmethod
     def from_pandas(cls, df, _context=None, _buffer=None, _offset=None):
