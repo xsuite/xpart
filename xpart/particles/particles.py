@@ -345,7 +345,7 @@ class Particles(xo.HybridClass):
         Method to calculate classical particle radius from particles
         """
         m0 = self.mass0*1.782661921e-36  # electron volt - kg conversion
-        r0 = (self.q0**qe)**2/(4*np.pi*epsilon_0*m0*clight**2)  #1.5347e-18 is default for protons
+        r0 = (self.q0*qe)**2/(4*np.pi*epsilon_0*m0*clight**2)  #1.5347e-18 is default for protons
         return r0
 
     @classmethod
