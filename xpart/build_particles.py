@@ -268,7 +268,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if mode == 'normalized_transverse':
 
-        if W_matrix is None:
+        if W_matrix is None and tracker is not None:
             if method is not None:
                 kwargs['method'] = method
             tw = tracker_rmat.twiss(particle_on_co=particle_on_co,
@@ -279,6 +279,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
             WW = tw_state.W_matrix
             particle_on_co = tw_state.particle_on_co
+        elif W_matrix is None and R_matrix is not None:
+            WW, _, _ = lnf.compute_linear_normal_form(
+                                R_matrix,
+                                **kwargs)
         else:
             WW = W_matrix
 

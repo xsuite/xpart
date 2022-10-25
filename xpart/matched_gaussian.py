@@ -8,8 +8,6 @@ import numpy as np
 from .longitudinal import generate_longitudinal_coordinates
 from .build_particles import build_particles
 
-from xtrack.linear_normal_form import compute_linear_normal_form
-
 import xpart as xp # To get the right Particles class depending on pyheatail interface state
 
 def generate_matched_gaussian_bunch(num_particles,
