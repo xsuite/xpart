@@ -339,9 +339,9 @@ class Particles(xo.HybridClass):
         print(dash)
         print('\n')
 
-    def classical_particle_radius(self):
+    def classical_particle_radius0(self):
         """ 
-        Method to calculate classical particle radius from particles
+        Method to calculate classical particle radius from reference particle
         """
         m0 = self.mass0*qe/(clight**2) # electron volt - kg conversion
         r0 = (self.q0*qe)**2/(4*np.pi*epsilon_0*m0*clight**2)  #1.5347e-18 is default for protons
