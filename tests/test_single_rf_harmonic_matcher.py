@@ -11,6 +11,10 @@ import xobjects as xo
 import xpart as xp
 import xtrack as xt
 
+from xpart.test_helpers import retry
+
+
+@retry(on=AssertionError, n_times=3)
 def test_single_rf_harmonic_matcher_rms_and_profile():
     for ctx in xo.context.get_test_contexts():
         print(f"Test {ctx.__class__}")
