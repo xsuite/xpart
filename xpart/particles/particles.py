@@ -189,7 +189,7 @@ class Particles(xo.HybridClass):
                     {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
 
             if 'pzeta' in kwargs.keys():
-                del(kwargs['pzeta']) # handled in part_dict
+                del(kwargs['pzeta'])  # handled in part_dict
 
             if 'sigma' in kwargs.keys():
                 raise NameError(
@@ -796,7 +796,8 @@ def _str_in_list(string, str_list):
 def part_energy_varnames():
     return [vv for tt, vv in part_energy_vars]
 
-def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
+
+def gen_local_particle_api(mode='no_local_copy'):
 
     if mode != 'no_local_copy':
         raise NotImplementedError
@@ -868,11 +869,9 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     /*gpufun*/
     void LocalParticle_add_to_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
     +'{')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('/* frozen variable!')
+        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
         src_lines.append(f'  part->{vv}[part->ipart] += value;')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('frozen variable!*/')
+        src_lines.append('#endif')
         src_lines.append('}\n')
     src_adders = '\n'.join(src_lines)
 
@@ -883,11 +882,9 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     /*gpufun*/
     void LocalParticle_scale_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
     +'{')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('/* frozen variable!')
+        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
         src_lines.append(f'  part->{vv}[part->ipart] *= value;')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('frozen variable!*/')
+        src_lines.append('#endif')
         src_lines.append('}\n')
     src_scalers = '\n'.join(src_lines)
 
@@ -898,11 +895,9 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     /*gpufun*/
     void LocalParticle_set_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
     +'{')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('/* frozen variable!')
+        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
         src_lines.append(f'  part->{vv}[part->ipart] = value;')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('frozen variable!*/')
+        src_lines.append('#endif')
         src_lines.append('}')
     src_setters = '\n'.join(src_lines)
 
