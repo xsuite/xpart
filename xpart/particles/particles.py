@@ -339,7 +339,7 @@ class Particles(xo.HybridClass):
         print(dash)
         print('\n')
 
-    def classical_particle_radius0(self):
+    def get_classical_particle_radius0(self):
         """ 
         Method to calculate classical particle radius from reference particle
         """
