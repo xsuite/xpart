@@ -29,7 +29,7 @@ def test_classical_particle_radius_ions():
         particle_ref = xp.Particles.from_dict(input_data['particle'])
         r0_Pb82 = np.float64(4.998617e-17)  # calculated theoretical classical particle radius 
            
-        assert np.isclose(particle_ref.classical_particle_radius0(), r0_Pb82, atol=1e-5)
+        assert np.isclose(particle_ref.get_classical_particle_radius0(), r0_Pb82, atol=1e-5)
         
 
 def test_classical_particle_radius_protons():
@@ -47,7 +47,7 @@ def test_classical_particle_radius_protons():
         particle_ref = xp.Particles.from_dict(input_data['particle'])
         r0_proton = np.float64(1.534698e-18)  # calculated theoretical classical particle radius 
            
-        assert np.isclose(particle_ref.classical_particle_radius0(), r0_proton, atol=1e-5)
+        assert np.isclose(particle_ref.get_classical_particle_radius0(), r0_proton, atol=1e-5)
         
         
 def test_printing_of_values():
