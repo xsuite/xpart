@@ -14,9 +14,10 @@ ctx = xo.ContextCpu() # choose a context
 filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     line = xt.Line.from_dict(json.load(fid)['line'])
-line.particle_ref = xp.Particles(p0c=7e12, mass0=xp.PROTON_MASS_EV, q0=1,
-                                x =1 , y=3)
 tracker = line.build_tracker(_context=ctx)
+
+# Attach a reference particle to the tracker
+tracker.particle_ref = xp.Particles(p0c=7e12, mass0=xp.PROTON_MASS_EV, q0=1, x =1 , y=3)
 
 # Built a set of three particles with different y coordinates
 # (context and particle_ref are taken from the tracker)
