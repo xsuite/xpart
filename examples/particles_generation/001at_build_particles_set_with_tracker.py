@@ -23,11 +23,6 @@ tracker.particle_ref = xp.Particles(p0c=7e12, mass0=xp.PROTON_MASS_EV, q0=1, x =
 # (context and particle_ref are taken from the tracker)
 particles = tracker.build_particles(y=[1,2,3])
 
-# Inspect
-print(particles.p0c[1]) # gives 7e12
-print(particles.x[1]) # gives 0.0
-print(particles.y[1]) # gives 2.0
-
 #!end-doc-part
 
 assert particles.p0c[1] == 7e12
