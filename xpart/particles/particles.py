@@ -157,7 +157,8 @@ class Particles(xo.HybridClass):
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
+
 
         input_kwargs = kwargs.copy()
 
@@ -190,7 +191,7 @@ class Particles(xo.HybridClass):
                     {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
 
             if 'pzeta' in kwargs.keys():
-                del(kwargs['pzeta']) # handled in part_dict
+                del(kwargs['pzeta'])  # handled in part_dict
 
             if 'sigma' in kwargs.keys():
                 raise NameError(
@@ -234,8 +235,8 @@ class Particles(xo.HybridClass):
                             value = 0.
                         getattr(self, kk)[:] = value
 
-            self._num_active_particles = -1 # To be filled in only on CPU
-            self._num_lost_particles = -1 # To be filled in only on CPU
+            self._num_active_particles = -1  # To be filled in only on CPU
+            self._num_lost_particles = -1  # To be filled in only on CPU
 
             # Force values provided by user if compatible
             for nn in part_energy_varnames():
@@ -260,7 +261,7 @@ class Particles(xo.HybridClass):
                 else:
                     self.reorganize()
 
-    def init_pipeline(self,name):
+    def init_pipeline(self, name):
         self.name = name
 
     def to_dict(self, copy_to_cpu=True,
@@ -280,7 +281,7 @@ class Particles(xo.HybridClass):
             remove_redundant_variables = compact
 
         if keep_rng_state is None:
-            keep_rng_state = not(compact)
+            keep_rng_state = not compact
 
         p_for_dict = self
 
@@ -373,8 +374,8 @@ class Particles(xo.HybridClass):
         # Check that scalar variable are compatible
         for tt, nn in scalar_vars:
             vals = [getattr(pp, nn) for pp in cpu_lst]
-            assert np.allclose(vals,
-                                getattr(cpu_lst[0], nn), rtol=0, atol=1e-14)
+            assert np.allclose(vals, getattr(cpu_lst[0], nn),
+                               rtol=0, atol=1e-14)
 
         # Make new particle on CPU
         capacity = np.sum([pp._capacity for pp in cpu_lst])
@@ -436,8 +437,8 @@ class Particles(xo.HybridClass):
 
             # Pyopencl returns int8 instead of bool
             if (isinstance(self._buffer.context, xo.ContextPyopencl) and
-                mask.dtype==np.int8):
-                assert np.all((mask>=0) & (mask<=1))
+                    mask.dtype == np.int8):
+                assert np.all((mask >= 0) & (mask <= 1))
                 mask = mask > 0
 
         # Make new particle on CPU
@@ -487,7 +488,7 @@ class Particles(xo.HybridClass):
 
         if seeds is None:
             seeds = np.random.randint(low=1, high=4e9,
-                        size=self._capacity, dtype=np.uint32)
+                                      size=self._capacity, dtype=np.uint32)
         else:
             assert len(seeds) == self._capacity
             if not hasattr(seeds, 'dtype') or seeds.dtype != np.uint32:
@@ -496,7 +497,7 @@ class Particles(xo.HybridClass):
         context = self._buffer.context
         seeds_dev = context.nparray_to_context_array(seeds)
         context.kernels.Particles_initialize_rand_gen(particles=self,
-             seeds=seeds_dev, n_init=self._capacity)
+            seeds=seeds_dev, n_init=self._capacity)
 
     def hide_lost_particles(self, _assume_reorganized=False):
         self._lim_arrays_name = '_num_active_particles'
@@ -526,7 +527,7 @@ class Particles(xo.HybridClass):
 
         n_used = n_active + n_lost
         sort_key_var = getattr(self, by)[:n_used].copy()
-        if not(interleave_lost_particles):
+        if not interleave_lost_particles:
             max_id_active = np.max(self.particle_id[:n_active])
             sort_key_var[n_active:] = 10 + max_id_active + sort_key_var[n_active:]
 
@@ -629,7 +630,6 @@ class Particles(xo.HybridClass):
         else:
             return ctx.nplike_lib.any(self.state <= 0)
 
-
     def update_delta(self, new_delta_value):
 
         ctx = self._buffer.context
@@ -650,10 +650,10 @@ class Particles(xo.HybridClass):
 
         new_delta_beta0 = new_delta_value * beta0
         new_ptau_beta0 = (new_delta_beta0 * new_delta_beta0
-                        + 2. * new_delta_beta0 * beta0 + 1.)**0.5 - 1.
+                          + 2. * new_delta_beta0 * beta0 + 1.)**0.5 - 1.
 
         new_one_plus_delta = 1. + new_delta_value
-        new_rvv = ( new_one_plus_delta ) / ( 1. + new_ptau_beta0 )
+        new_rvv = new_one_plus_delta / (1. + new_ptau_beta0)
         new_rpp = 1. / new_one_plus_delta
         new_ptau = new_ptau_beta0 / beta0
 
@@ -667,7 +667,6 @@ class Particles(xo.HybridClass):
             self._rvv = new_rvv
             self._ptau = new_ptau
             self._rpp = new_rpp
-
 
     @property
     def delta(self):
@@ -709,12 +708,12 @@ class Particles(xo.HybridClass):
             zeta = self.zeta
 
         ptau = new_ptau
-        irpp = (ptau*ptau + 2*ptau/beta0 +1)**0.5
+        irpp = (ptau*ptau + 2*ptau/beta0 + 1)**0.5
         new_rpp = 1./irpp
 
         new_rvv = irpp/(1 + beta0*ptau)
 
-        new_delta =  irpp - 1.
+        new_delta = irpp - 1.
 
         if mask is not None:
             self._delta[mask] = new_delta
@@ -743,6 +742,7 @@ class Particles(xo.HybridClass):
                                         mode='setitem_from_container',
                                         container=self,
                                         container_setitem_name='_ptau_setitem')
+
     @ptau.setter
     def ptau(self, value):
         self.ptau[:] = value
@@ -761,7 +761,7 @@ class Particles(xo.HybridClass):
 
     @property
     def energy0(self):
-        return ( self.p0c * self.p0c + self.mass0 * self.mass0 )**0.5
+        return (self.p0c * self.p0c + self.mass0 * self.mass0)**0.5
 
     @property
     def energy(self):
@@ -783,14 +783,14 @@ class Particles(xo.HybridClass):
 
         ptau_beta0 = (
             delta_energy / self.energy0.copy() +
-            ( delta_beta0 * delta_beta0 + 2.0 * delta_beta0 * beta0
-                    + 1. )**0.5 - 1.)
+            (delta_beta0 * delta_beta0 + 2.0 * delta_beta0 * beta0
+             + 1.)**0.5 - 1.)
 
-        ptau   = ptau_beta0 / beta0
-        delta = ( ptau * ptau + 2. * ptau / beta0 + 1 )**0.5 - 1
+        ptau = ptau_beta0 / beta0
+        delta = (ptau * ptau + 2. * ptau / beta0 + 1)**0.5 - 1
 
         one_plus_delta = delta + 1.
-        rvv = one_plus_delta / ( 1. + ptau_beta0 )
+        rvv = one_plus_delta / (1. + ptau_beta0)
 
         self._delta = delta
         self._ptau = ptau
@@ -816,10 +816,12 @@ def _str_in_list(string, str_list):
             break
     return found
 
+
 def part_energy_varnames():
     return [vv for tt, vv in part_energy_vars]
 
-def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
+
+def gen_local_particle_api(mode='no_local_copy'):
 
     if mode != 'no_local_copy':
         raise NotImplementedError
@@ -885,52 +887,46 @@ def gen_local_particle_api(mode='no_local_copy', freeze_vars=()):
     src_local_to_particles = '\n'.join(src_lines)
 
     # Adders
-    src_lines=[]
+    src_lines = []
     for tt, vv in per_particle_vars:
         src_lines.append('''
     /*gpufun*/
     void LocalParticle_add_to_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
     +'{')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('/* frozen variable!')
+        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
         src_lines.append(f'  part->{vv}[part->ipart] += value;')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('frozen variable!*/')
+        src_lines.append('#endif')
         src_lines.append('}\n')
     src_adders = '\n'.join(src_lines)
 
     # Scalers
-    src_lines=[]
+    src_lines = []
     for tt, vv in per_particle_vars:
         src_lines.append('''
     /*gpufun*/
     void LocalParticle_scale_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
     +'{')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('/* frozen variable!')
+        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
         src_lines.append(f'  part->{vv}[part->ipart] *= value;')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('frozen variable!*/')
+        src_lines.append('#endif')
         src_lines.append('}\n')
     src_scalers = '\n'.join(src_lines)
 
     # Setters
-    src_lines=[]
+    src_lines = []
     for tt, vv in per_particle_vars:
         src_lines.append('''
     /*gpufun*/
     void LocalParticle_set_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
     +'{')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('/* frozen variable!')
+        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
         src_lines.append(f'  part->{vv}[part->ipart] = value;')
-        if _str_in_list(vv, freeze_vars):
-            src_lines.append('frozen variable!*/')
+        src_lines.append('#endif')
         src_lines.append('}')
     src_setters = '\n'.join(src_lines)
 
     # Getters
-    src_lines=[]
+    src_lines = []
     for tt, vv in size_vars + scalar_vars:
         src_lines.append('/*gpufun*/')
         src_lines.append(f'{tt._c_type} LocalParticle_get_'+vv
@@ -1212,7 +1208,7 @@ def _pyparticles_to_xpart_dict(pyparticles):
 
         val_py = dct[kk]
 
-        if _num_particles > 1 and len(val_py)==1:
+        if _num_particles > 1 and len(val_py) == 1:
             temp = np.zeros(int(_num_particles), dtype=tt._dtype)
             temp += val_py[0]
             val_py = temp
