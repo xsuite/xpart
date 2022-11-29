@@ -326,7 +326,7 @@ class Particles(xo.HybridClass):
         import pandas as pd
         return pd.DataFrame(dct)
 
-    def print_values(self):
+    def show(self):
         """
         Method to print particle properties
         """
