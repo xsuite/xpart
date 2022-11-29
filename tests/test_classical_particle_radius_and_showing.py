@@ -49,10 +49,10 @@ def test_classical_particle_radius_protons():
            
         assert np.isclose(particle_ref.get_classical_particle_radius0(), r0_proton, atol=1e-5)
         
-        
-def test_printing_of_values():
+
+def test_showing():
     """
-    Test whether printing of particle values gives reasonable output
+    Test whether showing particle values gives reasonable output
     """
     test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
 
@@ -65,11 +65,4 @@ def test_printing_of_values():
              input_data = json.load(fid)
         
         particle_ref = xp.Particles.from_dict(input_data['particle'])
-        
-        
-        # Test the printing capture standard output by redirecting sys.stdout to a StringIO object
-        capturedOutput = io.StringIO()                  # Create StringIO object
-        sys.stdout = capturedOutput                     #  and redirect stdout.
-        particle_ref.print_values()
-        sys.stdout = sys.__stdout__                     # Reset redirect.
-        print('Captured', capturedOutput.getvalue())   # Now works as before.
+        particle_ref.show()
