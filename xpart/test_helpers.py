@@ -18,8 +18,9 @@ class _RetryableError(Exception):
         return self.message
 
 
-def retry(on: Type[Exception] | Tuple[Type[Exception]] = None,
-          n_times: int = 3):
+#def retry(on: Type[Exception] | Tuple[Type[Exception]] = None, # Removed to support Python 3.9
+#          n_times: int = 3):
+def retry(on = None, n_times: int = 3):
     """
     A decorator to be used on a flaky test. The test will be rerun until no
     exception defined in `on` is thrown, up to `n_times`. If `on` is
