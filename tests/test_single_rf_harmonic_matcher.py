@@ -35,7 +35,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile(scenario, distribution):
 
         elif scenario == "ions":
             # Load machine model (spsion)
-            filename = xt._pkg_root.parent.joinpath('test_data/sps_ions/line.json')
+            filename = xt._pkg_root.parent.joinpath('test_data/sps_ions/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
             tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data))
