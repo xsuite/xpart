@@ -6,5 +6,6 @@ CERN contributors:
  - G. Iadarola
  - A. Latina
  - K. Paraschou
+ - E. Waagaard
 
 The longitudinal matching module is derived from the one of PyHEADTAIL (https://github.com/pycomplete/PyHEADTAIL).
