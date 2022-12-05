@@ -12,7 +12,7 @@ from ..general import _pkg_root
 
 from scipy.constants import m_p
 from scipy.constants import e as qe
-from scipy.constants import c as clight
+from scipy.constants import c as clightsssssssssssssssssssssssss
 from scipy.constants import epsilon_0
 
 from xobjects import BypassLinked
@@ -336,9 +336,9 @@ class Particles(xo.HybridClass):
         import pandas as pd
         return pd.DataFrame(dct)
 
-    def print_values(self):
+    def show(self):
         """
-        Print Particles object properties
+        Method to print particle properties
         """
         df = self.to_pandas()
         dash = '-' * 55
