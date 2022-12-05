@@ -170,9 +170,3 @@ def test_ion_scaling_tracking():
             print("Proton:      dQx = {},  dQy = {}".format(Qx0_max, Qy0_max))
             
             assert np.isclose(Qx_max, Qx0_max, atol=1e-2)
-
-
-    
-    
-
-    
