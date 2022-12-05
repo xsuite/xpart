@@ -32,7 +32,7 @@ def test_ion_scaling_tracking():
         num_spacecharge_interactions = 540
         tol_spacecharge_position = 1e-2
         
-        ########## Load the SPS proton sequence and ref particle     #####################
+        ########## Load the SPS proton sequence and ref particle #####################
         fname_line =  test_data_folder.joinpath('sps_w_spacecharge/line_no_spacecharge_and_particle.json')
         with open(fname_line, 'r') as fid:
              input_data = json.load(fid)
@@ -170,10 +170,6 @@ def test_ion_scaling_tracking():
             print("Proton:      dQx = {},  dQy = {}".format(Qx0_max, Qy0_max))
             
             assert np.isclose(Qx_max, Qx0_max, atol=1e-2)
-
-
-#fname_line = '../../xtrack/test_data/sps_w_spacecharge/line_no_spacecharge_and_particle.json'
-#context = xo.ContextCpu()
 
 
     
