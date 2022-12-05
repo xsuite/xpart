@@ -12,7 +12,7 @@ from ..general import _pkg_root
 
 from scipy.constants import m_p
 from scipy.constants import e as qe
-from scipy.constants import c as clightsssssssssssssssssssssssss
+from scipy.constants import c as clight
 from scipy.constants import epsilon_0
 
 from xobjects import BypassLinked
