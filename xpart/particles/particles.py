@@ -159,7 +159,7 @@ class Particles(xo.HybridClass):
 
     def __init__(self, **kwargs):
         """
-        Particles object constructor 
+        Particles object constructor
         """
         input_kwargs = kwargs.copy()
 
