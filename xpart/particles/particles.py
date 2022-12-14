@@ -502,10 +502,13 @@ class Particles(xo.HybridClass):
     def hide_lost_particles(self, _assume_reorganized=False):
         self._lim_arrays_name = '_num_active_particles'
         if not _assume_reorganized:
-            self.reorganize()
+            n_active, _ = self.reorganize()
+            self._num_active_particles = n_active
 
     def unhide_lost_particles(self):
         del(self._lim_arrays_name)
+        if not isinstance(self._context, xo.ContextCpu):
+            self._num_active_particles = -1
 
     @property
     def lost_particles_are_hidden(self):
