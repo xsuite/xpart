@@ -561,8 +561,8 @@ class Particles(xo.HybridClass):
         mask_active = self.state > 0
         mask_lost = (self.state < 1) & (self.state>LAST_INVALID_STATE)
 
-        n_active = np.sum(mask_active)
-        n_lost = np.sum(mask_lost)
+        n_active = int(np.sum(mask_active))
+        n_lost = int(np.sum(mask_lost))
 
         with self._bypass_linked_vars():
             for tt, nn in self._structure['per_particle_vars']:
