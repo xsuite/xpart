@@ -4,6 +4,7 @@
 # ######################################### #
 
 import numpy as np
+import pytest
 import xobjects as xo
 import xtrack as xt
 import xpart as xp
@@ -141,6 +142,33 @@ def test_linked_arrays(test_context):
     assert particles.ptau[3] == p0.ptau[3]
     assert particles.rvv[3] == p0.rvv[3]
     assert particles.rpp[3] == p0.rpp[3]
+
+
+@for_all_test_contexts
+@pytest.mark.parametrize(
+    'varname,values',
+    [
+        ('p0c', [4e9, 5e11, 6e13]),
+        ('gamma0', [3., 4., 5.]),
+        ('beta0', [0.9, 1.0, 1.1]),
+    ]
+)
+def test_particles_update_ref_vars(test_context, varname, values):
+    p = xp.Particles(_context=test_context,
+                     delta=[1, 2, 3],
+                     **{varname: values})
+
+    p_ref = p.copy()
+
+    getattr(p, varname)[1] = getattr(p, varname)[0]
+
+    assert p.p0c[0] == p.p0c[1]
+    assert p.gamma0[0] == p.gamma0[1]
+    assert p.beta0[0] == p.beta0[1]
+
+    assert p.p0c[0] == p_ref.p0c[0]
+    assert p.gamma0[0] == p_ref.gamma0[0]
+    assert p.beta0[0] == p_ref.beta0[0]
 
 
 def test_sort():

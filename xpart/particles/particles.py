@@ -6,8 +6,6 @@
 import numpy as np
 import xobjects as xo
 
-from ._pyparticles import Pyparticles
-
 from ..general import _pkg_root
 
 from scipy.constants import m_p
@@ -22,10 +20,10 @@ pmass = m_p * clight * clight / qe
 LAST_INVALID_STATE = -999999999
 
 size_vars = (
-    (xo.Int64,   '_capacity'),
-    (xo.Int64,   '_num_active_particles'),
-    (xo.Int64,   '_num_lost_particles'),
-    (xo.Int64,   'start_tracking_at_element'),
+    (xo.Int64, '_capacity'),
+    (xo.Int64, '_num_active_particles'),
+    (xo.Int64, '_num_lost_particles'),
+    (xo.Int64, 'start_tracking_at_element'),
     )
 # Capacity is always kept up to date
 # the other two are placeholders to be used if needed
@@ -92,36 +90,36 @@ class Particles(xo.HybridClass):
     """
         Particle objects have the following fields:
 
-             - s [m]:  Reference accumulated path length
-             - x [m]:  Horizontal position
-             - px[1]:  Px / (m/m0 * p0c) = beta_x gamma /(beta0 gamma0)
-             - y [m]:  Vertical position
-             - py [1]:  Py / (m/m0 * p0c)
-             - delta[1]:  (Pc m0/m - p0c) /p0c
-             - ptau [1]:  (Energy m0/m - Energy0) / p0c
-             - pzeta [1]:  ptau / beta0
-             - rvv [1]:  beta / beta0
-             - rpp [1]:  m/m0 P0c / Pc = 1/(1+delta)
-             - zeta [m]:  (s - beta0 c t )
+             - s [m]: Reference accumulated path length
+             - x [m]: Horizontal position
+             - px[1]: Px / (m/m0 * p0c) = beta_x gamma /(beta0 gamma0)
+             - y [m]: Vertical position
+             - py [1]: Py / (m/m0 * p0c)
+             - delta [1]: (Pc m0/m - p0c) /p0c
+             - ptau [1]: (Energy m0/m - Energy0) / p0c
+             - pzeta [1]: ptau / beta0
+             - rvv [1]: beta / beta0
+             - rpp [1]: m/m0 P0c / Pc = 1/(1+delta)
+             - zeta [m]: (s - beta0 c t )
              - tau [m]: (s / beta0 - ct)
              - mass0 [eV]: Reference rest mass
-             - q0 [e]:  Reference charge
+             - q0 [e]: Reference charge
              - p0c [eV]: Reference momentum
              - energy0 [eV]: Reference energy
-             - gamma0 [1]:  Reference relativistic gamma
-             - beta0 [1]:  Reference relativistic beta
-             - mass_ratio [1]:  mass/mass0 (this is used to track particles of
-                                different species. Note that mass is the rest mass
-                                of the considered particle species and not the
-                                relativistic mass)
-             - chi [1]:  q/ q0 * m0/m = qratio / mratio
-             - charge_ratio [1]:  q / q0
+             - gamma0 [1]: Reference relativistic gamma
+             - beta0 [1]: Reference relativistic beta
+             - mass_ratio [1]: mass/mass0 (this is used to track particles of
+                               different species. Note that mass is the rest mass
+                               of the considered particle species and not the
+                               relativistic mass)
+             - chi [1]: q / q0 * m0 / m = qratio / mratio
+             - charge_ratio [1]: q / q0
              - particle_id [int]: Identifier of the particle
-             - at_turn [int]:  Number of tracked turns
+             - at_turn [int]: Number of tracked turns
              - state [int]: It is <= 0 if the particle is lost, > 0 otherwise
                             (different values are used to record information
                             on how the particle is lost or generated).
-             - weight [int]:  Particle weight in number of particles
+             - weight [int]: Particle weight in number of particles
                               (for collective sims.)
              - at_element [int]: Identifier of the last element through which
                                  the particle has been
@@ -132,10 +130,14 @@ class Particles(xo.HybridClass):
     _xofields = fields
 
     _rename = {
-            'delta': '_delta',
-            'ptau': '_ptau',
-            'rvv': '_rvv',
-            'rpp': '_rpp'}
+        'delta': '_delta',
+        'ptau': '_ptau',
+        'rvv': '_rvv',
+        'rpp': '_rpp',
+        'p0c': '_p0c',
+        'gamma0': '_gamma0',
+        'beta0': '_beta0',
+    }
 
     _extra_c_sources = [
         _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
@@ -157,109 +159,384 @@ class Particles(xo.HybridClass):
             'scalar_vars': scalar_vars,
             'per_particle_vars': per_particle_vars}
 
-    def __init__(self, **kwargs):
-
-        input_kwargs = kwargs.copy()
-
+    def __init__(
+            self,
+            _capacity=None,
+            _no_reorganize=False,
+            **kwargs,
+    ):
         if '_xobject' in kwargs.keys():
             # Initialize xobject
             self.xoinitialize(**kwargs)
             return
 
-        if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
-            # Needed to generate consistent longitudinal variables
-            pyparticles = Pyparticles(**kwargs)
-            if 'mass_ratio' in kwargs.keys():
-                del(kwargs['mass_ratio']) # info transferred in pyparticles.chi
-
-            part_dict = _pyparticles_to_xpart_dict(pyparticles)
-            if ('_capacity' in kwargs.keys() and
-                        kwargs['_capacity'] is not None):
-                assert kwargs['_capacity'] >= part_dict['_num_particles']
-            else:
-                kwargs['_capacity'] = part_dict['_num_particles']
-        else:
-            pyparticles = None
-            if '_capacity' not in kwargs.keys():
-                kwargs['_capacity'] = 1
-
-        # Make sure _capacity is integer
-        kwargs['_capacity'] = int(kwargs['_capacity'])
-
-        # We just provide array sizes to xoinitialize (we will set values later)
-        kwargs.update(
-                {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
-
-        if 'pzeta' in kwargs.keys():
-            del(kwargs['pzeta'])  # handled in part_dict
-
         if 'sigma' in kwargs.keys():
-            raise NameError(
-                '`sigma` is not supported anymore. Please use `zeta` instead.')
+            raise NameError('`sigma` is not supported anymore. '
+                            'Please use `zeta` instead.')
 
         if 'psigma' in kwargs.keys():
-            raise NameError(
-                '`psigma` is not supported anymore. Please use `pzeta` instead.')
+            raise NameError('`psigma` is not supported anymore.'
+                            'Please use `pzeta` instead.')
 
-        # Initialize xobject
-        self.xoinitialize(**kwargs)
+        per_part_input_vars = (
+            per_particle_vars +
+            ((xo.Float64, 'energy0'),
+             (xo.Float64, 'tau'),
+             (xo.Float64, 'pzeta'),
+             (xo.Float64, 'mass_ratio'))
+        )
 
-        if 'start_tracking_at_element' not in kwargs.keys():
-            self.start_tracking_at_element = -1
+        # Determine the number of particles and the capacity, so we can allocate
+        # the xobject of the right size
+        input_length = 1
+        for _, field in per_part_input_vars:
+            if field not in kwargs.keys():
+                continue
+            if np.isscalar(kwargs[field]) or len(kwargs[field]) == 1:
+                continue
+            if len(kwargs[field]) != input_length and input_length > 1:
+                raise ValueError(
+                    'All per particle vars have to be of the '
+                    'same length.'
+                )
+            input_length = len(kwargs[field])
 
-        # Initialize coordinates
-        with self._bypass_linked_vars():
-            if pyparticles is not None:
-                context = self._buffer.context
-                for tt, kk in list(scalar_vars):
-                    setattr(self, kk, part_dict[kk])
-                for tt, kk in list(per_particle_vars):
-                    if kk.startswith('_rng'):
-                        getattr(self, kk)[:] = 0
-                        continue
-                    vv = getattr(self, kk)
-                    vals =  context.nparray_to_context_array(part_dict[kk])
-                    ll = len(vals)
-                    vv[:ll] = vals
-                    vv[ll:] = LAST_INVALID_STATE
+        # Validate _capacity if given explicitly, if not assume it based on input
+        if _capacity is not None:
+            if _capacity <= 0:
+                raise ValueError('Explicitly provided `_capacity` has to be'
+                                 'greater than zero.')
+
+            if _capacity < input_length:
+                raise ValueError(
+                    f'Capacity ({_capacity}) has to be greater or equal to the '
+                    f'number of particles ({input_length}).'
+                )
+        else:
+            _capacity = input_length
+
+        # Allocate the xobject of the right size
+        self.xoinitialize(
+            _context=kwargs.pop('_context', None),
+            _buffer=kwargs.pop('_buffer', None),
+            _offset=kwargs.pop('_offset', None),
+            **{field: _capacity for _, field in per_particle_vars}
+        )
+        self._capacity = _capacity
+        self._num_active_particles = -1  # To be filled in only on CPU
+        self._num_lost_particles = -1  # To be filled in only on CPU
+
+        # Initialize the fields to preset values
+        for type_, field in per_particle_vars:
+            raw_field = self._rename.get(field, field)
+            if raw_field.startswith('_rng'):
+                setattr(self, raw_field, 0)
             else:
-                for tt, kk in list(scalar_vars):
-                    setattr(self, kk, 0.)
+                setattr(self, raw_field, LAST_INVALID_STATE)
 
-                for tt, kk in list(per_particle_vars):
-                    if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
-                        value = 1.
-                    elif kk == 'particle_id':
-                        value = np.arange(0, self._capacity, dtype=np.int64)
-                    else:
-                        value = 0.
-                    getattr(self, kk)[:] = value
+        np_to_ctx = self._context.nparray_to_context_array
 
-            self._num_active_particles = -1  # To be filled in only on CPU
-            self._num_lost_particles = -1  # To be filled in only on CPU
+        # Mask out the unallocated space from now on
+        # (match the length of the input arrays)
+        self.hide_first_n_particles(input_length)
 
-            # Force values provided by user if compatible
-            for nn in part_energy_varnames() + ['p0c', 'beta0', 'gamma0']:
-                vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
-                if nn in input_kwargs.keys():
-                    if hasattr(input_kwargs[nn], '__len__'):
-                        ll = len(input_kwargs[nn]) # in case there is unallocated space
-                    else:
-                        ll = len(vvv)
+        # Start populating the object with the input values
+        state = kwargs.get('state', 1)
+        if np.isscalar(state) or len(state) == 1:
+            state = np.array(state).item()
+        else:
+            state = np_to_ctx(np.array(state))
+        self.state = state
+        input_mask = self.state > LAST_INVALID_STATE
 
-                    if np.isscalar(input_kwargs[nn]):
-                        getattr(self, nn)[:] = input_kwargs[nn]
-                    else:
-                        getattr(self, nn)[:ll] = (
-                                context.nparray_to_context_array(
-                                    np.array(input_kwargs[nn])))
+        particle_ids = kwargs.get('particle_id', np.arange(input_length))
+        particle_ids = np.atleast_1d(particle_ids)
+        self.particle_id = np_to_ctx(particle_ids)
 
-        if isinstance(self._buffer.context, xo.ContextCpu):
-            # Particles always need to be organized to run on CPU
-            if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
-                pass
+        parent_particle_id = np.atleast_1d(kwargs.get('parent_particle_id',
+                                                      particle_ids))
+        self.parent_particle_id = np_to_ctx(parent_particle_id)
+
+        for field in ('state', 'particle_id', 'parent_particle_id'):
+            kwargs.pop(field, None)
+
+        # Ensure that all per particle inputs are numpy arrays of the same
+        # length, and move them to the target context
+        for xotype, field in per_part_input_vars:
+            if field not in kwargs.keys():
+                continue
+
+            if np.isscalar(kwargs[field]) or len(kwargs[field]) == 1:
+                value = np.array(kwargs[field]).item()
+                kwargs[field] = np.full(input_length, value)
             else:
-                self.reorganize()
+                kwargs[field] = np.array(kwargs[field])
+
+            # Coerce the right type so that we can allocate the right array
+            # in the target context. PyOpenCL gets fussy if types don't match
+            # in calculations.
+            if kwargs[field].dtype != xotype._dtype:
+                kwargs[field] = kwargs[field].astype(xotype._dtype)
+            kwargs[field] = np_to_ctx(kwargs[field])
+
+        # Init scalar vars
+        self.q0 = kwargs.get('q0', 1.0)
+        self.mass0 = kwargs.get('mass0', pmass)
+        self.start_tracking_at_element = kwargs.get('start_tracking_at_element',
+                                                    -1)
+
+        # Init independent per particle vars
+        self.s = kwargs.get('s', 0)
+        self.x = kwargs.get('x', 0)
+        self.y = kwargs.get('y', 0)
+        self.px = kwargs.get('px', 0)
+        self.py = kwargs.get('py', 0)
+        self.at_turn = kwargs.get('at_turn', 0)
+        self.at_element = kwargs.get('at_element', 0)
+        self.weight = kwargs.get('weight', 1)
+
+        # Init refs
+        self._update_refs(
+            p0c=kwargs.get('p0c'),
+            energy0=kwargs.get('energy0'),
+            gamma0=kwargs.get('gamma0'),
+            beta0=kwargs.get('beta0'),
+            mask=input_mask,
+        )
+
+        # Init energy deviations
+        self._update_energy_deviations(
+            delta=kwargs.get('delta'),
+            ptau=kwargs.get('ptau'),
+            pzeta=kwargs.get('pzeta'),
+            _rpp=kwargs.get('rpp'),
+            _rvv=kwargs.get('rvv'),
+            mask=input_mask,
+        )
+
+        # Init zeta
+        self._update_zeta(
+            zeta=kwargs.get('zeta'),
+            tau=kwargs.get('tau'),
+            mask=input_mask,
+        )
+
+        # Init chi and charge ratio
+        self._update_chi_charge_ratio(
+            chi=kwargs.get('chi'),
+            charge_ratio=kwargs.get('charge_ratio'),
+            mass_ratio=kwargs.get('mass_ratio'),
+            mask=input_mask,
+        )
+
+        self.unhide_first_n_particles()
+        if isinstance(self._context, xo.ContextCpu) and not _no_reorganize:
+            self.reorganize()
+
+    def _allclose(self, a, b, rtol=1e-05, atol=1e-08, mask=None):
+        """Substitute for np.allclose that works with all contexts, and
+        allows for masking. Mask is expected to be an integer array on pyopencl,
+        and a boolean array on other contexts.
+        """
+        if isinstance(self._context, xo.ContextPyopencl):
+            # PyOpenCL does not support np.allclose
+            c = abs(a - b) * mask
+            # We use the same formula as in numpy:
+            return not bool((c > (atol + rtol * abs(b))).any())
+        else:
+            if mask is not None:
+                a = a[mask]
+                b = b[mask]
+            return np.allclose(a, b, rtol, atol)
+
+    def _assert_values_consistent(self, given_value, computed_value, mask=None):
+        """Check if the given value is consistent with the computed value."""
+        if given_value is None:
+            return
+        if not self._allclose(given_value, computed_value, mask=mask):
+            raise ValueError(
+                f'The given value {given_value} is not consistent with the '
+                f'computed value {computed_value}. Difference: '
+                f'{abs(given_value - computed_value)}.'
+            )
+
+    def _setattr_if_consistent(self, varname, given_value, computed_value,
+                               mask=None):
+        """Update field values that may be both given and computed from others.
+
+        In case of small differences between the given value and them computed
+        value, the given value will prevail to preserve numerical stability.
+        This is useful when two or more dependent variables are given as input.
+        """
+        self._assert_values_consistent(given_value, computed_value, mask)
+        target_val = given_value if given_value is not None else computed_value
+
+        # The simple case
+        if mask is None:
+            setattr(self, varname, target_val)
+            return
+
+        # Assign with a mask
+        if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
+            if hasattr(mask, 'get'):
+                mask = mask.get()
+            mask = np.where(mask)[0]
+            mask = self._context.nparray_to_context_array(mask)
+
+        getattr(self, varname)[mask] = target_val[mask]
+
+    def _update_refs(self, p0c=None, energy0=None, gamma0=None, beta0=None,
+                     mask=None):
+        if not any(ff is not None for ff in (p0c, energy0, gamma0, beta0)):
+            self._p0c = 1e9
+            p0c = self._p0c
+
+        _sqrt = self._context.nplike_lib.sqrt
+
+        if p0c is not None:
+            _energy0 = _sqrt(p0c ** 2 + self.mass0 ** 2)
+            _beta0 = p0c / _energy0
+            _gamma0 = _energy0 / self.mass0
+            _p0c = p0c
+        elif energy0 is not None:
+            _p0c = _sqrt(energy0 ** 2 - self.mass0 ** 2)
+            _beta0 = _p0c / energy0
+            _gamma0 = energy0 / self.mass0
+        elif gamma0 is not None:
+            _beta0 = _sqrt(1 - 1 / gamma0 ** 2)
+            _energy0 = self.mass0 * gamma0
+            _p0c = _energy0 * _beta0
+            _gamma0 = gamma0
+        elif beta0 is not None:
+            _gamma0 = 1 / _sqrt(1 - beta0 ** 2)
+            _energy0 = self.mass0 * _gamma0
+            _p0c = _energy0 * beta0
+            _beta0 = beta0
+        else:
+            raise RuntimeError('This statement is unreachable.')
+
+        self._assert_values_consistent(energy0, self.mass0 * _gamma0, mask)
+        self._setattr_if_consistent('_p0c',
+                                    given_value=p0c,
+                                    computed_value=_p0c,
+                                    mask=mask)
+        self._setattr_if_consistent('_gamma0',
+                                    given_value=gamma0,
+                                    computed_value=_gamma0,
+                                    mask=mask)
+        self._setattr_if_consistent('_beta0',
+                                    given_value=beta0,
+                                    computed_value=_beta0,
+                                    mask=mask)
+
+    def _update_energy_deviations(self, delta=None, ptau=None, pzeta=None,
+                                  _rpp=None, _rvv=None, mask=None):
+        if all(ff is None for ff in (delta, ptau, pzeta)):
+            if _rpp is not None or _rvv is not None:
+                raise ValueError('Setting `delta` and `ptau` by only giving '
+                                 '`_rpp` and `_rvv` is not supported.')
+            self._delta = 0.0
+            delta = self._delta  # Cupy complains if we later assign LinkedArray
+
+        _sqrt = self._context.nplike_lib.sqrt
+
+        beta0 = self._beta0
+        if delta is not None:
+            _delta = delta
+            _ptau = _sqrt(_delta**2 + 2 * _delta + 1 / beta0**2) - 1 / beta0
+            _pzeta = _ptau / beta0
+        elif ptau is not None:
+            _ptau = ptau
+            _delta = _sqrt(_ptau ** 2 + 2 * _ptau / beta0 + 1) - 1
+            _pzeta = _ptau / beta0
+        elif pzeta is not None:
+            _pzeta = pzeta
+            _ptau = _pzeta * beta0
+            _delta = _sqrt(_ptau ** 2 + 2 * _ptau / beta0 + 1) - 1
+        else:
+            raise RuntimeError('This statement is unreachable.')
+
+        self._assert_values_consistent(pzeta, _pzeta, mask)
+        self._setattr_if_consistent('_delta',
+                                    given_value=delta,
+                                    computed_value=_delta,
+                                    mask=mask)
+        self._setattr_if_consistent('_ptau',
+                                    given_value=ptau,
+                                    computed_value=_ptau,
+                                    mask=mask)
+
+        delta = self._delta  # Cupy complains if we later assign LinkedArray
+        delta_beta0 = delta * beta0
+        ptau_beta0 = _sqrt(delta_beta0 ** 2 + 2 * delta_beta0 * beta0 + 1) - 1
+        new_rvv = (1 + delta) / (1 + ptau_beta0)
+        new_rpp = 1 / (1 + delta)
+        self._setattr_if_consistent('_rpp',
+                                    given_value=_rpp,
+                                    computed_value=new_rpp,
+                                    mask=mask)
+        self._setattr_if_consistent('_rvv',
+                                    given_value=_rvv,
+                                    computed_value=new_rvv,
+                                    mask=mask)
+
+    def _update_zeta(self, zeta=None, tau=None, mask=None):
+        if zeta is None and tau is None:
+            self.zeta = 0.0
+            zeta = self.zeta
+
+        beta0 = self._beta0
+
+        if zeta is not None:
+            _zeta = zeta
+            _tau = zeta / beta0
+        elif tau is not None:
+            _tau = tau
+            _zeta = beta0 * _tau
+        else:
+            raise RuntimeError('This statement is unreachable.')
+
+        self._assert_values_consistent(tau, _tau, mask)
+        self._setattr_if_consistent('zeta',
+                                    given_value=zeta,
+                                    computed_value=_zeta,
+                                    mask=mask)
+
+    def _update_chi_charge_ratio(self, chi=None, charge_ratio=None,
+                                 mass_ratio=None, mask=None):
+        num_args = sum(ff is not None for ff in (chi, charge_ratio, mass_ratio))
+
+        if num_args == 0:
+            self.chi = 1.0
+            self.charge_ratio = 1.0
+            return
+        elif num_args == 1:
+            raise ValueError('Two of `chi`, `charge_ratio` and `mass_ratio` '
+                             'must be provided.')
+        elif num_args == 2:
+            if chi is None:
+                _charge_ratio, _mass_ratio = charge_ratio, mass_ratio
+                _chi = charge_ratio / mass_ratio
+            elif charge_ratio is None:
+                _chi, _mass_ratio = chi, mass_ratio
+                _charge_ratio = chi * mass_ratio
+            elif mass_ratio is None:
+                _chi, _charge_ratio = chi, charge_ratio
+                _mass_ratio = charge_ratio / chi
+            else:
+                raise RuntimeError('This statement is unreachable.')
+        else:  # num_args == 3
+            _chi, _charge_ratio, _mass_ratio = chi, charge_ratio, mass_ratio
+
+        self._assert_values_consistent(mass_ratio, _mass_ratio, mask)
+        self._setattr_if_consistent('chi',
+                                    given_value=chi,
+                                    computed_value=_chi,
+                                    mask=mask)
+        self._setattr_if_consistent('charge_ratio',
+                                    given_value=charge_ratio,
+                                    computed_value=_charge_ratio,
+                                    mask=mask)
 
     def init_pipeline(self, name):
 
@@ -301,6 +578,9 @@ class Particles(xo.HybridClass):
         dct['ptau'] = p_for_dict.ptau
         dct['rvv'] = p_for_dict.rvv
         dct['rpp'] = p_for_dict.rpp
+        dct['p0c'] = p_for_dict._p0c
+        dct['beta0'] = p_for_dict._beta0
+        dct['gamma0'] = p_for_dict._gamma0
         dct['start_tracking_at_element'] = p_for_dict.start_tracking_at_element
 
         if remove_underscored:
@@ -525,30 +805,43 @@ class Particles(xo.HybridClass):
             seeds=seeds_dev, n_init=self._capacity)
 
     def hide_lost_particles(self, _assume_reorganized=False):
-
         """
         Hide lost particles in the particles object.
         """
-
         self._lim_arrays_name = '_num_active_particles'
         if not _assume_reorganized:
             n_active, _ = self.reorganize()
             self._num_active_particles = n_active
 
     def unhide_lost_particles(self):
-
         """
         Unhide lost particles in the particles object.
         """
-
-        del(self._lim_arrays_name)
+        if hasattr(self, '_lim_arrays_name'):
+            del self._lim_arrays_name
         if not isinstance(self._context, xo.ContextCpu):
             self._num_active_particles = -1
+
+    def hide_first_n_particles(self, num_particles):
+        """
+        Hide first `num_particles` particles in the particles object.
+        """
+        self._lim_arrays_name = '_num_shown_particles'
+        self._num_shown_particles = num_particles
+
+    def unhide_first_n_particles(self):
+        """
+        Unhide the particles in the particles object.
+        """
+        if hasattr(self, '_num_shown_particles'):
+            del self._lim_arrays_name
+        if not isinstance(self._context, xo.ContextCpu):
+            self._num_shown_particles = -1
 
     @property
     def lost_particles_are_hidden(self):
         return (hasattr(self, '_lim_arrays_name') and
-                 self._lim_arrays_name == '_num_active_particles')
+                self._lim_arrays_name == '_num_active_particles')
 
     def sort(self, by='particle_id', interleave_lost_particles=False):
         """
@@ -584,7 +877,6 @@ class Particles(xo.HybridClass):
         elif restore_hidden:
             self.hide_lost_particles(_assume_reorganized=True)
 
-
     def reorganize(self):
 
         """
@@ -603,7 +895,7 @@ class Particles(xo.HybridClass):
             # Going to for the masking for now, could be replaced by a kernel in the future.
             state_cpu = self.state.get()
             mask_active_cpu = state_cpu > 0
-            mask_lost_cpu = (state_cpu < 1) & (state_cpu>LAST_INVALID_STATE)
+            mask_lost_cpu = (state_cpu < 1) & (state_cpu > LAST_INVALID_STATE)
             mask_active = self._context.nparray_to_context_array(
                                                 np.where(mask_active_cpu)[0])
             mask_lost = self._context.nparray_to_context_array(
@@ -613,7 +905,7 @@ class Particles(xo.HybridClass):
             needs_reorganization = not mask_active_cpu[:n_active].all()
         else:
             mask_active = self.state > 0
-            mask_lost = (self.state < 1) & (self.state>LAST_INVALID_STATE)
+            mask_lost = (self.state < 1) & (self.state > LAST_INVALID_STATE)
             n_active = int(np.sum(mask_active))
             n_lost = int(np.sum(mask_lost))
             needs_reorganization = not mask_active[:n_active].all()
@@ -628,7 +920,7 @@ class Particles(xo.HybridClass):
 
                     vv[:n_active] = vv_active
                     vv[n_active:n_active+n_lost] = vv_lost
-                    vv[n_active+n_lost:] = LAST_INVALID_STATE
+                    vv[n_active + n_lost:] = tt._dtype.type(LAST_INVALID_STATE)
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
@@ -698,53 +990,18 @@ class Particles(xo.HybridClass):
 
         """
         Update the `delta` value of the particles object. `ptau` and `rvv` and
-        `rpp` are updated accordingly.
+        `rpp` are updated accordingly. If `new_delta_value` contains nans, these
+        values are not updated.
         """
 
-        ctx = self._buffer.context
+        isnan = self._context.nplike_lib.isnan
+        # The comparison with False is needed as mask consists of int8 on opencl
+        mask = (isnan(new_delta_value) == False) & (self.state > 0)  # noqa
 
-        if (self._contains_lost_or_unallocated_particles()
-                or _contains_nan(new_delta_value, ctx)):
-            if isinstance(self._buffer.context, xo.ContextPyopencl):
-                # Needs special treatment because masking does not work with pyopencl
-                # could be done with a kernel in the future
-                state_cpu = self.state.get()
-                if hasattr(new_delta_value, 'get'):
-                    new_delta_value_cpu = new_delta_value.get()
-                else:
-                    new_delta_value_cpu = new_delta_value
-                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_delta_value_cpu)))
-                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
-            else:
-                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
-        else:
-            mask = None
-
-        if mask is not None:
-            beta0 = self.beta0[mask]
-            new_delta_value = new_delta_value[mask]
-        else:
-            beta0 = self.beta0
-
-        new_delta_beta0 = new_delta_value * beta0
-        new_ptau_beta0 = (new_delta_beta0 * new_delta_beta0
-                          + 2. * new_delta_beta0 * beta0 + 1.)**0.5 - 1.
-
-        new_one_plus_delta = 1. + new_delta_value
-        new_rvv = new_one_plus_delta / (1. + new_ptau_beta0)
-        new_rpp = 1. / new_one_plus_delta
-        new_ptau = new_ptau_beta0 / beta0
-
-        if mask is not None:
-            self._delta[mask] = new_delta_value
-            self._rvv[mask] = new_rvv
-            self._ptau[mask] = new_ptau
-            self._rpp[mask] = new_rpp
-        else:
-            self._delta = new_delta_value
-            self._rvv = new_rvv
-            self._ptau = new_ptau
-            self._rpp = new_rpp
+        self._update_energy_deviations(
+            delta=new_delta_value,
+            mask=mask
+        )
 
     @property
     def delta(self):
@@ -769,56 +1026,18 @@ class Particles(xo.HybridClass):
 
         """
         Update the `ptau` value of the particles object. `delta` and `rvv` and
-        `rpp` are updated accordingly.
+        `rpp` are updated accordingly. If `new_ptau` contains nans, these values
+        are not updated.
         """
 
-        ctx = self._buffer.context
+        isnan = self._context.nplike_lib.isnan
+        # The comparison with False is needed as mask consists of int8 on opencl
+        mask = (isnan(new_ptau) == False) & (self.state > 0)  # noqa
 
-        if (self._contains_lost_or_unallocated_particles()
-                or _contains_nan(new_ptau, ctx)):
-            if isinstance(self._buffer.context, xo.ContextPyopencl):
-                # Needs special treatment because masking does not work with pyopencl
-                # could be done with a kernel in the future
-                state_cpu = self.state.get()
-                if hasattr(new_ptau, 'get'):
-                    new_ptau_value_cpu = new_ptau.get()
-                else:
-                    new_ptau_value_cpu = new_ptau
-                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_ptau_value_cpu)))
-                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
-            else:
-                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
-        else:
-            mask = None
-
-        if mask is not None:
-            beta0 = self.beta0[mask]
-            zeta = self.zeta[mask]
-            new_ptau = new_ptau[mask]
-        else:
-            beta0 = self.beta0
-            zeta = self.zeta
-
-        ptau = new_ptau
-        irpp = (ptau*ptau + 2*ptau/beta0 + 1)**0.5
-        new_rpp = 1./irpp
-
-        new_rvv = irpp/(1 + beta0*ptau)
-
-        new_delta = irpp - 1.
-
-        if mask is not None:
-            self._delta[mask] = new_delta
-            self._rvv[mask] = new_rvv
-            self._ptau[mask] = new_ptau
-            self._rpp[mask] = new_rpp
-            self.zeta[mask] = zeta
-        else:
-            self._delta = new_delta
-            self._rvv = new_rvv
-            self._ptau = new_ptau
-            self._rpp = new_rpp
-            self.zeta = zeta
+        self._update_energy_deviations(
+            ptau=new_ptau,
+            mask=mask
+        )
 
     def _ptau_setitem(self, indx, val):
         ctx = self._buffer.context
@@ -839,6 +1058,110 @@ class Particles(xo.HybridClass):
     def ptau(self, value):
         self.ptau[:] = value
 
+    def update_p0c(self, new_p0c):
+
+        """
+        Update the `p0c` value of the particles object. `gamma0` and `beta0` are
+        updated accordingly. If `new_p0c` contains nans, these values
+        are not updated.
+        """
+
+        isnan = self._context.nplike_lib.isnan
+        # The comparison with False is needed as mask consists of int8 on opencl
+        mask = (isnan(new_p0c) == False) & (self.state > 0)  # noqa
+
+        self._update_refs(
+            p0c=new_p0c,
+            mask=mask,
+        )
+
+    def _p0c_setitem(self, indx, val):
+        ctx = self._buffer.context
+        temp_p0c = ctx.zeros(shape=self._p0c.shape, dtype=np.float64)
+        temp_p0c[:] = np.nan
+        temp_p0c[indx] = val
+        self.update_p0c(temp_p0c)
+
+    @property
+    def p0c(self):
+        return self._buffer.context.linked_array_type.from_array(
+                                        self._p0c,
+                                        mode='setitem_from_container',
+                                        container=self,
+                                        container_setitem_name='_p0c_setitem')
+
+    @p0c.setter
+    def p0c(self, value):
+        self.p0c[:] = value
+
+    def update_gamma0(self, new_gamma0):
+
+        """
+        Update the `gamma0` value of the particles object. `p0c` and `beta0` are
+        updated accordingly. If `new_gamma0` contains nans, these values
+        are not updated.
+        """
+
+        mask = (new_gamma0 == new_gamma0) & (self.state > 0)
+
+        self._update_refs(
+            gamma0=new_gamma0,
+            mask=mask,
+        )
+
+    def _gamma0_setitem(self, indx, val):
+        ctx = self._buffer.context
+        temp_gamma0 = ctx.zeros(shape=self._gamma0.shape, dtype=np.float64)
+        temp_gamma0[:] = np.nan
+        temp_gamma0[indx] = val
+        self.update_gamma0(temp_gamma0)
+
+    @property
+    def gamma0(self):
+        return self._buffer.context.linked_array_type.from_array(
+                                        self._gamma0,
+                                        mode='setitem_from_container',
+                                        container=self,
+                                        container_setitem_name='_gamma0_setitem')
+
+    @gamma0.setter
+    def gamma0(self, value):
+        self.gamma0[:] = value
+
+    def update_beta0(self, new_beta0):
+
+        """
+        Update the `beta0` value of the particles object. `p0c` and `gamma0` are
+        updated accordingly. If `new_beta0` contains nans, these values
+        are not updated.
+        """
+
+        mask = (new_beta0 == new_beta0) & (self.state > 0)
+
+        self._update_refs(
+            beta0=new_beta0,
+            mask=mask,
+        )
+
+    def _beta0_setitem(self, indx, val):
+        ctx = self._buffer.context
+        temp_beta0 = ctx.zeros(shape=self._beta0.shape, dtype=np.float64)
+        temp_beta0[:] = np.nan
+        temp_beta0[indx] = val
+        self.update_beta0(temp_beta0)
+
+    @property
+    def beta0(self):
+        return self._buffer.context.linked_array_type.from_array(
+                                        self._beta0,
+                                        mode='setitem_from_container',
+                                        container=self,
+                                        container_setitem_name='_beta0_setitem')
+
+    @beta0.setter
+    def beta0(self, value):
+        self.beta0[:] = value
+
     @property
     def rvv(self):
         return self._buffer.context.linked_array_type.from_array(
@@ -853,7 +1176,10 @@ class Particles(xo.HybridClass):
 
     @property
     def energy0(self):
-        return (self.p0c * self.p0c + self.mass0 * self.mass0)**0.5
+        energy0 = (self.p0c * self.p0c + self.mass0 * self.mass0) ** 0.5
+        return self._buffer.context.linked_array_type.from_array(
+                                            energy0, mode='readonly',
+                                            container=self)
 
     @property
     def energy(self):
@@ -894,9 +1220,7 @@ class Particles(xo.HybridClass):
         self._rvv = rvv
         self._rpp = 1. / one_plus_delta
 
-    def set_particle(self, index, set_scalar_vars=False,
-                    **kwargs):
-
+    def set_particle(self, index, set_scalar_vars=False, **kwargs):
         raise NotImplementedError('This functionality has been removed')
 
 
@@ -1265,59 +1589,3 @@ int64_t check_is_active(LocalParticle* part) {
                           custom_source])
 
     return source
-
-def _pyparticles_to_xpart_dict(pyparticles):
-    """
-    Convert object to xpart Particles object dictionary
-    """
-    out = {}
-
-    dct = pyparticles.to_dict()
-
-    if hasattr(pyparticles, 'weight'):
-        dct['weight'] = getattr(pyparticles, 'weight')
-    else:
-        dct['weight'] = 1.
-
-    for tt, kk in scalar_vars + per_particle_vars:
-        if kk.startswith('_rng'):
-            continue
-        # Use properties
-        dct[kk] = getattr(pyparticles, kk)
-
-
-    for kk, vv in dct.items():
-        dct[kk] = np.atleast_1d(vv)
-
-    lll = [len(vv) for kk, vv in dct.items() if hasattr(vv, '__len__')]
-    lll = list(set(lll))
-    assert len(set(lll) - {1}) <= 1
-    _num_particles = max(lll)
-    out['_num_particles'] = _num_particles
-
-    for tt, kk in scalar_vars:
-        val = dct[kk]
-        assert np.allclose(val, val[0], rtol=1e-10, atol=1e-14)
-        out[kk] = val[0]
-
-    for tt, kk in per_particle_vars:
-        if kk.startswith('_rng'):
-            continue
-
-        val_py = dct[kk]
-
-        if _num_particles > 1 and len(val_py) == 1:
-            temp = np.zeros(int(_num_particles), dtype=tt._dtype)
-            temp += val_py[0]
-            val_py = temp
-
-        if type(val_py) != tt._dtype:
-            val_py = np.array(val_py, dtype=tt._dtype)
-
-        out[kk] = val_py
-
-    #out['_num_active_particles'] = np.sum(out['state']>0)
-    #out['_num_lost_particles'] = np.sum((out['state'] < 0) &
-    #                                      (out['state'] > LAST_INVALID_STATE))
-
-    return out

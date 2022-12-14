@@ -4,6 +4,7 @@
 # ######################################### #
 
 import numpy as np
+import pytest
 
 import xpart as xp
 
@@ -43,7 +44,8 @@ def test_to_dict_pyheadtail_interface():
 
 
 @for_all_test_contexts
-def test_to_pandas(test_context):
+@pytest.mark.parametrize('compact', [False, True])
+def test_to_pandas(test_context, compact):
     n_particles = 1000
     capacity = 3000
     part = xp.Particles(_capacity=capacity, _context=test_context,
@@ -55,24 +57,27 @@ def test_to_pandas(test_context):
                 delta=np.random.uniform(low=-1e-4, high=1e-4, size=n_particles),
                 p0c=7e12)
 
-    df_part = part.to_pandas()
-    df_part_compact = part.to_pandas(compact=True)
+    df_part = part.to_pandas(compact=compact)
 
-    assert len(df_part) == capacity
-    assert len(df_part_compact) == n_particles
+    if compact:
+        assert len(df_part) == n_particles
+    else:
+        assert len(df_part) == capacity
 
     # Check that underscored vars (if any) are all rng states
-    for df in [df_part, df_part_compact]:
-        ltest = [nn for nn in df.keys() if nn.startswith('_')]
-        assert np.all([nn.startswith('_rng') for nn in ltest])
+    ltest = [nn for nn in df_part.keys() if nn.startswith('_')]
+    assert np.all([nn.startswith('_rng') for nn in ltest])
 
     for nn in ['_rng_s1', '_rng_s2', '_rng_s3', '_rng_s4',
                 'beta0', 'gamma0', 'ptau', 'rpp', 'rvv']:
-        assert nn in df_part.keys()
-        assert nn not in df_part_compact.keys()
+        if compact:
+            assert nn not in df_part.keys()
+        else:
+            assert nn in df_part.keys()
 
-    for df, pref in zip([df_part, df_part_compact],
-                        [part, part.remove_unused_space()]):
-        part_test = xp.Particles.from_pandas(df)
-        for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'ptau', 'gamma0']:
-            assert np.all(pref.to_dict()[kk] == part_test.to_dict()[kk])
+    if compact:
+        part = part.remove_unused_space()
+
+    part_test = xp.Particles.from_pandas(df_part)
+    for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'ptau', 'gamma0']:
+        assert np.all(part.to_dict()[kk] == part_test.to_dict()[kk])
