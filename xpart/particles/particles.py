@@ -564,15 +564,17 @@ class Particles(xo.HybridClass):
         n_active = int(np.sum(mask_active))
         n_lost = int(np.sum(mask_lost))
 
-        with self._bypass_linked_vars():
-            for tt, nn in self._structure['per_particle_vars']:
-                vv = getattr(self, nn)
-                vv_active = vv[mask_active]
-                vv_lost = vv[mask_lost]
+        if not mask_active[:n_active].all():
+            # Reorganize particles
+            with self._bypass_linked_vars():
+                for tt, nn in self._structure['per_particle_vars']:
+                    vv = getattr(self, nn)
+                    vv_active = vv[mask_active]
+                    vv_lost = vv[mask_lost]
 
-                vv[:n_active] = vv_active
-                vv[n_active:n_active+n_lost] = vv_lost
-                vv[n_active+n_lost:] = LAST_INVALID_STATE
+                    vv[:n_active] = vv_active
+                    vv[n_active:n_active+n_lost] = vv_lost
+                    vv[n_active+n_lost:] = LAST_INVALID_STATE
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
