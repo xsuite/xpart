@@ -47,8 +47,6 @@ def test_to_pandas():
 
         n_particles = 1000
         capacity = 3000
-        n_particles = 3
-        capacity = 5
         part = xp.Particles(_capacity=capacity, _context=context,
                     x=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
                     px=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
