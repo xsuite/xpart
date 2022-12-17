@@ -37,10 +37,14 @@ def test_hide_lost_particles():
     for context in xo.context.get_test_contexts():
         print(f"Testing with context {context}")
 
+        if isinstance(context, xo.ContextPyopencl):
+            print("Skipping test for pyopencl context, not supported yet")
+            continue
+
         c2n = context.nparray_from_context_array
         n2c = context.nparray_to_context_array
 
-        particles = xp.Particles(p0c=450e9, x=[1,2,3,4,5],
+        particles = xp.Particles(_context=context, p0c=450e9, x=[1,2,3,4,5],
                                 delta=[0.1,0.2,0.3,0.4,0.5])
         particles0 = particles.copy()
 
