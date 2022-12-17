@@ -165,81 +165,82 @@ class Particles(xo.HybridClass):
         if '_xobject' in kwargs.keys():
             # Initialize xobject
             self.xoinitialize(**kwargs)
-        else:
-            if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
-                # Needed to generate consistent longitudinal variables
-                pyparticles = Pyparticles(**kwargs)
-                if 'mass_ratio' in kwargs.keys():
-                    del(kwargs['mass_ratio']) # info transferred in pyparticles.chi
+            return
 
-                part_dict = _pyparticles_to_xpart_dict(pyparticles)
-                if ('_capacity' in kwargs.keys() and
-                         kwargs['_capacity'] is not None):
-                    assert kwargs['_capacity'] >= part_dict['_num_particles']
-                else:
-                    kwargs['_capacity'] = part_dict['_num_particles']
+        if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
+            # Needed to generate consistent longitudinal variables
+            pyparticles = Pyparticles(**kwargs)
+            if 'mass_ratio' in kwargs.keys():
+                del(kwargs['mass_ratio']) # info transferred in pyparticles.chi
+
+            part_dict = _pyparticles_to_xpart_dict(pyparticles)
+            if ('_capacity' in kwargs.keys() and
+                        kwargs['_capacity'] is not None):
+                assert kwargs['_capacity'] >= part_dict['_num_particles']
             else:
-                pyparticles = None
-                if '_capacity' not in kwargs.keys():
-                    kwargs['_capacity'] = 1
+                kwargs['_capacity'] = part_dict['_num_particles']
+        else:
+            pyparticles = None
+            if '_capacity' not in kwargs.keys():
+                kwargs['_capacity'] = 1
 
-            # Make sure _capacity is integer
-            kwargs['_capacity'] = int(kwargs['_capacity'])
+        # Make sure _capacity is integer
+        kwargs['_capacity'] = int(kwargs['_capacity'])
 
-            # We just provide array sizes to xoinitialize (we will set values later)
-            kwargs.update(
-                    {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
+        # We just provide array sizes to xoinitialize (we will set values later)
+        kwargs.update(
+                {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
 
-            if 'pzeta' in kwargs.keys():
-                del(kwargs['pzeta'])  # handled in part_dict
+        if 'pzeta' in kwargs.keys():
+            del(kwargs['pzeta'])  # handled in part_dict
 
-            if 'sigma' in kwargs.keys():
-                raise NameError(
-                    '`sigma` is not supported anymore. Please use `zeta` instead.')
+        if 'sigma' in kwargs.keys():
+            raise NameError(
+                '`sigma` is not supported anymore. Please use `zeta` instead.')
 
-            if 'psigma' in kwargs.keys():
-                raise NameError(
-                    '`psigma` is not supported anymore. Please use `pzeta` instead.')
+        if 'psigma' in kwargs.keys():
+            raise NameError(
+                '`psigma` is not supported anymore. Please use `pzeta` instead.')
 
-            # Initialize xobject
-            self.xoinitialize(**kwargs)
+        # Initialize xobject
+        self.xoinitialize(**kwargs)
 
-            if 'start_tracking_at_element' not in kwargs.keys():
-                self.start_tracking_at_element = -1
+        if 'start_tracking_at_element' not in kwargs.keys():
+            self.start_tracking_at_element = -1
 
-            # Initialize coordinates
-            with self._bypass_linked_vars():
-                if pyparticles is not None:
-                    context = self._buffer.context
-                    for tt, kk in list(scalar_vars):
-                        setattr(self, kk, part_dict[kk])
-                    for tt, kk in list(per_particle_vars):
-                        if kk.startswith('_rng'):
-                            getattr(self, kk)[:] = 0
-                            continue
-                        vv = getattr(self, kk)
-                        vals =  context.nparray_to_context_array(part_dict[kk])
-                        ll = len(vals)
-                        vv[:ll] = vals
-                        vv[ll:] = LAST_INVALID_STATE
-                else:
-                    for tt, kk in list(scalar_vars):
-                        setattr(self, kk, 0.)
+        # Initialize coordinates
+        with self._bypass_linked_vars():
+            if pyparticles is not None:
+                context = self._buffer.context
+                for tt, kk in list(scalar_vars):
+                    setattr(self, kk, part_dict[kk])
+                for tt, kk in list(per_particle_vars):
+                    if kk.startswith('_rng'):
+                        getattr(self, kk)[:] = 0
+                        continue
+                    vv = getattr(self, kk)
+                    vals =  context.nparray_to_context_array(part_dict[kk])
+                    ll = len(vals)
+                    vv[:ll] = vals
+                    vv[ll:] = LAST_INVALID_STATE
+            else:
+                for tt, kk in list(scalar_vars):
+                    setattr(self, kk, 0.)
 
-                    for tt, kk in list(per_particle_vars):
-                        if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
-                            value = 1.
-                        elif kk == 'particle_id':
-                            value = np.arange(0, self._capacity, dtype=np.int64)
-                        else:
-                            value = 0.
-                        getattr(self, kk)[:] = value
+                for tt, kk in list(per_particle_vars):
+                    if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
+                        value = 1.
+                    elif kk == 'particle_id':
+                        value = np.arange(0, self._capacity, dtype=np.int64)
+                    else:
+                        value = 0.
+                    getattr(self, kk)[:] = value
 
             self._num_active_particles = -1  # To be filled in only on CPU
             self._num_lost_particles = -1  # To be filled in only on CPU
 
             # Force values provided by user if compatible
-            for nn in part_energy_varnames():
+            for nn in part_energy_varnames() + ['p0c', 'beta0', 'gamma0']:
                 vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
                 if nn in input_kwargs.keys():
                     if hasattr(input_kwargs[nn], '__len__'):
@@ -248,18 +249,18 @@ class Particles(xo.HybridClass):
                         ll = len(vvv)
 
                     if np.isscalar(input_kwargs[nn]):
-                        getattr(self, "_"+nn)[:] = input_kwargs[nn]
+                        getattr(self, nn)[:] = input_kwargs[nn]
                     else:
-                        getattr(self, "_"+nn)[:ll] = (
+                        getattr(self, nn)[:ll] = (
                                 context.nparray_to_context_array(
                                     np.array(input_kwargs[nn])))
 
-            if isinstance(self._buffer.context, xo.ContextCpu):
-                # Particles always need to be organized to run on CPU
-                if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
-                    pass
-                else:
-                    self.reorganize()
+        if isinstance(self._buffer.context, xo.ContextCpu):
+            # Particles always need to be organized to run on CPU
+            if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
+                pass
+            else:
+                self.reorganize()
 
     def init_pipeline(self, name):
         self.name = name
@@ -341,7 +342,7 @@ class Particles(xo.HybridClass):
         print('\n')
 
     def get_classical_particle_radius0(self):
-        """ 
+        """
         Method to calculate classical particle radius from reference particle
         """
         m0 = self.mass0*qe/(clight**2) # electron volt - kg conversion

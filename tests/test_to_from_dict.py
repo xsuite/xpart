@@ -46,7 +46,11 @@ def test_to_pandas():
         print(f"Test {context.__class__}")
 
         n_particles = 1000
-        part = xp.Particles(_capacity=3000, _context=context,
+        capacity = 3000
+        n_particles = 3
+        capacity = 5
+        part = xp.Particles(_capacity=capacity, _context=context,
+                    x=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
                     px=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
                     y=np.random.uniform(low=-1e-3, high=1e-3, size=n_particles),
                     py=np.random.uniform(low=-1e-6, high=1e-6, size=n_particles),
@@ -57,8 +61,8 @@ def test_to_pandas():
         df_part = part.to_pandas()
         df_part_compact = part.to_pandas(compact=True)
 
-        assert len(df_part) == 3000
-        assert len(df_part_compact) == 1000
+        assert len(df_part) == capacity
+        assert len(df_part_compact) == n_particles
 
         # Check that underscored vars (if any) are all rng states
         for df in [df_part, df_part_compact]:
