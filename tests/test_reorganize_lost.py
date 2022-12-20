@@ -7,10 +7,6 @@ def test_reorganize_particles():
     for context in xo.context.get_test_contexts():
         print(f"Testing with context {context}")
 
-        if isinstance(context, xo.ContextPyopencl):
-            print("Skipping test for pyopencl context, not supported yet")
-            continue
-
         c2n = context.nparray_from_context_array
         n2c = context.nparray_to_context_array
 

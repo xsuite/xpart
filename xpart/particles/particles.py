@@ -568,8 +568,8 @@ class Particles(xo.HybridClass):
                                                 np.where(mask_active_cpu)[0])
             mask_lost = self._context.nparray_to_context_array(
                                                 np.where(mask_lost_cpu)[0])
-            n_active = int(np.sum(mask_active))
-            n_lost = int(np.sum(mask_lost))
+            n_active = int(np.sum(mask_active_cpu))
+            n_lost = int(np.sum(mask_lost_cpu))
             needs_reorganization = not mask_active_cpu[:n_active].all()
         else:
             mask_active = self.state > 0
