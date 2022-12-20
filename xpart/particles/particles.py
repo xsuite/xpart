@@ -550,8 +550,6 @@ class Particles(xo.HybridClass):
 
 
     def reorganize(self):
-        # assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
-        #         'Masking does not work with pyopencl')
 
         if self.lost_particles_are_hidden:
             restore_hidden = True
@@ -657,8 +655,17 @@ class Particles(xo.HybridClass):
         if (self._contains_lost_or_unallocated_particles()
                 or _contains_nan(new_delta_value, ctx)):
             if isinstance(self._buffer.context, xo.ContextPyopencl):
-                raise NotImplementedError # Because masking of arrays does not work in pyopencl
-            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
+                # Needs special treatment because masking does not work with pyopencl
+                # could be done with a kernel in the future
+                state_cpu = self.state.get()
+                if hasattr(new_delta_value, 'get'):
+                    new_delta_value_cpu = new_delta_value.get()
+                else:
+                    new_delta_value_cpu = new_delta_value
+                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_delta_value_cpu)))
+                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
+            else:
+                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
         else:
             mask = None
 
@@ -714,8 +721,17 @@ class Particles(xo.HybridClass):
         if (self._contains_lost_or_unallocated_particles()
                 or _contains_nan(new_ptau, ctx)):
             if isinstance(self._buffer.context, xo.ContextPyopencl):
-                raise NotImplementedError # Because masking of arrays does not work in pyopencl
-            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
+                # Needs special treatment because masking does not work with pyopencl
+                # could be done with a kernel in the future
+                state_cpu = self.state.get()
+                if hasattr(new_ptau, 'get'):
+                    new_ptau_value_cpu = new_ptau.get()
+                else:
+                    new_ptau_value_cpu = new_ptau
+                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_ptau_value_cpu)))
+                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
+            else:
+                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
         else:
             mask = None
 
