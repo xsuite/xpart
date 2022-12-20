@@ -561,6 +561,7 @@ class Particles(xo.HybridClass):
 
         if isinstance(self._context, xo.ContextPyopencl):
             # Needs special treatment because masking does not work with pyopencl
+            # Going to for the masking for now, could be replaced by a kernel in the future.
             state_cpu = self.state.get()
             mask_active_cpu = state_cpu > 0
             mask_lost_cpu = (state_cpu < 1) & (state_cpu>LAST_INVALID_STATE)
