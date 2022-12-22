@@ -572,11 +572,10 @@ class Particles(xo.HybridClass):
 
 
     def reorganize(self):
+
         """
         Return number of active and lost particles in Particles object 
         """
-        assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
-                'Masking does not work with pyopencl')
 
         if self.lost_particles_are_hidden:
             restore_hidden = True
@@ -584,13 +583,27 @@ class Particles(xo.HybridClass):
         else:
             restore_hidden = False
 
-        mask_active = self.state > 0
-        mask_lost = (self.state < 1) & (self.state>LAST_INVALID_STATE)
+        if isinstance(self._context, xo.ContextPyopencl):
+            # Needs special treatment because masking does not work with pyopencl
+            # Going to for the masking for now, could be replaced by a kernel in the future.
+            state_cpu = self.state.get()
+            mask_active_cpu = state_cpu > 0
+            mask_lost_cpu = (state_cpu < 1) & (state_cpu>LAST_INVALID_STATE)
+            mask_active = self._context.nparray_to_context_array(
+                                                np.where(mask_active_cpu)[0])
+            mask_lost = self._context.nparray_to_context_array(
+                                                np.where(mask_lost_cpu)[0])
+            n_active = int(np.sum(mask_active_cpu))
+            n_lost = int(np.sum(mask_lost_cpu))
+            needs_reorganization = not mask_active_cpu[:n_active].all()
+        else:
+            mask_active = self.state > 0
+            mask_lost = (self.state < 1) & (self.state>LAST_INVALID_STATE)
+            n_active = int(np.sum(mask_active))
+            n_lost = int(np.sum(mask_lost))
+            needs_reorganization = not mask_active[:n_active].all()
 
-        n_active = int(np.sum(mask_active))
-        n_lost = int(np.sum(mask_lost))
-
-        if not mask_active[:n_active].all():
+        if needs_reorganization:
             # Reorganize particles
             with self._bypass_linked_vars():
                 for tt, nn in self._structure['per_particle_vars']:
@@ -675,8 +688,17 @@ class Particles(xo.HybridClass):
         if (self._contains_lost_or_unallocated_particles()
                 or _contains_nan(new_delta_value, ctx)):
             if isinstance(self._buffer.context, xo.ContextPyopencl):
-                raise NotImplementedError # Because masking of arrays does not work in pyopencl
-            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
+                # Needs special treatment because masking does not work with pyopencl
+                # could be done with a kernel in the future
+                state_cpu = self.state.get()
+                if hasattr(new_delta_value, 'get'):
+                    new_delta_value_cpu = new_delta_value.get()
+                else:
+                    new_delta_value_cpu = new_delta_value
+                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_delta_value_cpu)))
+                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
+            else:
+                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
         else:
             mask = None
 
@@ -734,8 +756,17 @@ class Particles(xo.HybridClass):
         if (self._contains_lost_or_unallocated_particles()
                 or _contains_nan(new_ptau, ctx)):
             if isinstance(self._buffer.context, xo.ContextPyopencl):
-                raise NotImplementedError # Because masking of arrays does not work in pyopencl
-            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
+                # Needs special treatment because masking does not work with pyopencl
+                # could be done with a kernel in the future
+                state_cpu = self.state.get()
+                if hasattr(new_ptau, 'get'):
+                    new_ptau_value_cpu = new_ptau.get()
+                else:
+                    new_ptau_value_cpu = new_ptau
+                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_ptau_value_cpu)))
+                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
+            else:
+                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
         else:
             mask = None
 
