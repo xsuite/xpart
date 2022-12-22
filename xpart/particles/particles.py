@@ -158,9 +158,7 @@ class Particles(xo.HybridClass):
             'per_particle_vars': per_particle_vars}
 
     def __init__(self, **kwargs):
-        """
-        Particles object constructor
-        """
+
         input_kwargs = kwargs.copy()
 
         if '_xobject' in kwargs.keys():
@@ -264,9 +262,11 @@ class Particles(xo.HybridClass):
                 self.reorganize()
 
     def init_pipeline(self, name):
+
         """
-        Add name to class attribute 
+        Add attribute (for pipeline mode).
         """
+
         self.name = name
 
     def to_dict(self, copy_to_cpu=True,
@@ -275,9 +275,6 @@ class Particles(xo.HybridClass):
                 remove_redundant_variables=None,
                 keep_rng_state=None,
                 compact=False):
-        """
-        Generate dictionary of Particles object's properties
-        """
 
         if remove_underscored is None:
             remove_underscored = True
@@ -325,9 +322,7 @@ class Particles(xo.HybridClass):
                   remove_redundant_variables=None,
                   keep_rng_state=None,
                   compact=False):
-        """
-        Generate pandas dataframe of Particles object properties
-        """
+
         dct = self.to_dict(
                     remove_underscored=remove_underscored,
                     remove_unused_space=remove_unused_space,
@@ -338,9 +333,11 @@ class Particles(xo.HybridClass):
         return pd.DataFrame(dct)
 
     def show(self):
+
         """
-        Method to print particle properties
+        Print particle properties.
         """
+
         df = self.to_pandas()
         dash = '-' * 55
         print("PARTICLES:\n\n")
@@ -352,19 +349,18 @@ class Particles(xo.HybridClass):
         print('\n')
 
     def get_classical_particle_radius0(self):
-        """ 
-        Calculate classical particle radius from reference particle
+
         """
-        
+        Get classical particle radius of the reference particle.
+        """
+
         m0 = self.mass0*qe/(clight**2) # electron volt - kg conversion
         r0 = (self.q0*qe)**2/(4*np.pi*epsilon_0*m0*clight**2)  #1.5347e-18 is default for protons
         return r0
 
     @classmethod
     def from_pandas(cls, df, _context=None, _buffer=None, _offset=None):
-        """ 
-        Construct Particles object from pandas dataframe
-        """
+
         dct = df.to_dict(orient='list')
         for tt, nn in scalar_vars + size_vars:
             if nn in dct.keys() and not np.isscalar(dct[nn]):
@@ -373,9 +369,11 @@ class Particles(xo.HybridClass):
 
     @classmethod
     def merge(cls, lst, _context=None, _buffer=None, _offset=None):
+
         """
-        Merge array of Particles objects into a single object
+        Merge a list of particles into a single particles object.
         """
+
         # TODO For now the merge is performed on CPU for add contexts.
         # Slow for objects on GPU (transferred to CPU for the merge).
 
@@ -443,7 +441,7 @@ class Particles(xo.HybridClass):
 
     def filter(self, mask):
         """
-        Select a subset of particles satisfying a logical condition defined by the user
+        Select a subset of particles satisfying a logical condition.
         """
         if isinstance(self._buffer.context, xo.ContextCpu):
             self_cpu = self
@@ -486,6 +484,11 @@ class Particles(xo.HybridClass):
             return new_part_cpu.copy(_context=target_ctx)
 
     def remove_unused_space(self):
+
+        """
+        Return a new particles object with removed no space in the particle arrays.
+        """
+
         return self.filter(self.state > LAST_INVALID_STATE)
 
     def _bypass_linked_vars(self):
@@ -503,7 +506,8 @@ class Particles(xo.HybridClass):
 
     def _init_random_number_generator(self, seeds=None):
         """
-        Constructor for random number generator, with possibility to provide seed
+        Initialize state of the random number generator (possibility to providing
+        a seed for each particle).
         """
         self.compile_kernels(only_if_needed=True)
 
@@ -521,12 +525,22 @@ class Particles(xo.HybridClass):
             seeds=seeds_dev, n_init=self._capacity)
 
     def hide_lost_particles(self, _assume_reorganized=False):
+
+        """
+        Hide lost particles in the particles object.
+        """
+
         self._lim_arrays_name = '_num_active_particles'
         if not _assume_reorganized:
             n_active, _ = self.reorganize()
             self._num_active_particles = n_active
 
     def unhide_lost_particles(self):
+
+        """
+        Unhide lost particles in the particles object.
+        """
+
         del(self._lim_arrays_name)
         if not isinstance(self._context, xo.ContextCpu):
             self._num_active_particles = -1
@@ -538,7 +552,7 @@ class Particles(xo.HybridClass):
 
     def sort(self, by='particle_id', interleave_lost_particles=False):
         """
-        Sort particles by particle ID or other key
+        Sort particles by particle ID or other veriabke.
         """
         if not isinstance(self._buffer.context, xo.ContextCpu):
             raise NotImplementedError('Sorting only works on CPU for now')
@@ -574,7 +588,8 @@ class Particles(xo.HybridClass):
     def reorganize(self):
 
         """
-        Return number of active and lost particles in Particles object 
+        Reorganize the particles object so that all active particles are at the
+        beginning of the arrays.
         """
 
         if self.lost_particles_are_hidden:
@@ -626,7 +641,7 @@ class Particles(xo.HybridClass):
 
     def add_particles(self, part, keep_lost=False):
         """
-        Add particle to already existing Particles object
+        Add particles to the Particles object.
         """
         if keep_lost:
             raise NotImplementedError
@@ -662,7 +677,7 @@ class Particles(xo.HybridClass):
 
     def get_active_particle_id_range(self):
         """
-        Find ID range of active particles in Particles object
+        Get the range of particle ids of active particles.
         """
         ctx2np = self._buffer.context.nparray_from_context_array
         mask_active = ctx2np(self.state) > 0
@@ -680,9 +695,12 @@ class Particles(xo.HybridClass):
             return ctx.nplike_lib.any(self.state <= 0)
 
     def update_delta(self, new_delta_value):
+
         """
-        Update relative momentum spread attribute of active particles
+        Update the `delta` value of the particles object. `ptau` and `rvv` and
+        `rpp` are updated accordingly.
         """
+
         ctx = self._buffer.context
 
         if (self._contains_lost_or_unallocated_particles()
@@ -748,9 +766,12 @@ class Particles(xo.HybridClass):
         self.update_delta(temp_delta)
 
     def update_ptau(self, new_ptau):
+
         """
-        Update ptau attribute of active particles
+        Update the `ptau` value of the particles object. `delta` and `rvv` and
+        `rpp` are updated accordingly.
         """
+
         ctx = self._buffer.context
 
         if (self._contains_lost_or_unallocated_particles()
@@ -850,7 +871,8 @@ class Particles(xo.HybridClass):
 
     def add_to_energy(self, delta_energy):
         """
-        Update Particle attributes for given delta_energy 
+        Add `delta_energy` to the `energy` of the particles object. `delta`,
+        'ptau', `rvv` and `rpp` are updated accordingly.
         """
         beta0 = self.beta0.copy()
         delta_beta0 = self.delta * beta0
