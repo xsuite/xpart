@@ -315,10 +315,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                         / particle_ref._xobject.gamma0[0])
 
 
-        x_norm_scaled = np.sqrt(gemitt_x) * x_norm
-        px_norm_scaled = np.sqrt(gemitt_x) * px_norm
-        y_norm_scaled = np.sqrt(gemitt_y) * y_norm
-        py_norm_scaled = np.sqrt(gemitt_y) * py_norm
+        x_norm_scaled = np.sqrt(gemitt_x) * np.array(x_norm)
+        px_norm_scaled = np.sqrt(gemitt_x) * np.array(px_norm)
+        y_norm_scaled = np.sqrt(gemitt_y) * np.array(y_norm)
+        py_norm_scaled = np.sqrt(gemitt_y) * np.array(py_norm)
 
         # Transform long. coordinates to normalized space
         XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
