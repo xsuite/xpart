@@ -303,12 +303,17 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             nemitt_y = scale_with_transverse_norm_emitt[1]
 
         if nemitt_x is None:
-            nemitt_x = 1
-        if nemitt_y is None:
-            nemitt_y = 1
+            gemitt_x = 1
+        else:
+            gemitt_x = (nemitt_x / particle_ref._xobject.beta0[0]
+                        / particle_ref._xobject.gamma0[0])
 
-        gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
-        gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
+        if nemitt_y is None:
+            gemitt_y = 1
+        else:
+            gemitt_y = (nemitt_y / particle_ref._xobject.beta0[0]
+                        / particle_ref._xobject.gamma0[0])
+
 
         x_norm_scaled = np.sqrt(gemitt_x) * x_norm
         px_norm_scaled = np.sqrt(gemitt_x) * px_norm
