@@ -210,17 +210,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if mode is None:
         mode = 'set'
 
-    if mode == 'normalized_transverse':
-        if x_norm is None: x_norm = 0
-        if px_norm is None: px_norm = 0
-        if y_norm is None: y_norm = 0
-        if py_norm is None: py_norm = 0
-    else:
-        if x is None: x = 0
-        if px is None: px = 0
-        if y is None: y = 0
-        if py is None: py = 0
-
     assert particle_ref._capacity == 1
     ref_dict = {
         'q0': particle_ref.q0,
@@ -287,8 +276,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         else:
             WW = W_matrix
 
-        WWinv = np.linalg.inv(WW)
-
         num_particles = _check_lengths(num_particles=num_particles,
             zeta=zeta, delta=delta, x_norm=x_norm, px_norm=px_norm,
             y_norm=y_norm, py_norm=py_norm)
@@ -314,8 +301,56 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             gemitt_y = (nemitt_y / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
 
+        if len([vv is not None for vv in [x, x_norm, px, px_norm]]) > 2:
+            raise ValueError(
+                "Only two of `x`, `x_norm`, `px` and `px_norm` can be provided")
+        elif len([vv is not None for vv in [x, x_norm, px, px_norm]]) <= 1:
+            if x is None and x_norm is None:
+                x_norm = 0
+            if px is None and px_norm is None:
+                px_norm = 0
 
-        x_norm_scaled = np.sqrt(gemitt_x) * np.array(x_norm)
+        if len([vv is not None for vv in [y, y_norm, py, py_norm]]) > 2:
+            raise ValueError(
+                "Only two of `y`, `y_norm`, `py` and `py_norm` can be provided")
+        elif len([vv is not None for vv in [y, y_norm, py, py_norm]]) <= 1:
+            if y is None and y_norm is None:
+                y_norm = 0
+            if py is None and py_norm is None:
+                py_norm = 0
+
+        zeta_norm_scaled = None  # To be implemented in the future
+        pzeta_norm_scaled = None # To be implemented in the future
+
+        if x_norm is not None:
+            x_norm_scaled = np.sqrt(gemitt_x) * np.array(x_norm)
+        else:
+            x_norm_scaled = None
+
+        if px_norm is not None:
+            px_norm_scaled = np.sqrt(gemitt_x) * np.array(px_norm)
+        else:
+            px_norm_scaled = None
+
+        if y_norm is not None:
+            y_norm_scaled = np.sqrt(gemitt_y) * np.array(y_norm)
+        else:
+            y_norm_scaled = None
+
+        if py_norm is not None:
+            py_norm_scaled = np.sqrt(gemitt_y) * np.array(py_norm)
+        else:
+            py_norm_scaled = None
+
+
+
+
+        LINEAR SYSTEM TO BE SOLVED HERE
+
+
+
+
+
         px_norm_scaled = np.sqrt(gemitt_x) * np.array(px_norm)
         y_norm_scaled = np.sqrt(gemitt_y) * np.array(y_norm)
         py_norm_scaled = np.sqrt(gemitt_y) * np.array(py_norm)
@@ -343,6 +378,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[5, :] += particle_on_co._xobject.ptau[0] / beta0
 
     elif mode == 'set':
+
+        if x is None: x = 0
+        if px is None: px = 0
+        if y is None: y = 0
+        if py is None: py = 0
 
         if R_matrix is not None:
             logger.warning('R_matrix provided but not used in this mode!')
