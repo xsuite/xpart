@@ -301,81 +301,62 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             gemitt_y = (nemitt_y / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
 
-        if len([vv is not None for vv in [x, x_norm, px, px_norm]]) > 2:
+        if sum([vv is not None for vv in [x, x_norm, px, px_norm]]) > 2:
             raise ValueError(
                 "Only two of `x`, `x_norm`, `px` and `px_norm` can be provided")
-        elif len([vv is not None for vv in [x, x_norm, px, px_norm]]) <= 1:
+        elif sum([vv is not None for vv in [x, x_norm, px, px_norm]]) <= 1:
             if x is None and x_norm is None:
                 x_norm = 0
             if px is None and px_norm is None:
                 px_norm = 0
 
-        if len([vv is not None for vv in [y, y_norm, py, py_norm]]) > 2:
+        if sum([vv is not None for vv in [y, y_norm, py, py_norm]]) > 2:
             raise ValueError(
                 "Only two of `y`, `y_norm`, `py` and `py_norm` can be provided")
-        elif len([vv is not None for vv in [y, y_norm, py, py_norm]]) <= 1:
+        elif sum([vv is not None for vv in [y, y_norm, py, py_norm]]) <= 1:
             if y is None and y_norm is None:
                 y_norm = 0
             if py is None and py_norm is None:
                 py_norm = 0
 
-        zeta_norm_scaled = None  # To be implemented in the future
-        pzeta_norm_scaled = None # To be implemented in the future
+        zeta_norm = None # To be implemented in the future
+        pzeta_norm = None # To be implemented in the future
+        gemitt_zeta = None # To be implemented in the future
 
-        if x_norm is not None:
-            x_norm_scaled = np.sqrt(gemitt_x) * np.array(x_norm)
-        else:
-            x_norm_scaled = None
+        BB = np.zeros(shape=(12, num_particles), dtype=np.float64)
+        AA = np.zeros(shape=(12, 12), dtype=np.float64)
 
-        if px_norm is not None:
-            px_norm_scaled = np.sqrt(gemitt_x) * np.array(px_norm)
-        else:
-            px_norm_scaled = None
+        # The first 6 equations are X - WW * X_norm = X_CO
+        AA[:6, :6] = np.eye(6)
+        AA[:6, 6:] = -WW
 
-        if y_norm is not None:
-            y_norm_scaled = np.sqrt(gemitt_y) * np.array(y_norm)
-        else:
-            y_norm_scaled = None
+        BB[0, :] = particle_on_co._xobject.x[0]
+        BB[1, :] = particle_on_co._xobject.px[0]
+        BB[2, :] = particle_on_co._xobject.y[0]
+        BB[3, :] = particle_on_co._xobject.py[0]
+        BB[4, :] = particle_on_co._xobject.zeta[0]
+        BB[5, :] = particle_on_co._xobject.ptau[0] / beta0
 
-        if py_norm is not None:
-            py_norm_scaled = np.sqrt(gemitt_y) * np.array(py_norm)
-        else:
-            py_norm_scaled = None
+        # The next 6 equations fix either X or X_norm
+        i_fill = 6
+        for ii, rr in enumerate([x, px, y, py, zeta, pzeta]):
+            if rr is not None:
+                BB[i_fill, :] = np.array(rr)
+                AA[i_fill, ii] = 1
+                i_fill += 1
 
+        for ii, (rr_norm,  gemitt) in enumerate(zip(
+                    [x_norm, px_norm, y_norm, py_norm, zeta_norm, pzeta_norm],
+                    [gemitt_x, gemitt_x, gemitt_y, gemitt_y, gemitt_zeta, gemitt_zeta])):
+            if rr_norm is not None:
+                rr_norm_scaled = np.sqrt(gemitt) * np.array(rr_norm)
+                BB[i_fill, :] = rr_norm_scaled
+                AA[i_fill, ii + 6] = 1
+                i_fill += 1
 
-
-
-        LINEAR SYSTEM TO BE SOLVED HERE
-
-
-
-
-
-        px_norm_scaled = np.sqrt(gemitt_x) * np.array(px_norm)
-        y_norm_scaled = np.sqrt(gemitt_y) * np.array(y_norm)
-        py_norm_scaled = np.sqrt(gemitt_y) * np.array(py_norm)
-
-        # Transform long. coordinates to normalized space
-        XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
-        XX_long[4, :] = zeta - particle_on_co._xobject.zeta[0]
-        XX_long[5, :] = pzeta - particle_on_co._xobject.ptau[0] / beta0
-
-        XX_norm_scaled = np.dot(WWinv, XX_long)
-
-        XX_norm_scaled[0, :] = x_norm_scaled
-        XX_norm_scaled[1, :] = px_norm_scaled
-        XX_norm_scaled[2, :] = y_norm_scaled
-        XX_norm_scaled[3, :] = py_norm_scaled
-
-        # Transform to physical coordinates
-        XX = np.dot(WW, XX_norm_scaled)
-
-        XX[0, :] += particle_on_co._xobject.x[0]
-        XX[1, :] += particle_on_co._xobject.px[0]
-        XX[2, :] += particle_on_co._xobject.y[0]
-        XX[3, :] += particle_on_co._xobject.py[0]
-        XX[4, :] += particle_on_co._xobject.zeta[0]
-        XX[5, :] += particle_on_co._xobject.ptau[0] / beta0
+        # Solve and extract geometric coordinates
+        X_Xhat = np.linalg.solve(AA, BB)
+        XX = X_Xhat[:6, :]
 
     elif mode == 'set':
 
