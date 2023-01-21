@@ -426,6 +426,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         particles.weight[:num_particles] = weight
 
     if match_at_s is not None:
+        import pdb; pdb.set_trace()
         # Backtrack to at_element
         length_aux_drift = -match_at_s + tracker.line.get_s_position(at_element)
         assert length_aux_drift <= 0

@@ -22,24 +22,27 @@ tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
 
 # Location of the collimator
 at_element = 'tcp.d6l7.b1'
-at_s = tracker.line.get_s_position(at_element) + 1e-6 # to be able to crosscheck
+at_s = tracker.line.get_s_position(at_element) + 1.
 y_cut = 3e-3 # position of the jaw
 pencil_dr_sigmas = 3 # width of the pencil
 
-# I generate a particle exactly on the jaw with no normalized px
-
 tw_at_s = tracker.twiss(at_s=at_s)
+drift_to_at_s = xt.Drift(length=at_s - tracker.line.get_s_position(at_element))
 
-p_on_cut = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+# I generate a particle exactly on the jaw with no normalized py
+p_on_cut_at_element = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                                    y=y_cut,
                                    x_norm=0, px_norm=0, py_norm=0,
                                    zeta_norm=0, pzeta_norm=0,
                                    at_element=at_element, match_at_s=at_s)
+p_on_cut_at_s = p_on_cut_at_element.copy()
+drift_to_at_s.track(p_on_cut_at_s)
 
 # Get accurate cut in sigmas
-p_on_cut_norm = tw_at_s.get_normalized_coordinates(p_on_cut,
+p_on_cut_norm = tw_at_s.get_normalized_coordinates(p_on_cut_at_s,
                                         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
-                                        _force_at_element=0)
+                                        _force_at_element=0 # the twiss has only this element
+                                        )
 pencil_cut_sigmas = p_on_cut_norm.y_norm
 
 
@@ -48,14 +51,16 @@ y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
                              num_particles=num_particles,
                              pos_cut_sigmas=p_on_cut_norm.y_norm,
                              dr_sigmas=pencil_dr_sigmas,
-                             side='+-')
+                             side='+')
 
 # Generate geometric coordinates in un y/py plane only
-p_pencil_y_only = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+p_pencil_y_only_at_element = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                                     y_norm=y_in_sigmas, py_norm=py_in_sigmas,
                                     zeta_norm=0, pzeta_norm=0,
                                     x_norm=0, px_norm=0,
                                     at_element=at_element, match_at_s=at_s)
+p_pencil_y_only_at_s = p_pencil_y_only_at_element.copy()
+drift_to_at_s.track(p_pencil_y_only_at_s)
 
 # Add other coordinates without perturbing the y/py plane
 # (the normalized coordinates are blurred in order to preserve the geometric ones)
@@ -69,9 +74,14 @@ zeta, delta = xp.generate_longitudinal_coordinates(
         sigma_z=10e-2, tracker=tracker)
 
 particles = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
-                y=p_pencil_y_only.y, py=p_pencil_y_only.py,
+                y=p_pencil_y_only_at_s.y, py=p_pencil_y_only_at_s.py,
                 x_norm=x_in_sigmas, px_norm=px_in_sigmas,
-                zeta=zeta, delta=delta)
+                zeta=zeta, delta=delta,
+                at_element=at_element, match_at_s=at_s)
+
+# Drift to match position for checking
+
+drift_to_at_s.track(particles)
 
 import matplotlib.pyplot as plt
 plt.close('all')
