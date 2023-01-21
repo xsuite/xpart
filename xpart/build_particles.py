@@ -134,6 +134,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
     Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
 
+    assert 'at_s' not in kwargs, "at_s is not a valid argument for this function"
+
     if particles_class is not None:
         raise NotImplementedError
 
@@ -339,7 +341,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         BB[2, :] = particle_on_co._xobject.y[0]
         BB[3, :] = particle_on_co._xobject.py[0]
         BB[4, :] = particle_on_co._xobject.zeta[0]
-        BB[5, :] = particle_on_co._xobject.ptau[0] / beta0
+        BB[5, :] = particle_on_co._xobject.ptau[0] / particle_on_co._xobject.beta0[0]
 
         # The next 6 equations fix either X or X_norm
         i_fill = 6
@@ -399,7 +401,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[2, :] = y + particle_ref.y
         XX[3, :] = py + particle_ref.py
         XX[4, :] = zeta + particle_ref.zeta
-        XX[5, :] = pzeta + particle_ref.ptau / beta0
+        XX[5, :] = pzeta + particle_ref.ptau / particle_ref._xobject.beta0[0]
     else:
         raise ValueError('What?!')
 
@@ -408,7 +410,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     part_dict['y'] = XX[2, :]
     part_dict['py'] = XX[3, :]
     part_dict['zeta'] = XX[4, :]
-    part_dict['ptau'] = XX[5, :] * beta0
+    part_dict['ptau'] = XX[5, :] * particle_ref._xobject.beta0[0]
 
     part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
 
