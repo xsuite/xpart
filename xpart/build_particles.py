@@ -42,8 +42,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       mode=None,
                       particle_ref=None,
                       num_particles=None,
-                      x=None, px=None, y=None, py=None, zeta=None, delta=None,
+                      x=None, px=None, y=None, py=None,
+                      zeta=None, delta=None, pzeta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
+                      zeta_norm=None, pzeta_norm=None,
                       tracker=None,
                       at_element=None,
                       match_at_s=None,
@@ -168,39 +170,32 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     py = (py.get() if hasattr(py, "get") else py)
     zeta = (zeta.get() if hasattr(zeta, "get") else zeta)
     delta = (delta.get() if hasattr(delta, "get") else delta)
+    pzeta = (pzeta.get() if hasattr(pzeta, "get") else pzeta)
     x_norm = (x_norm.get() if hasattr(x_norm, "get") else x_norm)
     px_norm = (px_norm.get() if hasattr(px_norm, "get") else px_norm)
     y_norm = (y_norm.get() if hasattr(y_norm, "get") else y_norm)
     py_norm = (py_norm.get() if hasattr(py_norm, "get") else py_norm)
+    zeta_norm = (zeta_norm.get() if hasattr(zeta_norm, "get") else zeta_norm)
+    pzeta_norm = (pzeta_norm.get() if hasattr(pzeta_norm, "get") else pzeta_norm)
 
     if tracker is not None and tracker.iscollective:
         logger.warning('Ignoring collective elements in particles generation.')
         tracker = tracker._supertracker
 
-    if zeta is None:
-        zeta = 0
-
-    if delta is None:
-        delta = 0
-
-    if not np.isscalar(delta):
-        delta = np.array(delta)
-
-    if not np.isscalar(zeta):
-        zeta = np.array(zeta)
-
     # Compute ptau from delta
-    beta0 = particle_ref._xobject.beta0[0]
-    delta_beta0 = delta * beta0
-    ptau_beta0 = (delta_beta0 * delta_beta0
-                        + 2. * delta_beta0 * beta0 + 1.)**0.5 - 1.
-    pzeta = ptau_beta0 / beta0 / beta0
+    if delta is not None:
+        assert pzeta is None
+        if not np.isscalar(delta):
+            delta = np.array(delta)
+        beta0 = particle_ref._xobject.beta0[0]
+        delta_beta0 = delta * beta0
+        ptau_beta0 = (delta_beta0 * delta_beta0
+                            + 2. * delta_beta0 * beta0 + 1.)**0.5 - 1.
+        pzeta = ptau_beta0 / beta0 / beta0
 
     if (x_norm is not None or px_norm is not None
-        or y_norm is not None or py_norm is not None):
-
-        assert (x is  None and px is  None
-                and y is  None and py is  None)
+            or y_norm is not None or py_norm is not None
+            or zeta_norm is not None or pzeta_norm is not None):
 
         if mode is None:
             mode = 'normalized_transverse'
@@ -277,8 +272,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             WW = W_matrix
 
         num_particles = _check_lengths(num_particles=num_particles,
-            zeta=zeta, delta=delta, x_norm=x_norm, px_norm=px_norm,
-            y_norm=y_norm, py_norm=py_norm)
+            x=x, px=px, y=y, py=py, zeta=zeta, pzeta=pzeta,
+            x_norm=x_norm, px_norm=px_norm,
+            y_norm=y_norm, py_norm=py_norm,
+            zeta_norm=zeta_norm, pzeta_norm=pzeta_norm)
 
         if scale_with_transverse_norm_emitt is not None:
             assert len(scale_with_transverse_norm_emitt) == 2
@@ -301,6 +298,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             gemitt_y = (nemitt_y / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
 
+        gemitt_zeta = 1
+
         if sum([vv is not None for vv in [x, x_norm, px, px_norm]]) > 2:
             raise ValueError(
                 "Only two of `x`, `x_norm`, `px` and `px_norm` can be provided")
@@ -319,9 +318,14 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             if py is None and py_norm is None:
                 py_norm = 0
 
-        zeta_norm = None # To be implemented in the future
-        pzeta_norm = None # To be implemented in the future
-        gemitt_zeta = None # To be implemented in the future
+        if sum([vv is not None for vv in [zeta, zeta_norm, pzeta, pzeta_norm]]) > 2:
+            raise ValueError(
+                "Only two of `zeta`, `zeta_norm`, `pzeta` and `pzeta_norm` can be provided")
+        elif sum([vv is not None for vv in [zeta, zeta_norm, pzeta, pzeta_norm]]) <= 1:
+            if zeta is None and zeta_norm is None:
+                zeta_norm = 0
+            if pzeta is None and pzeta_norm is None:
+                pzeta_norm = 0
 
         BB = np.zeros(shape=(12, num_particles), dtype=np.float64)
         AA = np.zeros(shape=(12, 12), dtype=np.float64)
