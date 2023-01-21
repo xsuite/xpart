@@ -24,7 +24,7 @@ tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
 at_element = 'tcp.d6l7.b1'
 at_s = tracker.line.get_s_position(at_element) + 1.
 y_cut = 3e-3 # position of the jaw
-pencil_dr_sigmas = 3 # width of the pencil
+pencil_dr_sigmas = 0.00001 #3 # width of the pencil
 
 tw_at_s = tracker.twiss(at_s=at_s)
 drift_to_at_s = xt.Drift(length=at_s - tracker.line.get_s_position(at_element))
@@ -38,7 +38,7 @@ p_on_cut_at_element = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt
 p_on_cut_at_s = p_on_cut_at_element.copy()
 drift_to_at_s.track(p_on_cut_at_s)
 
-# Get accurate cut in sigmas
+# Get cut in (accurate) sigmas
 p_on_cut_norm = tw_at_s.get_normalized_coordinates(p_on_cut_at_s,
                                         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                                         _force_at_element=0 # the twiss has only this element
@@ -49,11 +49,12 @@ pencil_cut_sigmas = p_on_cut_norm.y_norm
 # Generate pencil in y_norm - py_norm plane only
 y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
                              num_particles=num_particles,
-                             pos_cut_sigmas=p_on_cut_norm.y_norm,
+                             pos_cut_sigmas=pencil_cut_sigmas,
                              dr_sigmas=pencil_dr_sigmas,
                              side='+')
 
 # Generate geometric coordinates in un y/py plane only
+# (by construction y_cut is preserved)
 p_pencil_y_only_at_element = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                                     y_norm=y_in_sigmas, py_norm=py_in_sigmas,
                                     zeta_norm=0, pzeta_norm=0,
