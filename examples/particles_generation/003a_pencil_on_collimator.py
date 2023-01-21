@@ -24,7 +24,7 @@ tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
 at_element = 'tcp.d6l7.b1'
 at_s = tracker.line.get_s_position(at_element) + 1.
 y_cut = 3e-3 # position of the jaw
-pencil_dr_sigmas = 0.00001 #3 # width of the pencil
+pencil_dr_sigmas = 3 # width of the pencil
 
 tw_at_s = tracker.twiss(at_s=at_s)
 drift_to_at_s = xt.Drift(length=at_s - tracker.line.get_s_position(at_element))
