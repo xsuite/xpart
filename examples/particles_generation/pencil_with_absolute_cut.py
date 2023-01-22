@@ -1,3 +1,5 @@
+import numpy as np
+
 import xtrack as xt
 import xpart as xp
 
@@ -28,6 +30,11 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         at_elements=([at_element] if match_at_s is None else None),
         **kwargs)
 
+    if side=='+':
+        assert tw_at_s[plane][0] < absolute_cut, 'The cut is on the wrong side'
+    else:
+        assert tw_at_s[plane][0] > absolute_cut, 'The cut is on the wrong side'
+
     # Generate a particle exactly on the jaw with no amplitude in other eigemvectors
     p_on_cut_at_element = tracker.build_particles(
         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
@@ -50,9 +57,9 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
                                         _force_at_element=0 # the twiss has only this element
                                         )
     if plane == 'x':
-        pencil_cut_sigmas = p_on_cut_norm.x_norm
+        pencil_cut_sigmas = np.abs(p_on_cut_norm.x_norm)
     else:
-        pencil_cut_sigmas = p_on_cut_norm.y_norm
+        pencil_cut_sigmas = np.abs(p_on_cut_norm.y_norm)
 
     # Generate normalized pencil in the selected plane (here w is x or y according to plane)
     w_in_sigmas, pw_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
