@@ -28,15 +28,15 @@ x_cut = 3e-3 # position of the jaw
 pencil_dr_sigmas = 3 # width of the pencil
 side = '+' # side of the pencil
 
-# Horizontal plane: generate gaussian distribution in normalized coordinates
-y_in_sigmas, py_in_sigmas = xp.generate_2D_gaussian(num_particles)
-
-# Vertical plane: generate pencil beam in absolute coordinates
+# Horizontal plane: generate pencil beam in absolute coordinates
 x_absolute, px_absolute = xp.generate_2D_pencil_with_absolute_cut(num_particles,
                     plane='x', absolute_cut=x_cut, dr_sigmas=pencil_dr_sigmas,
                     side=side, tracker=tracker,
                     nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                     at_element=at_element, match_at_s=at_s)
+
+# Vertical plane: generate gaussian distribution in normalized coordinates
+y_in_sigmas, py_in_sigmas = xp.generate_2D_gaussian(num_particles)
 
 # Longitudinal plane: generate gaussian distribution matched to bucket
 zeta, delta = xp.generate_longitudinal_coordinates(
