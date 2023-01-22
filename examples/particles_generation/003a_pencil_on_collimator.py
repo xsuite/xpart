@@ -9,8 +9,6 @@ import numpy as np
 import xpart as xp
 import xtrack as xt
 
-from pencil_with_absolute_cut import generate_2D_pencil_with_absolute_cut
-
 num_particles = 10000
 nemitt_x = 2.5e-6
 nemitt_y = 3e-6
@@ -33,7 +31,7 @@ side = '+' # side of the pencil
 x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
 
 # Vertical plane: generate pencil beam in absolute coordinates
-y_absolute, py_absolute = generate_2D_pencil_with_absolute_cut(num_particles,
+y_absolute, py_absolute = xp.generate_2D_pencil_with_absolute_cut(num_particles,
                     plane='y', absolute_cut=y_cut, dr_sigmas=pencil_dr_sigmas,
                     side=side, tracker=tracker,
                     nemitt_x=nemitt_x, nemitt_y=nemitt_y,
