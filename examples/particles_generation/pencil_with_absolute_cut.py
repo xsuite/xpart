@@ -6,6 +6,8 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     nemitt_x=None, nemitt_y=None,
     at_element=None, match_at_s=None, **kwargs):
 
+    # kwargs are passed to tracker.twiss
+
     assert side == '+' or side == '-'
     assert plane == 'x' or plane == 'y'
     assert tracker is not None
@@ -22,8 +24,9 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     else:
         drift_to_at_s = None
 
-
-    tw_at_s = tracker.twiss(at_s=match_at_s, at_elements=[at_element], **kwargs)
+    tw_at_s = tracker.twiss(at_s=match_at_s,
+        at_elements=([at_element] if match_at_s is None else None),
+        **kwargs)
 
     # Generate a particle exactly on the jaw with no amplitude in other eigemvectors
     p_on_cut_at_element = tracker.build_particles(
