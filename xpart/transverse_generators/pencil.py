@@ -81,7 +81,7 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         at_element = 0
 
     if match_at_s is not None:
-        drift_to_at_s = xt.Drift(
+        drift_to_at_s = xt.Drift(_context=tracker._context,
             length=match_at_s - tracker.line.get_s_position(at_element))
     else:
         drift_to_at_s = None

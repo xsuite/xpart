@@ -8,8 +8,11 @@ import numpy as np
 
 import xpart as xp
 import xtrack as xt
+import xobjects as xo
+from xobjects.test_helpers import for_all_test_contexts
 
-def test_pencil_with_absolute_cut():
+@for_all_test_contexts
+def test_pencil_with_absolute_cut(test_context):
 
     num_particles = 10000
     nemitt_x = 2.5e-6
@@ -19,7 +22,8 @@ def test_pencil_with_absolute_cut():
     filename = xt._pkg_root.parent.joinpath('test_data/hllhc15_noerrors_nobb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
-    tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
+    line=xt.Line.from_dict(input_data['line'])
+    tracker = line.build_tracker(_context=test_context)
     tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
 
     # Location of the collimator
@@ -62,20 +66,17 @@ def test_pencil_with_absolute_cut():
                         at_element=at_element, match_at_s=at_s)
 
     # Drift to at_s position for checking
-    drift_to_at_s = xt.Drift(length=at_s-tracker.line.get_s_position(at_element))
+    drift_to_at_s = xt.Drift(_context=test_context,
+                    length=at_s-tracker.line.get_s_position(at_element))
     drift_to_at_s.track(particles)
 
+    particles.move(_context=xo.ContextCpu())
     # Checks
 
     tw_at_s = tracker.twiss(at_s=at_s)
     norm_coords = tw_at_s.get_normalized_coordinates(
                     particles, nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                     _force_at_element=0)
-
-    x_norm = norm_coords.x_norm
-    px_norm = norm_coords.px_norm
-    y_norm = norm_coords.y_norm
-    py_norm = norm_coords.py_norm
 
     v = getattr(particles, plane)
     pv = getattr(particles, 'p'+plane)
