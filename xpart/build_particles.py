@@ -370,6 +370,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         if px is None: px = 0
         if y is None: y = 0
         if py is None: py = 0
+        if zeta is None: zeta = 0
+        if pzeta is None: pzeta = 0
 
         if R_matrix is not None:
             logger.warning('R_matrix provided but not used in this mode!')
@@ -387,6 +389,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[5, :] = pzeta
 
     elif mode == "shift":
+
+        if x is None: x = 0
+        if px is None: px = 0
+        if y is None: y = 0
+        if py is None: py = 0
+        if zeta is None: zeta = 0
+        if pzeta is None: pzeta = 0
 
         if R_matrix is not None:
             logger.warning('R_matrix provided but not used in this mode!')
