@@ -21,7 +21,8 @@ tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
 tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
 
 # Location of the collimator
-at_element = 'tcp.6l3.b1'
+at_element = 'tcp.6l3.b1' # High dispersion
+# at_element = 'tcp.d6l7.b1' # Low dispersion
 at_s = tracker.line.get_s_position(at_element) + 1.
 x_cut = 3e-3 # position of the jaw
 pencil_dr_sigmas = 3 # width of the pencil
