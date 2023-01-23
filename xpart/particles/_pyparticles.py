@@ -248,6 +248,10 @@ class Pyparticles:
         state = kwargs.get('state', None)  # == 0 particle lost, == 1 particle active
         weight = kwargs.get('weight', None)
         at_element = kwargs.get('at_element', None)
+        _rng_s1 = kwargs.get('_rng_s1', 0)
+        _rng_s2 = kwargs.get('_rng_s2', 0)
+        _rng_s3 = kwargs.get('_rng_s3', 0)
+        _rng_s4 = kwargs.get('_rng_s4', 0)
 
         if mathlib is None:
             mathlib=MathlibDefault
@@ -262,6 +266,10 @@ class Pyparticles:
         self._mass0 = mass0
         self.q0 = q0
         self._update_coordinates = False
+        self._rng_s1 = _rng_s1
+        self._rng_s2 = _rng_s2
+        self._rng_s3 = _rng_s3
+        self._rng_s4 = _rng_s4
 
         if state is not None and not(np.isscalar(state)):
             mask_check = state > -1e8 # Unallocated particles
@@ -502,6 +510,10 @@ class Pyparticles:
         "at_turn",
         "state",
         "weight",
+        "_rng_s1",
+        "_rng_s2",
+        "_rng_s3",
+        "_rng_s4"
     )
 
     def remove_lost_particles(self, keep_memory=True):
