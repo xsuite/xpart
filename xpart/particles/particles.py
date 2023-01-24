@@ -269,6 +269,24 @@ class Particles(xo.HybridClass):
 
         self.name = name
 
+    @classmethod
+    def from_dict(*args, load_rng_state=True, **kwargs):
+        part = cls(
+            **dct,
+            _context=_context,
+            _buffer=_buffer,
+            _offset=_offset,
+            _kwargs_name_check=False,
+        )
+
+        if load_rng_state:
+            part._rng_s1 = dct['_rng_s1']
+            part._rng_s2 = dct['_rng_s2']
+            part._rng_s3 = dct['_rng_s3']
+            part._rng_s4 = dct['_rng_s4']
+
+        return part
+
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
                 remove_unused_space=None,
