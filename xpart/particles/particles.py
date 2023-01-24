@@ -270,14 +270,8 @@ class Particles(xo.HybridClass):
         self.name = name
 
     @classmethod
-    def from_dict(*args, load_rng_state=True, **kwargs):
-        part = cls(
-            **dct,
-            _context=_context,
-            _buffer=_buffer,
-            _offset=_offset,
-            _kwargs_name_check=False,
-        )
+    def from_dict(cls, dct, load_rng_state=True, **kwargs):
+        part = cls(**dct, **kwargs)
 
         if load_rng_state:
             part._rng_s1 = dct['_rng_s1']
