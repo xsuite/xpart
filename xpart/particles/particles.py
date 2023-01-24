@@ -214,6 +214,9 @@ class Particles(xo.HybridClass):
                 for tt, kk in list(scalar_vars):
                     setattr(self, kk, part_dict[kk])
                 for tt, kk in list(per_particle_vars):
+                    if kk.startswith('_rng'):
+                        getattr(self, kk)[:] = 0
+                        continue
                     vv = getattr(self, kk)
                     vals =  context.nparray_to_context_array(part_dict[kk])
                     ll = len(vals)
@@ -1277,8 +1280,11 @@ def _pyparticles_to_xpart_dict(pyparticles):
         dct['weight'] = 1.
 
     for tt, kk in scalar_vars + per_particle_vars:
+        if kk.startswith('_rng'):
+            continue
         # Use properties
         dct[kk] = getattr(pyparticles, kk)
+
 
     for kk, vv in dct.items():
         dct[kk] = np.atleast_1d(vv)
@@ -1295,6 +1301,9 @@ def _pyparticles_to_xpart_dict(pyparticles):
         out[kk] = val[0]
 
     for tt, kk in per_particle_vars:
+        if kk.startswith('_rng'):
+            continue
+
         val_py = dct[kk]
 
         if _num_particles > 1 and len(val_py) == 1:
