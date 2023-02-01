@@ -302,32 +302,58 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         gemitt_zeta = 1
 
-        if sum([vv is not None for vv in [x, x_norm, px, px_norm]]) > 2:
-            raise ValueError(
-                "Only two of `x`, `x_norm`, `px` and `px_norm` can be provided")
-        elif sum([vv is not None for vv in [x, x_norm, px, px_norm]]) <= 1:
+
+        n_constraints = sum([vv is not None for vv in [x, x_norm, px, px_norm,
+            y, y_norm, py, py_norm, zeta, zeta_norm, pzeta, pzeta_norm]])
+
+        if n_constraints > 6:
+            raise ValueError('Too many constraints. At most 6 among `x`, `x_norm`, '
+                                '`px`, `px_norm`, `y`, `y_norm`, `py`, `py_norm`, '
+                                '`zeta`, `zeta_norm`, `pzeta`, `pzeta_norm` can be '
+                                'provided.')
+        while n_constraints < 6:
             if x is None and x_norm is None:
                 x_norm = 0
+                n_constraints += 1
+                continue
             if px is None and px_norm is None:
                 px_norm = 0
-
-        if sum([vv is not None for vv in [y, y_norm, py, py_norm]]) > 2:
-            raise ValueError(
-                "Only two of `y`, `y_norm`, `py` and `py_norm` can be provided")
-        elif sum([vv is not None for vv in [y, y_norm, py, py_norm]]) <= 1:
+                n_constraints += 1
+                continue
             if y is None and y_norm is None:
                 y_norm = 0
+                n_constraints += 1
+                continue
             if py is None and py_norm is None:
                 py_norm = 0
-
-        if sum([vv is not None for vv in [zeta, zeta_norm, pzeta, pzeta_norm]]) > 2:
-            raise ValueError(
-                "Only two of `zeta`, `zeta_norm`, `pzeta` and `pzeta_norm` can be provided")
-        elif sum([vv is not None for vv in [zeta, zeta_norm, pzeta, pzeta_norm]]) <= 1:
+                n_constraints += 1
+                continue
             if zeta is None and zeta_norm is None:
                 zeta_norm = 0
+                n_constraints += 1
+                continue
             if pzeta is None and pzeta_norm is None:
                 pzeta_norm = 0
+                n_constraints += 1
+                continue
+
+        # if sum([vv is not None for vv in [x, x_norm, px, px_norm]]) <= 1:
+        #     if x is None and x_norm is None:
+        #         x_norm = 0
+        #     if px is None and px_norm is None:
+        #         px_norm = 0
+
+        # if sum([vv is not None for vv in [y, y_norm, py, py_norm]]) <= 1:
+        #     if y is None and y_norm is None:
+        #         y_norm = 0
+        #     if py is None and py_norm is None:
+        #         py_norm = 0
+
+        # if sum([vv is not None for vv in [zeta, zeta_norm, pzeta, pzeta_norm]]) <= 1:
+        #     if zeta is None and zeta_norm is None:
+        #         zeta_norm = 0
+        #     if pzeta is None and pzeta_norm is None:
+        #         pzeta_norm = 0
 
         BB = np.zeros(shape=(12, num_particles), dtype=np.float64)
         AA = np.zeros(shape=(12, 12), dtype=np.float64)
