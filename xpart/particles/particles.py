@@ -142,7 +142,7 @@ class Particles(xo.HybridClass):
         _pkg_root.joinpath('rng_src','base_rng.h'),
         _pkg_root.joinpath('rng_src','particles_rng.h'),
         '\n /*placeholder_for_local_particle_src*/ \n'
-        ]
+    ]
 
     _kernels = {
         'Particles_initialize_rand_gen': xo.Kernel(
@@ -151,12 +151,13 @@ class Particles(xo.HybridClass):
                 xo.Arg(xo.UInt32, pointer=True, name='seeds'),
                 xo.Arg(xo.Int32, name='n_init')],
             n_threads='n_init')
-        }
+    }
 
     _structure = {
-            'size_vars': size_vars,
-            'scalar_vars': scalar_vars,
-            'per_particle_vars': per_particle_vars}
+        'size_vars': size_vars,
+        'scalar_vars': scalar_vars,
+        'per_particle_vars': per_particle_vars,
+    }
 
     def __init__(
             self,
@@ -1241,369 +1242,368 @@ class Particles(xo.HybridClass):
     def set_particle(self, index, set_scalar_vars=False, **kwargs):
         raise NotImplementedError('This functionality has been removed')
 
+    @classmethod
+    def gen_local_particle_api(cls, mode='no_local_copy'):
 
-def _str_in_list(string, str_list):
+        _size_vars = cls._structure['size_vars']
+        _scalar_vars = cls._structure['scalar_vars']
+        _per_particle_vars = cls._structure['per_particle_vars']
 
-    found = False
-    for ss in str_list:
-        # TODO: Tried this but did not work
-        # To avoid strange behaviors with different str formats
-        # if ss.decode('utf-8') == string.decode('utf-8'):
-        if ss == string:
-            found = True
-            break
-    return found
+        if mode != 'no_local_copy':
+            raise NotImplementedError
+
+        src_lines = []
+        src_lines.append('typedef struct {')
+
+        for tt, vv in _size_vars + _scalar_vars:
+            src_lines.append('                 ' + tt._c_type + '  '+vv+';')
+
+        for tt, vv in _per_particle_vars:
+            src_lines.append('    /*gpuglmem*/ ' + tt._c_type + '* '+vv+';')
+
+        src_lines.append('                 int64_t ipart;')
+        src_lines.append('    /*gpuglmem*/ int8_t* io_buffer;')
+        src_lines.append('} LocalParticle;')
+        src_typedef = '\n'.join(src_lines)
+
+        # Get io buffer
+        src_lines = []
+        src_lines.append('''
+        /*gpufun*/
+        /*gpuglmem*/ int8_t* LocalParticle_get_io_buffer(LocalParticle* part){
+            return part->io_buffer;
+        }
+    
+        ''')
+
+        # Particles_to_LocalParticle
+        src_lines.append('''
+        /*gpufun*/
+        void Particles_to_LocalParticle(ParticlesData source,
+                                        LocalParticle* dest,
+                                        int64_t id){''')
+        for _, vv in _size_vars + _scalar_vars:
+            src_lines.append(
+                    f'  dest->{vv} = ParticlesData_get_'+vv+'(source);')
+
+        for _, vv in _per_particle_vars:
+            src_lines.append(
+                    f'  dest->{vv} = ParticlesData_getp1_'+vv+'(source, 0);')
+
+        src_lines.append('  dest->ipart = id;')
+        src_lines.append('}')
+        src_particles_to_local = '\n'.join(src_lines)
+
+        # LocalParticle_to_Particles
+        src_lines = []
+        src_lines.append('''
+        /*gpufun*/
+        void LocalParticle_to_Particles(
+                                        LocalParticle* source,
+                                        ParticlesData dest,
+                                        int64_t id,
+                                        int64_t set_scalar){''')
+        src_lines.append('if (set_scalar){')
+        for _, vv in _size_vars + _scalar_vars:
+            src_lines.append(
+                    f'  ParticlesData_set_' + vv + '(dest,'
+                    f'      LocalParticle_get_{vv}(source));')
+        src_lines.append('}')
+
+        for _, vv in _per_particle_vars:
+            src_lines.append(
+                    f'  ParticlesData_set_' + vv + '(dest, id, '
+                    f'      LocalParticle_get_{vv}(source));')
+        src_lines.append('}')
+        src_local_to_particles = '\n'.join(src_lines)
+
+        # Adders
+        src_lines = []
+        for tt, vv in _per_particle_vars:
+            src_lines.append('''
+        /*gpufun*/
+        void LocalParticle_add_to_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
+        +'{')
+            src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
+            src_lines.append(f'  part->{vv}[part->ipart] += value;')
+            src_lines.append('#endif')
+            src_lines.append('}\n')
+        src_adders = '\n'.join(src_lines)
+
+        # Scalers
+        src_lines = []
+        for tt, vv in _per_particle_vars:
+            src_lines.append('''
+        /*gpufun*/
+        void LocalParticle_scale_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
+        +'{')
+            src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
+            src_lines.append(f'  part->{vv}[part->ipart] *= value;')
+            src_lines.append('#endif')
+            src_lines.append('}\n')
+        src_scalers = '\n'.join(src_lines)
+
+        # Setters
+        src_lines = []
+        for tt, vv in _per_particle_vars:
+            src_lines.append('''
+        /*gpufun*/
+        void LocalParticle_set_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
+        +'{')
+            src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
+            src_lines.append(f'  part->{vv}[part->ipart] = value;')
+            src_lines.append('#endif')
+            src_lines.append('}')
+        src_setters = '\n'.join(src_lines)
+
+        # Getters
+        src_lines = []
+
+        for tt, vv in _size_vars + _scalar_vars:
+            src_lines.append('/*gpufun*/')
+            src_lines.append(f'{tt._c_type} LocalParticle_get_'+vv
+                            + f'(LocalParticle* part)'
+                            + '{')
+            src_lines.append(f'  return part->{vv};')
+            src_lines.append('}')
+
+        for tt, vv in _per_particle_vars:
+            src_lines.append('/*gpufun*/')
+            src_lines.append(f'{tt._c_type} LocalParticle_get_'+vv
+                            + f'(LocalParticle* part)'
+                            + '{')
+            src_lines.append(f'  return part->{vv}[part->ipart];')
+            src_lines.append('}')
+
+        src_getters = '\n'.join(src_lines)
+
+        # Particle exchangers
+        src_exchange = '''
+    /*gpufun*/
+    void LocalParticle_exchange(LocalParticle* part, int64_t i1, int64_t i2){
+    '''
+        for tt, vv in _per_particle_vars:
+            src_exchange += '\n'.join([
+              '\n    {',
+              f'    {tt._c_type} temp = part->{vv}[i2];',
+              f'    part->{vv}[i2] = part->{vv}[i1];',
+              f'    part->{vv}[i1] = temp;',
+              '     }'])
+        src_exchange += '}\n'
+
+
+        custom_source='''
+    /*gpufun*/
+    double LocalParticle_get_energy0(LocalParticle* part){
+    
+        double const p0c = LocalParticle_get_p0c(part);
+        double const m0  = LocalParticle_get_mass0(part);
+    
+        return sqrt( p0c * p0c + m0 * m0 );
+    }
+    
+    /*gpufun*/
+    void LocalParticle_update_ptau(LocalParticle* part, double new_ptau_value){
+    
+        double const beta0 = LocalParticle_get_beta0(part);
+    
+        double const ptau = new_ptau_value;
+    
+        double const irpp = sqrt(ptau*ptau + 2*ptau/beta0 +1);
+    
+        double const new_rpp = 1./irpp;
+        LocalParticle_set_delta(part, irpp - 1.);
+    
+        double const new_rvv = irpp/(1 + beta0*ptau);
+        LocalParticle_set_rvv(part, new_rvv);
+        LocalParticle_set_ptau(part, ptau);
+    
+        LocalParticle_set_rpp(part, new_rpp );
+    }
+    /*gpufun*/
+    void LocalParticle_add_to_energy(LocalParticle* part, double delta_energy, int pz_only ){
+    
+        double ptau = LocalParticle_get_ptau(part);
+        double const p0c = LocalParticle_get_p0c(part);
+    
+        ptau += delta_energy/p0c;
+        double const old_rpp = LocalParticle_get_rpp(part);
+    
+        LocalParticle_update_ptau(part, ptau);
+    
+        if (!pz_only) {
+            double const new_rpp = LocalParticle_get_rpp(part);
+            double const f = old_rpp / new_rpp;
+            LocalParticle_scale_px(part, f);
+            LocalParticle_scale_py(part, f);
+        }
+    }
+    
+    /*gpufun*/
+    void LocalParticle_update_delta(LocalParticle* part, double new_delta_value){
+        double const beta0 = LocalParticle_get_beta0(part);
+        double const delta_beta0 = new_delta_value * beta0;
+        double const ptau_beta0  = sqrt( delta_beta0 * delta_beta0 +
+                                    2. * delta_beta0 * beta0 + 1. ) - 1.;
+    
+        double const one_plus_delta = 1. + new_delta_value;
+        double const rvv    = ( one_plus_delta ) / ( 1. + ptau_beta0 );
+        double const rpp    = 1. / one_plus_delta;
+        double const ptau = ptau_beta0 / beta0;
+    
+        LocalParticle_set_delta(part, new_delta_value);
+    
+        LocalParticle_set_rvv(part, rvv );
+        LocalParticle_set_rpp(part, rpp );
+        LocalParticle_set_ptau(part, ptau );
+    
+    }
+    
+    /*gpufun*/
+    void LocalParticle_update_p0c(LocalParticle* part, double new_p0c_value){
+    
+        double const mass0 = LocalParticle_get_mass0(part);
+        double const old_p0c = LocalParticle_get_p0c(part);
+        double const old_delta = LocalParticle_get_delta(part);
+        double const old_beta0 = LocalParticle_get_beta0(part);
+    
+        double const ppc = old_p0c * old_delta + old_p0c;
+        double const new_delta = (ppc - new_p0c_value)/new_p0c_value;
+    
+        double const new_energy0 = sqrt(new_p0c_value*new_p0c_value + mass0 * mass0);
+        double const new_beta0 = new_p0c_value / new_energy0;
+        double const new_gamma0 = new_energy0 / mass0;
+    
+        LocalParticle_set_p0c(part, new_p0c_value);
+        LocalParticle_set_gamma0(part, new_gamma0);
+        LocalParticle_set_beta0(part, new_beta0);
+    
+        LocalParticle_update_delta(part, new_delta);
+    
+        LocalParticle_scale_px(part, old_p0c/new_p0c_value);
+        LocalParticle_scale_py(part, old_p0c/new_p0c_value);
+    
+        LocalParticle_scale_zeta(part, new_beta0/old_beta0);
+    
+    }
+    
+    /*gpufun*/
+    double LocalParticle_get_pzeta(LocalParticle* part){
+    
+        double const ptau = LocalParticle_get_ptau(part);
+        double const beta0 = LocalParticle_get_beta0(part);
+    
+        return ptau/beta0;
+    
+    }
+    
+    /*gpufun*/
+    void LocalParticle_update_pzeta(LocalParticle* part, double new_pzeta_value){
+    
+        double const beta0 = LocalParticle_get_beta0(part);
+        LocalParticle_update_ptau(part, beta0*new_pzeta_value);
+    
+    }
+    
+    
+    #ifdef XTRACK_GLOBAL_POSLIMIT
+    
+    /*gpufun*/
+    void global_aperture_check(LocalParticle* part0){
+    
+    
+        //start_per_particle_block (part0->part)
+            double const x = LocalParticle_get_x(part);
+            double const y = LocalParticle_get_y(part);
+    
+        int64_t const is_alive = (int64_t)(
+                          (x >= -XTRACK_GLOBAL_POSLIMIT) &&
+                  (x <=  XTRACK_GLOBAL_POSLIMIT) &&
+                  (y >= -XTRACK_GLOBAL_POSLIMIT) &&
+                  (y <=  XTRACK_GLOBAL_POSLIMIT) );
+    
+        // I assume that if I am in the function is because
+            if (!is_alive){
+               LocalParticle_set_state(part, -1);
+        }
+        //end_per_particle_block
+    
+    
+    }
+    #endif
+    
+    /*gpufun*/
+    void increment_at_element(LocalParticle* part0){
+    
+       //start_per_particle_block (part0->part)
+            LocalParticle_add_to_at_element(part, 1);
+       //end_per_particle_block
+    
+    
+    }
+    
+    /*gpufun*/
+    void increment_at_turn(LocalParticle* part0, int flag_reset_s){
+    
+        //start_per_particle_block (part0->part)
+        LocalParticle_add_to_at_turn(part, 1);
+        LocalParticle_set_at_element(part, 0);
+        if (flag_reset_s>0){
+            LocalParticle_set_s(part, 0.);
+        }
+        //end_per_particle_block
+    }
+    
+    
+    // check_is_active has different implementation on CPU and GPU
+    
+    #define CPUIMPLEM //only_for_context cpu_serial cpu_openmp
+    
+    #ifdef CPUIMPLEM
+    
+    /*gpufun*/
+    int64_t check_is_active(LocalParticle* part) {
+        int64_t ipart=0;
+        while (ipart < part->_num_active_particles){
+            if (part->state[ipart]<1){
+                LocalParticle_exchange(
+                    part, ipart, part->_num_active_particles-1);
+                part->_num_active_particles--;
+                part->_num_lost_particles++;
+            }
+        else{
+            ipart++;
+        }
+        }
+    
+        if (part->_num_active_particles==0){
+            return 0;//All particles lost
+        } else {
+            return 1; //Some stable particles are still present
+        }
+    }
+    
+    #else
+    
+    /*gpufun*/
+    int64_t check_is_active(LocalParticle* part) {
+        return LocalParticle_get_state(part)>0;
+    };
+    
+    #endif
+    
+    #undef CPUIMPLEM //only_for_context cpu_serial cpu_openmp
+    
+    
+    '''
+
+        source = '\n\n'.join([src_typedef, src_adders, src_getters,
+                              src_setters, src_scalers, src_exchange,
+                              src_particles_to_local, src_local_to_particles,
+                              custom_source])
+
+        return source
 
 
 def part_energy_varnames():
-    return [vv for tt, vv in part_energy_vars]
-
-
-def gen_local_particle_api(mode='no_local_copy'):
-
-    if mode != 'no_local_copy':
-        raise NotImplementedError
-
-    src_lines = []
-    src_lines.append('''typedef struct{''')
-    for tt, vv in size_vars + scalar_vars:
-        src_lines.append('                 ' + tt._c_type + '  '+vv+';')
-    for tt, vv in per_particle_vars:
-        src_lines.append('    /*gpuglmem*/ ' + tt._c_type + '* '+vv+';')
-    src_lines.append(    '                 int64_t ipart;')
-    src_lines.append('    /*gpuglmem*/ int8_t* io_buffer;')
-    src_lines.append('}LocalParticle;')
-    src_typedef = '\n'.join(src_lines)
-
-    # Get io buffer
-    src_lines = []
-    src_lines.append('''
-    /*gpufun*/
-    /*gpuglmem*/ int8_t* LocalParticle_get_io_buffer(LocalParticle* part){
-        return part->io_buffer;
-    }
-
-    ''')
-
-    # Particles_to_LocalParticle
-    src_lines.append('''
-    /*gpufun*/
-    void Particles_to_LocalParticle(ParticlesData source,
-                                    LocalParticle* dest,
-                                    int64_t id){''')
-    for tt, vv in size_vars + scalar_vars:
-        src_lines.append(
-                f'  dest->{vv} = ParticlesData_get_'+vv+'(source);')
-    for tt, vv in per_particle_vars:
-        src_lines.append(
-                f'  dest->{vv} = ParticlesData_getp1_'+vv+'(source, 0);')
-    src_lines.append('  dest->ipart = id;')
-    src_lines.append('}')
-    src_particles_to_local = '\n'.join(src_lines)
-
-    # LocalParticle_to_Particles
-    src_lines = []
-    src_lines.append('''
-    /*gpufun*/
-    void LocalParticle_to_Particles(
-                                    LocalParticle* source,
-                                    ParticlesData dest,
-                                    int64_t id,
-                                    int64_t set_scalar){''')
-    src_lines.append('if (set_scalar){')
-    for tt, vv in size_vars + scalar_vars:
-        src_lines.append(
-                f'  ParticlesData_set_' + vv + '(dest,'
-                f'      LocalParticle_get_{vv}(source));')
-    src_lines.append('}')
-
-    for tt, vv in per_particle_vars:
-        src_lines.append(
-                f'  ParticlesData_set_' + vv + '(dest, id, '
-                f'      LocalParticle_get_{vv}(source));')
-    src_lines.append('}')
-    src_local_to_particles = '\n'.join(src_lines)
-
-    # Adders
-    src_lines = []
-    for tt, vv in per_particle_vars:
-        src_lines.append('''
-    /*gpufun*/
-    void LocalParticle_add_to_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
-    +'{')
-        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
-        src_lines.append(f'  part->{vv}[part->ipart] += value;')
-        src_lines.append('#endif')
-        src_lines.append('}\n')
-    src_adders = '\n'.join(src_lines)
-
-    # Scalers
-    src_lines = []
-    for tt, vv in per_particle_vars:
-        src_lines.append('''
-    /*gpufun*/
-    void LocalParticle_scale_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
-    +'{')
-        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
-        src_lines.append(f'  part->{vv}[part->ipart] *= value;')
-        src_lines.append('#endif')
-        src_lines.append('}\n')
-    src_scalers = '\n'.join(src_lines)
-
-    # Setters
-    src_lines = []
-    for tt, vv in per_particle_vars:
-        src_lines.append('''
-    /*gpufun*/
-    void LocalParticle_set_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
-    +'{')
-        src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
-        src_lines.append(f'  part->{vv}[part->ipart] = value;')
-        src_lines.append('#endif')
-        src_lines.append('}')
-    src_setters = '\n'.join(src_lines)
-
-    # Getters
-    src_lines = []
-    for tt, vv in size_vars + scalar_vars:
-        src_lines.append('/*gpufun*/')
-        src_lines.append(f'{tt._c_type} LocalParticle_get_'+vv
-                        + f'(LocalParticle* part)'
-                        + '{')
-        src_lines.append(f'  return part->{vv};')
-        src_lines.append('}')
-    for tt, vv in per_particle_vars:
-        src_lines.append('/*gpufun*/')
-        src_lines.append(f'{tt._c_type} LocalParticle_get_'+vv
-                        + f'(LocalParticle* part)'
-                        + '{')
-        src_lines.append(f'  return part->{vv}[part->ipart];')
-        src_lines.append('}')
-    src_getters = '\n'.join(src_lines)
-
-    # Particle exchangers
-    src_exchange = '''
-/*gpufun*/
-void LocalParticle_exchange(LocalParticle* part, int64_t i1, int64_t i2){
-'''
-    for tt, vv in per_particle_vars:
-        src_exchange += '\n'.join([
-          '\n    {',
-          f'    {tt._c_type} temp = part->{vv}[i2];',
-          f'    part->{vv}[i2] = part->{vv}[i1];',
-          f'    part->{vv}[i1] = temp;',
-          '     }'])
-    src_exchange += '}\n'
-
-
-    custom_source='''
-/*gpufun*/
-double LocalParticle_get_energy0(LocalParticle* part){
-
-    double const p0c = LocalParticle_get_p0c(part);
-    double const m0  = LocalParticle_get_mass0(part);
-
-    return sqrt( p0c * p0c + m0 * m0 );
-}
-
-/*gpufun*/
-void LocalParticle_update_ptau(LocalParticle* part, double new_ptau_value){
-
-    double const beta0 = LocalParticle_get_beta0(part);
-
-    double const ptau = new_ptau_value;
-
-    double const irpp = sqrt(ptau*ptau + 2*ptau/beta0 +1);
-
-    double const new_rpp = 1./irpp;
-    LocalParticle_set_delta(part, irpp - 1.);
-
-    double const new_rvv = irpp/(1 + beta0*ptau);
-    LocalParticle_set_rvv(part, new_rvv);
-    LocalParticle_set_ptau(part, ptau);
-
-    LocalParticle_set_rpp(part, new_rpp );
-}
-/*gpufun*/
-void LocalParticle_add_to_energy(LocalParticle* part, double delta_energy, int pz_only ){
-
-    double ptau = LocalParticle_get_ptau(part);
-    double const p0c = LocalParticle_get_p0c(part);
-
-    ptau += delta_energy/p0c;
-    double const old_rpp = LocalParticle_get_rpp(part);
-
-    LocalParticle_update_ptau(part, ptau);
-
-    if (!pz_only) {
-        double const new_rpp = LocalParticle_get_rpp(part);
-        double const f = old_rpp / new_rpp;
-        LocalParticle_scale_px(part, f);
-        LocalParticle_scale_py(part, f);
-    }
-}
-
-/*gpufun*/
-void LocalParticle_update_delta(LocalParticle* part, double new_delta_value){
-    double const beta0 = LocalParticle_get_beta0(part);
-    double const delta_beta0 = new_delta_value * beta0;
-    double const ptau_beta0  = sqrt( delta_beta0 * delta_beta0 +
-                                2. * delta_beta0 * beta0 + 1. ) - 1.;
-
-    double const one_plus_delta = 1. + new_delta_value;
-    double const rvv    = ( one_plus_delta ) / ( 1. + ptau_beta0 );
-    double const rpp    = 1. / one_plus_delta;
-    double const ptau = ptau_beta0 / beta0;
-
-    LocalParticle_set_delta(part, new_delta_value);
-
-    LocalParticle_set_rvv(part, rvv );
-    LocalParticle_set_rpp(part, rpp );
-    LocalParticle_set_ptau(part, ptau );
-
-}
-
-/*gpufun*/
-void LocalParticle_update_p0c(LocalParticle* part, double new_p0c_value){
-
-    double const mass0 = LocalParticle_get_mass0(part);
-    double const old_p0c = LocalParticle_get_p0c(part);
-    double const old_delta = LocalParticle_get_delta(part);
-    double const old_beta0 = LocalParticle_get_beta0(part);
-
-    double const ppc = old_p0c * old_delta + old_p0c;
-    double const new_delta = (ppc - new_p0c_value)/new_p0c_value;
-
-    double const new_energy0 = sqrt(new_p0c_value*new_p0c_value + mass0 * mass0);
-    double const new_beta0 = new_p0c_value / new_energy0;
-    double const new_gamma0 = new_energy0 / mass0;
-
-    LocalParticle_set_p0c(part, new_p0c_value);
-    LocalParticle_set_gamma0(part, new_gamma0);
-    LocalParticle_set_beta0(part, new_beta0);
-
-    LocalParticle_update_delta(part, new_delta);
-
-    LocalParticle_scale_px(part, old_p0c/new_p0c_value);
-    LocalParticle_scale_py(part, old_p0c/new_p0c_value);
-
-    LocalParticle_scale_zeta(part, new_beta0/old_beta0);
-
-}
-
-/*gpufun*/
-double LocalParticle_get_pzeta(LocalParticle* part){
-
-    double const ptau = LocalParticle_get_ptau(part);
-    double const beta0 = LocalParticle_get_beta0(part);
-
-    return ptau/beta0;
-
-}
-
-/*gpufun*/
-void LocalParticle_update_pzeta(LocalParticle* part, double new_pzeta_value){
-
-    double const beta0 = LocalParticle_get_beta0(part);
-    LocalParticle_update_ptau(part, beta0*new_pzeta_value);
-
-}
-
-#define XP_LOST_ON_GLOBAL_AP -1
-#ifdef  XTRACK_GLOBAL_POSLIMIT
-
-/*gpufun*/
-void global_aperture_check(LocalParticle* part0){
-
-
-    //start_per_particle_block (part0->part)
-        double const x = LocalParticle_get_x(part);
-        double const y = LocalParticle_get_y(part);
-
-	int64_t const is_alive = (int64_t)(
-                      (x >= -XTRACK_GLOBAL_POSLIMIT) &&
-		      (x <=  XTRACK_GLOBAL_POSLIMIT) &&
-		      (y >= -XTRACK_GLOBAL_POSLIMIT) &&
-		      (y <=  XTRACK_GLOBAL_POSLIMIT) );
-
-	// I assume that if I am in the function is because
-    	if (!is_alive){
-           LocalParticle_set_state(part, XP_LOST_ON_GLOBAL_AP);
-	}
-    //end_per_particle_block
-
-
-}
-#endif
-
-/*gpufun*/
-void increment_at_element(LocalParticle* part0){
-
-   //start_per_particle_block (part0->part)
-        LocalParticle_add_to_at_element(part, 1);
-   //end_per_particle_block
-
-
-}
-
-/*gpufun*/
-void increment_at_turn(LocalParticle* part0, int flag_reset_s){
-
-    //start_per_particle_block (part0->part)
-	LocalParticle_add_to_at_turn(part, 1);
-	LocalParticle_set_at_element(part, 0);
-    if (flag_reset_s>0){
-        LocalParticle_set_s(part, 0.);
-    }
-    //end_per_particle_block
-}
-
-
-// check_is_active has different implementation on CPU and GPU
-
-#define CPUIMPLEM //only_for_context cpu_serial cpu_openmp
-
-#ifdef CPUIMPLEM
-
-/*gpufun*/
-int64_t check_is_active(LocalParticle* part) {
-    int64_t ipart=0;
-    while (ipart < part->_num_active_particles){
-        if (part->state[ipart]<1){
-            LocalParticle_exchange(
-                part, ipart, part->_num_active_particles-1);
-            part->_num_active_particles--;
-            part->_num_lost_particles++;
-        }
-	else{
-	    ipart++;
-	}
-    }
-
-    if (part->_num_active_particles==0){
-        return 0;//All particles lost
-    } else {
-        return 1; //Some stable particles are still present
-    }
-}
-
-#else
-
-/*gpufun*/
-int64_t check_is_active(LocalParticle* part) {
-    return LocalParticle_get_state(part)>0;
-};
-
-#endif
-
-#undef CPUIMPLEM //only_for_context cpu_serial cpu_openmp
-
-
-'''
-
-    source = '\n\n'.join([src_typedef, src_adders, src_getters,
-                          src_setters, src_scalers, src_exchange,
-                          src_particles_to_local, src_local_to_particles,
-                          custom_source])
-
-    return source
+    return [vv for _, vv in part_energy_vars]

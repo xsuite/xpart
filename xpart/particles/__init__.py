@@ -4,3 +4,4 @@
 # ######################################### #
 
 from .particles import *
+from .particles_interface import *
