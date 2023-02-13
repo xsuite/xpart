@@ -41,8 +41,8 @@ class RandomGenerator(xo.HybridClass):
             kwargs.setdefault('rutherford_iterations', 7)
             kwargs.setdefault('rutherford_lower_val', 0.0009982)
             kwargs.setdefault('rutherford_upper_val', 1.)
-            kwargs.setdefault('rutherford_A', 1.)
-            kwargs.setdefault('rutherford_B', 1.)
+            kwargs.setdefault('rutherford_A', 0.)
+            kwargs.setdefault('rutherford_B', 0.)
             kwargs.setdefault('_samples', np.array([]))
         super().__init__(**kwargs)
 

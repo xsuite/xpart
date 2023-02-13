@@ -7,8 +7,7 @@
 #define LOCALPARTICE_RNG_H
 
 /*gpufun*/
-double LocalParticle_generate_random_double(LocalParticle* part)
-{
+double RandomGenerator_get_double(LocalParticle* part){
     uint32_t s1 = LocalParticle_get__rng_s1(part);
     uint32_t s2 = LocalParticle_get__rng_s2(part);
     uint32_t s3 = LocalParticle_get__rng_s3(part);
@@ -23,20 +22,22 @@ double LocalParticle_generate_random_double(LocalParticle* part)
 }
 
 /*gpufun*/
-double LocalParticle_generate_random_double_exp(LocalParticle* part)
-{
-  return -log(LocalParticle_generate_random_double(part));
+double RandomGenerator_get_double_exp(LocalParticle* part){
+    double x1 = RandomGenerator_get_double(part);
+    while(x1==0.0){
+        x1 = RandomGenerator_get_double(part);
+    }
+    return -log(x1);
 }
 
 /*gpufun*/
-double LocalParticle_generate_random_double_gauss(LocalParticle* part)
-{
-    double x1 = LocalParticle_generate_random_double(part);
+double RandomGenerator_get_double_gauss(LocalParticle* part){
+    double x1 = RandomGenerator_get_double(part);
     while(x1==0.0){
-        x1 = LocalParticle_generate_random_double(part);
+        x1 = RandomGenerator_get_double(part);
     }
     x1 = sqrt(-2.0*log(x1));
-    double x2 = LocalParticle_generate_random_double(part);
+    double x2 = RandomGenerator_get_double(part);
     x2 = 2.0*3.1415926535897932384626433832795028841971693993751*x2;
     double r = x1*sin(x2);
     return r;
@@ -44,7 +45,7 @@ double LocalParticle_generate_random_double_gauss(LocalParticle* part)
 
 // Generate a random value weighted with a Rutherford distribution
 /*gpufun*/
-double RandomGenerator_get_double_rutherford(RandomGeneratorData ran, LocalParticle* part){
+double RandomGenerator_get_double_ruth(RandomGeneratorData ran, LocalParticle* part){
 
     // get the parameters
     double x0     = RandomGeneratorData_get_rutherford_lower_val(ran);
@@ -52,13 +53,13 @@ double RandomGenerator_get_double_rutherford(RandomGeneratorData ran, LocalParti
     double A      = RandomGeneratorData_get_rutherford_A(ran);
     double B      = RandomGeneratorData_get_rutherford_B(ran);
     
-    if (A==0 || B==0){
+    if (A==0. || B==0.){
         // Not initialised
-        return 0.
+        return 0.;
     }
 
     // sample a random uniform
-    double t = LocalParticle_generate_random_double(part);
+    double t = RandomGenerator_get_double(part);
 
     // initial estimate is the lower border
     double x = x0;

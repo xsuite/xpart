@@ -15,13 +15,13 @@ void RandomSampler_track_local_particle(RandomSamplerData el, LocalParticle* par
     int i;
     for (i=0; i<n_samples; ++i){
         if (dist==0) {
-            val = LocalParticle_generate_random_double(part);
+            val = RandomGenerator_get_double(part);
         } else if (dist==1) {
-            val = LocalParticle_generate_random_double_exp(part);
+            val = RandomGenerator_get_double_exp(part);
         } else if (dist==2) {
-            val = LocalParticle_generate_random_double_gauss(part);
+            val = RandomGenerator_get_double_gauss(part);
         } else if (dist==3) {
-            val = RandomGenerator_get_double_rutherford(rng, part);
+            val = RandomGenerator_get_double_ruth(rng, part);
         } else {
             val = 0;
         }
