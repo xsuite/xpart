@@ -42,8 +42,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       mode=None,
                       particle_ref=None,
                       num_particles=None,
-                      x=None, px=None, y=None, py=None, zeta=None, delta=None,
+                      x=None, px=None, y=None, py=None,
+                      zeta=None, delta=None, pzeta=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
+                      zeta_norm=None, pzeta_norm=None,
                       tracker=None,
                       at_element=None,
                       match_at_s=None,
@@ -132,6 +134,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
     Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
 
+    assert 'at_s' not in kwargs, "at_s is not a valid argument for this function"
+
     if particles_class is not None:
         raise NotImplementedError
 
@@ -168,39 +172,32 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     py = (py.get() if hasattr(py, "get") else py)
     zeta = (zeta.get() if hasattr(zeta, "get") else zeta)
     delta = (delta.get() if hasattr(delta, "get") else delta)
+    pzeta = (pzeta.get() if hasattr(pzeta, "get") else pzeta)
     x_norm = (x_norm.get() if hasattr(x_norm, "get") else x_norm)
     px_norm = (px_norm.get() if hasattr(px_norm, "get") else px_norm)
     y_norm = (y_norm.get() if hasattr(y_norm, "get") else y_norm)
     py_norm = (py_norm.get() if hasattr(py_norm, "get") else py_norm)
+    zeta_norm = (zeta_norm.get() if hasattr(zeta_norm, "get") else zeta_norm)
+    pzeta_norm = (pzeta_norm.get() if hasattr(pzeta_norm, "get") else pzeta_norm)
 
     if tracker is not None and tracker.iscollective:
         logger.warning('Ignoring collective elements in particles generation.')
         tracker = tracker._supertracker
 
-    if zeta is None:
-        zeta = 0
-
-    if delta is None:
-        delta = 0
-
-    if not np.isscalar(delta):
-        delta = np.array(delta)
-
-    if not np.isscalar(zeta):
-        zeta = np.array(zeta)
-
     # Compute ptau from delta
-    beta0 = particle_ref._xobject.beta0[0]
-    delta_beta0 = delta * beta0
-    ptau_beta0 = (delta_beta0 * delta_beta0
-                        + 2. * delta_beta0 * beta0 + 1.)**0.5 - 1.
-    pzeta = ptau_beta0 / beta0 / beta0
+    if delta is not None:
+        assert pzeta is None
+        if not np.isscalar(delta):
+            delta = np.array(delta)
+        beta0 = particle_ref._xobject.beta0[0]
+        delta_beta0 = delta * beta0
+        ptau_beta0 = (delta_beta0 * delta_beta0
+                            + 2. * delta_beta0 * beta0 + 1.)**0.5 - 1.
+        pzeta = ptau_beta0 / beta0 / beta0
 
     if (x_norm is not None or px_norm is not None
-        or y_norm is not None or py_norm is not None):
-
-        assert (x is  None and px is  None
-                and y is  None and py is  None)
+            or y_norm is not None or py_norm is not None
+            or zeta_norm is not None or pzeta_norm is not None):
 
         if mode is None:
             mode = 'normalized_transverse'
@@ -209,17 +206,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if mode is None:
         mode = 'set'
-
-    if mode == 'normalized_transverse':
-        if x_norm is None: x_norm = 0
-        if px_norm is None: px_norm = 0
-        if y_norm is None: y_norm = 0
-        if py_norm is None: py_norm = 0
-    else:
-        if x is None: x = 0
-        if px is None: px = 0
-        if y is None: y = 0
-        if py is None: py = 0
 
     assert particle_ref._capacity == 1
     ref_dict = {
@@ -287,11 +273,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         else:
             WW = W_matrix
 
-        WWinv = np.linalg.inv(WW)
-
         num_particles = _check_lengths(num_particles=num_particles,
-            zeta=zeta, delta=delta, x_norm=x_norm, px_norm=px_norm,
-            y_norm=y_norm, py_norm=py_norm)
+            x=x, px=px, y=y, py=py, zeta=zeta, pzeta=pzeta,
+            x_norm=x_norm, px_norm=px_norm,
+            y_norm=y_norm, py_norm=py_norm,
+            zeta_norm=zeta_norm, pzeta_norm=pzeta_norm)
 
         if scale_with_transverse_norm_emitt is not None:
             assert len(scale_with_transverse_norm_emitt) == 2
@@ -303,41 +289,89 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             nemitt_y = scale_with_transverse_norm_emitt[1]
 
         if nemitt_x is None:
-            nemitt_x = 1
+            gemitt_x = 1
+        else:
+            gemitt_x = (nemitt_x / particle_ref._xobject.beta0[0]
+                        / particle_ref._xobject.gamma0[0])
+
         if nemitt_y is None:
-            nemitt_y = 1
+            gemitt_y = 1
+        else:
+            gemitt_y = (nemitt_y / particle_ref._xobject.beta0[0]
+                        / particle_ref._xobject.gamma0[0])
 
-        gemitt_x = nemitt_x/particle_ref.beta0/particle_ref.gamma0
-        gemitt_y = nemitt_y/particle_ref.beta0/particle_ref.gamma0
+        gemitt_zeta = 1
 
-        x_norm_scaled = np.sqrt(gemitt_x) * x_norm
-        px_norm_scaled = np.sqrt(gemitt_x) * px_norm
-        y_norm_scaled = np.sqrt(gemitt_y) * y_norm
-        py_norm_scaled = np.sqrt(gemitt_y) * py_norm
+        if sum([vv is not None for vv in [x, x_norm, px, px_norm]]) > 2:
+            raise ValueError(
+                "Only two of `x`, `x_norm`, `px` and `px_norm` can be provided")
+        elif sum([vv is not None for vv in [x, x_norm, px, px_norm]]) <= 1:
+            if x is None and x_norm is None:
+                x_norm = 0
+            if px is None and px_norm is None:
+                px_norm = 0
 
-        # Transform long. coordinates to normalized space
-        XX_long = np.zeros(shape=(6, num_particles), dtype=np.float64)
-        XX_long[4, :] = zeta - particle_on_co._xobject.zeta[0]
-        XX_long[5, :] = pzeta - particle_on_co._xobject.ptau[0] / beta0
+        if sum([vv is not None for vv in [y, y_norm, py, py_norm]]) > 2:
+            raise ValueError(
+                "Only two of `y`, `y_norm`, `py` and `py_norm` can be provided")
+        elif sum([vv is not None for vv in [y, y_norm, py, py_norm]]) <= 1:
+            if y is None and y_norm is None:
+                y_norm = 0
+            if py is None and py_norm is None:
+                py_norm = 0
 
-        XX_norm_scaled = np.dot(WWinv, XX_long)
+        if sum([vv is not None for vv in [zeta, zeta_norm, pzeta, pzeta_norm]]) > 2:
+            raise ValueError(
+                "Only two of `zeta`, `zeta_norm`, `pzeta` and `pzeta_norm` can be provided")
+        elif sum([vv is not None for vv in [zeta, zeta_norm, pzeta, pzeta_norm]]) <= 1:
+            if zeta is None and zeta_norm is None:
+                zeta_norm = 0
+            if pzeta is None and pzeta_norm is None:
+                pzeta_norm = 0
 
-        XX_norm_scaled[0, :] = x_norm_scaled
-        XX_norm_scaled[1, :] = px_norm_scaled
-        XX_norm_scaled[2, :] = y_norm_scaled
-        XX_norm_scaled[3, :] = py_norm_scaled
+        BB = np.zeros(shape=(12, num_particles), dtype=np.float64)
+        AA = np.zeros(shape=(12, 12), dtype=np.float64)
 
-        # Transform to physical coordinates
-        XX = np.dot(WW, XX_norm_scaled)
+        # The first 6 equations are X - WW * X_norm = X_CO
+        AA[:6, :6] = np.eye(6)
+        AA[:6, 6:] = -WW
 
-        XX[0, :] += particle_on_co._xobject.x[0]
-        XX[1, :] += particle_on_co._xobject.px[0]
-        XX[2, :] += particle_on_co._xobject.y[0]
-        XX[3, :] += particle_on_co._xobject.py[0]
-        XX[4, :] += particle_on_co._xobject.zeta[0]
-        XX[5, :] += particle_on_co._xobject.ptau[0] / beta0
+        BB[0, :] = particle_on_co._xobject.x[0]
+        BB[1, :] = particle_on_co._xobject.px[0]
+        BB[2, :] = particle_on_co._xobject.y[0]
+        BB[3, :] = particle_on_co._xobject.py[0]
+        BB[4, :] = particle_on_co._xobject.zeta[0]
+        BB[5, :] = particle_on_co._xobject.ptau[0] / particle_on_co._xobject.beta0[0]
+
+        # The next 6 equations fix either X or X_norm
+        i_fill = 6
+        for ii, rr in enumerate([x, px, y, py, zeta, pzeta]):
+            if rr is not None:
+                BB[i_fill, :] = np.array(rr)
+                AA[i_fill, ii] = 1
+                i_fill += 1
+
+        for ii, (rr_norm,  gemitt) in enumerate(zip(
+                    [x_norm, px_norm, y_norm, py_norm, zeta_norm, pzeta_norm],
+                    [gemitt_x, gemitt_x, gemitt_y, gemitt_y, gemitt_zeta, gemitt_zeta])):
+            if rr_norm is not None:
+                rr_norm_scaled = np.sqrt(gemitt) * np.array(rr_norm)
+                BB[i_fill, :] = rr_norm_scaled
+                AA[i_fill, ii + 6] = 1
+                i_fill += 1
+
+        # Solve and extract geometric coordinates
+        X_Xhat = np.linalg.solve(AA, BB)
+        XX = X_Xhat[:6, :]
 
     elif mode == 'set':
+
+        if x is None: x = 0
+        if px is None: px = 0
+        if y is None: y = 0
+        if py is None: py = 0
+        if zeta is None: zeta = 0
+        if pzeta is None: pzeta = 0
 
         if R_matrix is not None:
             logger.warning('R_matrix provided but not used in this mode!')
@@ -356,6 +390,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     elif mode == "shift":
 
+        if x is None: x = 0
+        if px is None: px = 0
+        if y is None: y = 0
+        if py is None: py = 0
+        if zeta is None: zeta = 0
+        if pzeta is None: pzeta = 0
+
         if R_matrix is not None:
             logger.warning('R_matrix provided but not used in this mode!')
 
@@ -369,7 +410,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[2, :] = y + particle_ref.y
         XX[3, :] = py + particle_ref.py
         XX[4, :] = zeta + particle_ref.zeta
-        XX[5, :] = pzeta + particle_ref.ptau / beta0
+        XX[5, :] = pzeta + particle_ref.ptau / particle_ref._xobject.beta0[0]
     else:
         raise ValueError('What?!')
 
@@ -378,7 +419,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     part_dict['y'] = XX[2, :]
     part_dict['py'] = XX[3, :]
     part_dict['zeta'] = XX[4, :]
-    part_dict['ptau'] = XX[5, :] * beta0
+    part_dict['ptau'] = XX[5, :] * particle_ref._xobject.beta0[0]
 
     part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
 

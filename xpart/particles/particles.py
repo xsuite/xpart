@@ -159,87 +159,87 @@ class Particles(xo.HybridClass):
 
     def __init__(self, **kwargs):
 
-
         input_kwargs = kwargs.copy()
 
         if '_xobject' in kwargs.keys():
             # Initialize xobject
             self.xoinitialize(**kwargs)
-        else:
-            if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
-                # Needed to generate consistent longitudinal variables
-                pyparticles = Pyparticles(**kwargs)
-                if 'mass_ratio' in kwargs.keys():
-                    del(kwargs['mass_ratio']) # info transferred in pyparticles.chi
+            return
 
-                part_dict = _pyparticles_to_xpart_dict(pyparticles)
-                if ('_capacity' in kwargs.keys() and
-                         kwargs['_capacity'] is not None):
-                    assert kwargs['_capacity'] >= part_dict['_num_particles']
-                else:
-                    kwargs['_capacity'] = part_dict['_num_particles']
+        if any([nn in kwargs.keys() for tt, nn in per_particle_vars]):
+            # Needed to generate consistent longitudinal variables
+            pyparticles = Pyparticles(**kwargs)
+            if 'mass_ratio' in kwargs.keys():
+                del(kwargs['mass_ratio']) # info transferred in pyparticles.chi
+
+            part_dict = _pyparticles_to_xpart_dict(pyparticles)
+            if ('_capacity' in kwargs.keys() and
+                        kwargs['_capacity'] is not None):
+                assert kwargs['_capacity'] >= part_dict['_num_particles']
             else:
-                pyparticles = None
-                if '_capacity' not in kwargs.keys():
-                    kwargs['_capacity'] = 1
+                kwargs['_capacity'] = part_dict['_num_particles']
+        else:
+            pyparticles = None
+            if '_capacity' not in kwargs.keys():
+                kwargs['_capacity'] = 1
 
-            # Make sure _capacity is integer
-            kwargs['_capacity'] = int(kwargs['_capacity'])
+        # Make sure _capacity is integer
+        kwargs['_capacity'] = int(kwargs['_capacity'])
 
-            # We just provide array sizes to xoinitialize (we will set values later)
-            kwargs.update(
-                    {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
+        # We just provide array sizes to xoinitialize (we will set values later)
+        kwargs.update(
+                {kk: kwargs['_capacity'] for tt, kk in per_particle_vars})
 
-            if 'pzeta' in kwargs.keys():
-                del(kwargs['pzeta'])  # handled in part_dict
+        if 'pzeta' in kwargs.keys():
+            del(kwargs['pzeta'])  # handled in part_dict
 
-            if 'sigma' in kwargs.keys():
-                raise NameError(
-                    '`sigma` is not supported anymore. Please use `zeta` instead.')
+        if 'sigma' in kwargs.keys():
+            raise NameError(
+                '`sigma` is not supported anymore. Please use `zeta` instead.')
 
-            if 'psigma' in kwargs.keys():
-                raise NameError(
-                    '`psigma` is not supported anymore. Please use `pzeta` instead.')
+        if 'psigma' in kwargs.keys():
+            raise NameError(
+                '`psigma` is not supported anymore. Please use `pzeta` instead.')
 
-            # Initialize xobject
-            self.xoinitialize(**kwargs)
+        # Initialize xobject
+        self.xoinitialize(**kwargs)
 
-            if 'start_tracking_at_element' not in kwargs.keys():
-                self.start_tracking_at_element = -1
+        if 'start_tracking_at_element' not in kwargs.keys():
+            self.start_tracking_at_element = -1
 
-            # Initialize coordinates
-            with self._bypass_linked_vars():
-                if pyparticles is not None:
-                    context = self._buffer.context
-                    for tt, kk in list(scalar_vars):
-                        setattr(self, kk, part_dict[kk])
-                    for tt, kk in list(per_particle_vars):
-                        if kk.startswith('_rng'):
-                            getattr(self, kk)[:] = 0
-                            continue
-                        vv = getattr(self, kk)
-                        vals =  context.nparray_to_context_array(part_dict[kk])
-                        ll = len(vals)
-                        vv[:ll] = vals
-                        vv[ll:] = LAST_INVALID_STATE
-                else:
-                    for tt, kk in list(scalar_vars):
-                        setattr(self, kk, 0.)
+        # Initialize coordinates
+        with self._bypass_linked_vars():
+            if pyparticles is not None:
+                context = self._buffer.context
+                for tt, kk in list(scalar_vars):
+                    setattr(self, kk, part_dict[kk])
+                for tt, kk in list(per_particle_vars):
+                    if kk.startswith('_rng'):
+                        getattr(self, kk)[:] = 0
+                        continue
+                    vv = getattr(self, kk)
+                    vals =  context.nparray_to_context_array(part_dict[kk])
+                    ll = len(vals)
+                    vv[:ll] = vals
+                    vv[ll:] = LAST_INVALID_STATE
+            else:
+                for tt, kk in list(scalar_vars):
+                    setattr(self, kk, 0.)
 
-                    for tt, kk in list(per_particle_vars):
-                        if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
-                            value = 1.
-                        elif kk == 'particle_id':
-                            value = np.arange(0, self._capacity, dtype=np.int64)
-                        else:
-                            value = 0.
-                        getattr(self, kk)[:] = value
+                for tt, kk in list(per_particle_vars):
+                    if kk == 'chi' or kk == 'charge_ratio' or kk == 'state':
+                        value = 1.
+                    elif kk == 'particle_id':
+                        value = np.arange(0, self._capacity, dtype=np.int64)
+                    else:
+                        value = 0.
+                    getattr(self, kk)[:] = value
 
             self._num_active_particles = -1  # To be filled in only on CPU
             self._num_lost_particles = -1  # To be filled in only on CPU
 
             # Force values provided by user if compatible
-            for nn in part_energy_varnames():
+            for nn in part_energy_varnames() + ['p0c', 'beta0', 'gamma0']:
                 vvv = self._buffer.context.nparray_from_context_array(getattr(self, nn))
                 if nn in input_kwargs.keys():
                     if hasattr(input_kwargs[nn], '__len__'):
@@ -248,20 +248,25 @@ class Particles(xo.HybridClass):
                         ll = len(vvv)
 
                     if np.isscalar(input_kwargs[nn]):
-                        getattr(self, "_"+nn)[:] = input_kwargs[nn]
+                        getattr(self, nn)[:] = input_kwargs[nn]
                     else:
-                        getattr(self, "_"+nn)[:ll] = (
+                        getattr(self, nn)[:ll] = (
                                 context.nparray_to_context_array(
                                     np.array(input_kwargs[nn])))
 
-            if isinstance(self._buffer.context, xo.ContextCpu):
-                # Particles always need to be organized to run on CPU
-                if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
-                    pass
-                else:
-                    self.reorganize()
+        if isinstance(self._buffer.context, xo.ContextCpu):
+            # Particles always need to be organized to run on CPU
+            if '_no_reorganize' in kwargs.keys() and kwargs['_no_reorganize']:
+                pass
+            else:
+                self.reorganize()
 
     def init_pipeline(self, name):
+
+        """
+        Add attribute (for pipeline mode).
+        """
+
         self.name = name
 
     def to_dict(self, copy_to_cpu=True,
@@ -317,6 +322,7 @@ class Particles(xo.HybridClass):
                   remove_redundant_variables=None,
                   keep_rng_state=None,
                   compact=False):
+
         dct = self.to_dict(
                     remove_underscored=remove_underscored,
                     remove_unused_space=remove_unused_space,
@@ -327,9 +333,11 @@ class Particles(xo.HybridClass):
         return pd.DataFrame(dct)
 
     def show(self):
+
         """
-        Method to print particle properties
+        Print particle properties.
         """
+
         df = self.to_pandas()
         dash = '-' * 55
         print("PARTICLES:\n\n")
@@ -341,15 +349,18 @@ class Particles(xo.HybridClass):
         print('\n')
 
     def get_classical_particle_radius0(self):
-        """ 
-        Method to calculate classical particle radius from reference particle
+
         """
+        Get classical particle radius of the reference particle.
+        """
+
         m0 = self.mass0*qe/(clight**2) # electron volt - kg conversion
         r0 = (self.q0*qe)**2/(4*np.pi*epsilon_0*m0*clight**2)  #1.5347e-18 is default for protons
         return r0
 
     @classmethod
     def from_pandas(cls, df, _context=None, _buffer=None, _offset=None):
+
         dct = df.to_dict(orient='list')
         for tt, nn in scalar_vars + size_vars:
             if nn in dct.keys() and not np.isscalar(dct[nn]):
@@ -358,6 +369,10 @@ class Particles(xo.HybridClass):
 
     @classmethod
     def merge(cls, lst, _context=None, _buffer=None, _offset=None):
+
+        """
+        Merge a list of particles into a single particles object.
+        """
 
         # TODO For now the merge is performed on CPU for add contexts.
         # Slow for objects on GPU (transferred to CPU for the merge).
@@ -425,7 +440,9 @@ class Particles(xo.HybridClass):
                                      _offset=_offset)
 
     def filter(self, mask):
-
+        """
+        Select a subset of particles satisfying a logical condition.
+        """
         if isinstance(self._buffer.context, xo.ContextCpu):
             self_cpu = self
         else:
@@ -467,6 +484,11 @@ class Particles(xo.HybridClass):
             return new_part_cpu.copy(_context=target_ctx)
 
     def remove_unused_space(self):
+
+        """
+        Return a new particles object with removed no space in the particle arrays.
+        """
+
         return self.filter(self.state > LAST_INVALID_STATE)
 
     def _bypass_linked_vars(self):
@@ -483,7 +505,10 @@ class Particles(xo.HybridClass):
             return True
 
     def _init_random_number_generator(self, seeds=None):
-
+        """
+        Initialize state of the random number generator (possibility to providing
+        a seed for each particle).
+        """
         self.compile_kernels(only_if_needed=True)
 
         if seeds is None:
@@ -500,12 +525,25 @@ class Particles(xo.HybridClass):
             seeds=seeds_dev, n_init=self._capacity)
 
     def hide_lost_particles(self, _assume_reorganized=False):
+
+        """
+        Hide lost particles in the particles object.
+        """
+
         self._lim_arrays_name = '_num_active_particles'
         if not _assume_reorganized:
-            self.reorganize()
+            n_active, _ = self.reorganize()
+            self._num_active_particles = n_active
 
     def unhide_lost_particles(self):
+
+        """
+        Unhide lost particles in the particles object.
+        """
+
         del(self._lim_arrays_name)
+        if not isinstance(self._context, xo.ContextCpu):
+            self._num_active_particles = -1
 
     @property
     def lost_particles_are_hidden(self):
@@ -513,7 +551,9 @@ class Particles(xo.HybridClass):
                  self._lim_arrays_name == '_num_active_particles')
 
     def sort(self, by='particle_id', interleave_lost_particles=False):
-
+        """
+        Sort particles by particle ID or other veriabke.
+        """
         if not isinstance(self._buffer.context, xo.ContextCpu):
             raise NotImplementedError('Sorting only works on CPU for now')
 
@@ -546,8 +586,11 @@ class Particles(xo.HybridClass):
 
 
     def reorganize(self):
-        assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
-                'Masking does not work with pyopencl')
+
+        """
+        Reorganize the particles object so that all active particles are at the
+        beginning of the arrays.
+        """
 
         if self.lost_particles_are_hidden:
             restore_hidden = True
@@ -555,21 +598,37 @@ class Particles(xo.HybridClass):
         else:
             restore_hidden = False
 
-        mask_active = self.state > 0
-        mask_lost = (self.state < 1) & (self.state>LAST_INVALID_STATE)
+        if isinstance(self._context, xo.ContextPyopencl):
+            # Needs special treatment because masking does not work with pyopencl
+            # Going to for the masking for now, could be replaced by a kernel in the future.
+            state_cpu = self.state.get()
+            mask_active_cpu = state_cpu > 0
+            mask_lost_cpu = (state_cpu < 1) & (state_cpu>LAST_INVALID_STATE)
+            mask_active = self._context.nparray_to_context_array(
+                                                np.where(mask_active_cpu)[0])
+            mask_lost = self._context.nparray_to_context_array(
+                                                np.where(mask_lost_cpu)[0])
+            n_active = int(np.sum(mask_active_cpu))
+            n_lost = int(np.sum(mask_lost_cpu))
+            needs_reorganization = not mask_active_cpu[:n_active].all()
+        else:
+            mask_active = self.state > 0
+            mask_lost = (self.state < 1) & (self.state>LAST_INVALID_STATE)
+            n_active = int(np.sum(mask_active))
+            n_lost = int(np.sum(mask_lost))
+            needs_reorganization = not mask_active[:n_active].all()
 
-        n_active = np.sum(mask_active)
-        n_lost = np.sum(mask_lost)
+        if needs_reorganization:
+            # Reorganize particles
+            with self._bypass_linked_vars():
+                for tt, nn in self._structure['per_particle_vars']:
+                    vv = getattr(self, nn)
+                    vv_active = vv[mask_active]
+                    vv_lost = vv[mask_lost]
 
-        with self._bypass_linked_vars():
-            for tt, nn in self._structure['per_particle_vars']:
-                vv = getattr(self, nn)
-                vv_active = vv[mask_active]
-                vv_lost = vv[mask_lost]
-
-                vv[:n_active] = vv_active
-                vv[n_active:n_active+n_lost] = vv_lost
-                vv[n_active+n_lost:] = LAST_INVALID_STATE
+                    vv[:n_active] = vv_active
+                    vv[n_active:n_active+n_lost] = vv_lost
+                    vv[n_active+n_lost:] = LAST_INVALID_STATE
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
@@ -581,7 +640,9 @@ class Particles(xo.HybridClass):
         return n_active, n_lost
 
     def add_particles(self, part, keep_lost=False):
-
+        """
+        Add particles to the Particles object.
+        """
         if keep_lost:
             raise NotImplementedError
         assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
@@ -615,6 +676,9 @@ class Particles(xo.HybridClass):
         self.reorganize()
 
     def get_active_particle_id_range(self):
+        """
+        Get the range of particle ids of active particles.
+        """
         ctx2np = self._buffer.context.nparray_from_context_array
         mask_active = ctx2np(self.state) > 0
         ids_active_particles = ctx2np(self.particle_id)[mask_active]
@@ -632,13 +696,27 @@ class Particles(xo.HybridClass):
 
     def update_delta(self, new_delta_value):
 
+        """
+        Update the `delta` value of the particles object. `ptau` and `rvv` and
+        `rpp` are updated accordingly.
+        """
+
         ctx = self._buffer.context
 
         if (self._contains_lost_or_unallocated_particles()
                 or _contains_nan(new_delta_value, ctx)):
             if isinstance(self._buffer.context, xo.ContextPyopencl):
-                raise NotImplementedError # Because masking of arrays does not work in pyopencl
-            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
+                # Needs special treatment because masking does not work with pyopencl
+                # could be done with a kernel in the future
+                state_cpu = self.state.get()
+                if hasattr(new_delta_value, 'get'):
+                    new_delta_value_cpu = new_delta_value.get()
+                else:
+                    new_delta_value_cpu = new_delta_value
+                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_delta_value_cpu)))
+                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
+            else:
+                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_delta_value)))
         else:
             mask = None
 
@@ -689,13 +767,27 @@ class Particles(xo.HybridClass):
 
     def update_ptau(self, new_ptau):
 
+        """
+        Update the `ptau` value of the particles object. `delta` and `rvv` and
+        `rpp` are updated accordingly.
+        """
+
         ctx = self._buffer.context
 
         if (self._contains_lost_or_unallocated_particles()
                 or _contains_nan(new_ptau, ctx)):
             if isinstance(self._buffer.context, xo.ContextPyopencl):
-                raise NotImplementedError # Because masking of arrays does not work in pyopencl
-            mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
+                # Needs special treatment because masking does not work with pyopencl
+                # could be done with a kernel in the future
+                state_cpu = self.state.get()
+                if hasattr(new_ptau, 'get'):
+                    new_ptau_value_cpu = new_ptau.get()
+                else:
+                    new_ptau_value_cpu = new_ptau
+                mask_cpu = ((state_cpu > 0) & (~np.isnan(new_ptau_value_cpu)))
+                mask = ctx.nparray_to_context_array(np.where(mask_cpu)[0])
+            else:
+                mask = ((self.state > 0) & (~ctx.nplike_lib.isnan(new_ptau)))
         else:
             mask = None
 
@@ -778,6 +870,10 @@ class Particles(xo.HybridClass):
                                             container=self)
 
     def add_to_energy(self, delta_energy):
+        """
+        Add `delta_energy` to the `energy` of the particles object. `delta`,
+        'ptau', `rvv` and `rpp` are updated accordingly.
+        """
         beta0 = self.beta0.copy()
         delta_beta0 = self.delta * beta0
 
@@ -1171,7 +1267,9 @@ int64_t check_is_active(LocalParticle* part) {
     return source
 
 def _pyparticles_to_xpart_dict(pyparticles):
-
+    """
+    Convert object to xpart Particles object dictionary
+    """
     out = {}
 
     dct = pyparticles.to_dict()

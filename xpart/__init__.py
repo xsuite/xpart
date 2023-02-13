@@ -14,6 +14,7 @@ from .linear_normal_form import compute_linear_normal_form
 from .transverse_generators import generate_2D_polar_grid
 from .transverse_generators import generate_2D_uniform_circular_sector
 from .transverse_generators import generate_2D_pencil
+from .transverse_generators import generate_2D_pencil_with_absolute_cut
 from .transverse_generators import generate_2D_gaussian
 
 from .longitudinal import generate_longitudinal_coordinates
