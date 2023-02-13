@@ -10,6 +10,7 @@ import numpy as np
 import xobjects as xo
 import xtrack as xt
 import xpart as xp
+from xpart.random_number_generator import RandomGenerator
 
 def test_random_generation():
     for ctx in xo.context.get_test_contexts():
@@ -23,11 +24,10 @@ def test_random_generation():
                 'dummy': xo.Float64,
                 }
 
+            _depends_on = [RandomGenerator]
+
             _extra_c_sources = [
-                xp._pkg_root.joinpath(
-                    'random_number_generator/rng_src/base_rng.h'),
-                xp._pkg_root.joinpath(
-                    'random_number_generator/rng_src/local_particle_rng.h'),
+                xp._pkg_root.joinpath('random_number_generator/rng_src/local_particle_rng.h'),
 
                 '''
                     /*gpufun*/

@@ -1,3 +1,8 @@
+// copyright ############################### //
+// This file is part of the Xpart Package.   //
+// Copyright (c) CERN, 2023.                 //
+// ######################################### //
+
 #ifndef XPART_RANDOM_SAMPLER_H
 #define XPART_RANDOM_SAMPLER_H
 #include <stdlib.h>
@@ -6,7 +11,7 @@
 
 /*gpufun*/
 void RandomSampler_track_local_particle(RandomSamplerData el, LocalParticle* part0) {
-    int64_t n_samples       = RandomSamplerData_get_n_samples(el);
+    int64_t n_samples       = RandomSamplerData_get__n_samples(el);
     int8_t dist             = RandomSamplerData_get_distribution(el);
     RandomGeneratorData rng = RandomSamplerData_getp_generator(el);
     double val;
@@ -25,10 +30,9 @@ void RandomSampler_track_local_particle(RandomSamplerData el, LocalParticle* par
         } else {
             val = 0;
         }
-
         RandomSamplerData_set__samples(el, n_samples*LocalParticle_get_particle_id(part) + i, val);
     }
     //end_per_particle_block
 }
 
-#endif
+#endif /* XPART_RANDOM_SAMPLER_H */

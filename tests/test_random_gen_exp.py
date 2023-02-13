@@ -27,19 +27,18 @@ def test_random_generation():
             _depends_on = [RandomGenerator]
 
             _extra_c_sources = [
-            xp._pkg_root.joinpath('random_number_generator/rng_src/local_particle_rng.h'),
+                xp._pkg_root.joinpath('random_number_generator/rng_src/local_particle_rng.h'),
 
-            '''
-                /*gpufun*/
-                void TestElement_track_local_particle(
-                        TestElementData el, LocalParticle* part0){
-                    //start_per_particle_block (part0->part)
-                        double rr = RandomGenerator_get_double(part);
-                        LocalParticle_set_x(part, rr);
-                    //end_per_particle_block
-                }
-            '''
-            ]
+                '''
+                    /*gpufun*/
+                    void TestElement_track_local_particle(
+                            TestElementData el, LocalParticle* part0){
+                        //start_per_particle_block (part0->part)
+                            double rr = RandomGenerator_get_double_exp(part);
+                            LocalParticle_set_x(part, rr);
+                        //end_per_particle_block
+                    }
+                ''']
 
         telem = TestElement(_context=ctx)
 
@@ -54,8 +53,7 @@ def test_random_generation():
 
         for i_part in range(part._capacity):
             x = tracker.record_last_track.x[i_part, :]
-            assert np.all(x>0)
-            assert np.all(x<1)
-            hstgm, bin_edges = np.histogram(x,  bins=50, range=(0, 1), density=True)
-            assert np.allclose(hstgm, 1, rtol=1e-10, atol=0.03)
-
+            hstgm, bin_edges = np.histogram(x,  bins=50, range=(0, 10), density=True)
+            bin_centers = (bin_edges[:-1]+bin_edges[1:])/2
+            exp = np.exp(-bin_centers)
+            assert np.allclose(hstgm, exp, rtol=1e-10, atol=1E-2)
