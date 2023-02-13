@@ -12,12 +12,14 @@ double RandomGenerator_get_double(LocalParticle* part){
     uint32_t s1 = LocalParticle_get__rng_s1(part);
     uint32_t s2 = LocalParticle_get__rng_s2(part);
     uint32_t s3 = LocalParticle_get__rng_s3(part);
+    uint32_t s4 = LocalParticle_get__rng_s4(part);
 
-    double r = rng_get(&s1, &s2, &s3);
+    double r = rng_get(&s1, &s2, &s3, &s4);
 
     LocalParticle_set__rng_s1(part, s1);
     LocalParticle_set__rng_s2(part, s2);
     LocalParticle_set__rng_s3(part, s3);
+    LocalParticle_set__rng_s4(part, s4);
 
     return r;
 }

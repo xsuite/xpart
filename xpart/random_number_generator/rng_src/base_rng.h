@@ -3,46 +3,52 @@
 // Copyright (c) CERN, 2021.                 //
 // ######################################### //
 
-#ifndef XTRACK_RNG_H
-#define XTRACK_RNG_H
+#ifndef XPART_BASE_RNG_H
+#define XPART_BASE_RNG_H
 
 #include <stdint.h> //only_for_context none
 
-/*gpufun*/
-double rng_get (uint32_t *s1, uint32_t *s2, uint32_t *s3 )
-{
+// Combined LCG-Thausworthe generator from (example 37-4):
+// https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-37-efficient-random-number-generation-and-application
 #define MASK 0xffffffffUL
 #define TAUSWORTHE(s,a,b,c,d) ((((s) &c) <<d) &MASK) ^ (((((s) <<a) &MASK)^(s)) >>b)
+#define LCG(s,A,C) ((((A*(s)) &MASK) + C) &MASK)
 
-  *s1 = TAUSWORTHE (*s1, 13, 19, 4294967294UL, 12);
-  *s2 = TAUSWORTHE (*s2, 2, 25, 4294967288UL, 4);
-  *s3 = TAUSWORTHE (*s3, 3, 11, 4294967280UL, 17);
 
-  return ((*s1) ^ (*s2) ^ (*s3)) / 4294967296.0 ;
+/*gpufun*/
+double rng_get (uint32_t *s1, uint32_t *s2, uint32_t *s3, uint32_t *s4 ){
+  *s1 = TAUSWORTHE (*s1, 13, 19, 4294967294UL, 12);  // p1=2^31-1
+  *s2 = TAUSWORTHE (*s2, 2, 25, 4294967288UL, 4);    // p2=2^30-1
+  *s3 = TAUSWORTHE (*s3, 3, 11, 4294967280UL, 17);   // p3=2^28-1
+  *s4 = LCG(*s4, 1664525, 1013904223UL);             // p4=2^32
+
+  // Combined period is lcm(p1,p2,p3,p4) ~ 2^121
+  return ((*s1) ^ (*s2) ^ (*s3) ^ (*s4)) / 4294967296.0 ;
 }
 
 /*gpufun*/
-void rng_set (uint32_t *s1, uint32_t *s2, uint32_t *s3, uint32_t s )
-{
+void rng_set (uint32_t *s1, uint32_t *s2, uint32_t *s3, uint32_t *s4, uint32_t s ){
   if (s == 0)
     s = 1;      /* default seed is 1 */
 
-#define LCG(n) ((69069 * (n)) & 0xffffffffUL)
-  *s1 = LCG (s);
+  *s1 = LCG (s, 69069, 0);
   if (*s1 < 2) *s1 += 2UL;
-  *s2 = LCG (*s1);
+  *s2 = LCG (*s1, 69069, 0);
   if (*s2 < 8) *s2 += 8UL;
-  *s3 = LCG (*s2);
+  *s3 = LCG (*s2, 69069, 0);
   if (*s3 < 16) *s3 += 16UL;
+  *s4 = LCG (*s3, 69069, 0);
 
   /* "warm it up" */
-  rng_get (s1, s2, s3);
-  rng_get (s1, s2, s3);
-  rng_get (s1, s2, s3);
-  rng_get (s1, s2, s3);
-  rng_get (s1, s2, s3);
-  rng_get (s1, s2, s3);
+  rng_get (s1, s2, s3, s4);
+  rng_get (s1, s2, s3, s4);
+  rng_get (s1, s2, s3, s4);
+  rng_get (s1, s2, s3, s4);
+  rng_get (s1, s2, s3, s4);
+  rng_get (s1, s2, s3, s4);
   return;
 }
 
-#endif /* XTRACK_RNG_H */
+#endif /* XPART_BASE_RNG_H */
+
+ 
