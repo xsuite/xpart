@@ -274,10 +274,10 @@ class Particles(xo.HybridClass):
         part = cls(**dct, **kwargs)
 
         if load_rng_state:
-            part._rng_s1 = dct['_rng_s1']
-            part._rng_s2 = dct['_rng_s2']
-            part._rng_s3 = dct['_rng_s3']
-            part._rng_s4 = dct['_rng_s4']
+            part._rng_s1 = dct.get('_rng_s1', 0)
+            part._rng_s2 = dct.get('_rng_s2', 0)
+            part._rng_s3 = dct.get('_rng_s3', 0)
+            part._rng_s4 = dct.get('_rng_s4', 0)
 
         return part
 
