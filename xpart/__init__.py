@@ -4,7 +4,7 @@
 # ######################################### #
 
 from .general import _pkg_root
-from .particles import Particles, ParticlesInterface, pmass
+from .particles import Particles, ParticlesInterface, ParticlesFixed, pmass
 
 from .build_particles import build_particles
 from .matched_gaussian import generate_matched_gaussian_bunch

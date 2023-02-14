@@ -1,8 +1,3 @@
-# copyright ############################### #
-# This file is part of the Xpart Package.   #
-# Copyright (c) CERN, 2021.                 #
-# ######################################### #
-
 import numpy as np
 import xobjects as xo
 
@@ -20,7 +15,7 @@ size_vars = (
     (xo.Int64, '_num_active_particles'),
     (xo.Int64, '_num_lost_particles'),
     (xo.Int64, 'start_tracking_at_element'),
-    )
+)
 # Capacity is always kept up to date
 # the other two are placeholders to be used if needed
 # i.e. on ContextCpu
@@ -28,44 +23,43 @@ size_vars = (
 scalar_vars = (
     (xo.Float64, 'q0'),
     (xo.Float64, 'mass0'),
-    )
+)
 
 part_energy_vars = (
     (xo.Float64, 'ptau'),
     (xo.Float64, 'delta'),
     (xo.Float64, 'rpp'),
     (xo.Float64, 'rvv'),
-    )
+)
 
 per_particle_vars = (
-    (
-        (xo.Float64, 'p0c'),
-        (xo.Float64, 'gamma0'),
-        (xo.Float64, 'beta0'),
-        (xo.Float64, 's'),
-        (xo.Float64, 'x'),
-        (xo.Float64, 'y'),
-        (xo.Float64, 'px'),
-        (xo.Float64, 'py'),
-        (xo.Float64, 'zeta'),
-    )
-    + part_energy_vars +
-    (
-        (xo.Float64, 'chi'),
-        (xo.Float64, 'charge_ratio'),
-        (xo.Float64, 'weight'),
-        (xo.Int64, 'particle_id'),
-        (xo.Int64, 'at_element'),
-        (xo.Int64, 'at_turn'),
-        (xo.Int64, 'state'),
-        (xo.Int64, 'parent_particle_id'),
-        (xo.UInt32, '_rng_s1'),
-        (xo.UInt32, '_rng_s2'),
-        (xo.UInt32, '_rng_s3'),
-        (xo.UInt32, '_rng_s4')
-    )
-    )
-
+        (
+            (xo.Float64, 'p0c'),
+            (xo.Float64, 'gamma0'),
+            (xo.Float64, 'beta0'),
+            (xo.Float64, 's'),
+            # (xo.Float64, 'x'),
+            # (xo.Float64, 'y'),
+            # (xo.Float64, 'px'),
+            # (xo.Float64, 'py'),
+            (xo.Float64, 'zeta'),
+        )
+        + part_energy_vars +
+        (
+            (xo.Float64, 'chi'),
+            (xo.Float64, 'charge_ratio'),
+            (xo.Float64, 'weight'),
+            (xo.Int64, 'particle_id'),
+            (xo.Int64, 'at_element'),
+            (xo.Int64, 'at_turn'),
+            (xo.Int64, 'state'),
+            (xo.Int64, 'parent_particle_id'),
+            (xo.UInt32, '_rng_s1'),
+            (xo.UInt32, '_rng_s2'),
+            (xo.UInt32, '_rng_s3'),
+            (xo.UInt32, '_rng_s4')
+        )
+)
 
 fields = {}
 for tt, nn in size_vars + scalar_vars:
@@ -73,6 +67,7 @@ for tt, nn in size_vars + scalar_vars:
 
 for tt, nn in per_particle_vars:
     fields[nn] = tt[:]
+
 
 def _contains_nan(arr, ctx):
     if isinstance(ctx, xo.ContextPyopencl):
@@ -82,15 +77,11 @@ def _contains_nan(arr, ctx):
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
 
-class Particles(ParticlesInterface):
+class ParticlesFixed(ParticlesInterface):
     """
         Particle objects have the following fields:
 
              - s [m]: Reference accumulated path length
-             - x [m]: Horizontal position
-             - px[1]: Px / (m/m0 * p0c) = beta_x gamma /(beta0 gamma0)
-             - y [m]: Vertical position
-             - py [1]: Py / (m/m0 * p0c)
              - delta [1]: (Pc m0/m - p0c) /p0c
              - ptau [1]: (Energy m0/m - Energy0) / p0c
              - pzeta [1]: ptau / beta0
@@ -122,12 +113,8 @@ class Particles(ParticlesInterface):
              - parent_particle_id [int]: Identifier of the parent particle
                                          (secondary production processes)
     """
-
+    _cname = 'ParticlesData'
     _xofields = ParticlesInterface._xofields.copy()
-    _xofields['x'] = xo.Float64[:]
-    _xofields['y'] = xo.Float64[:]
-    _xofields['px'] = xo.Float64[:]
-    _xofields['py'] = xo.Float64[:]
 
     _rename = {
         'delta': '_delta',
@@ -140,8 +127,8 @@ class Particles(ParticlesInterface):
     }
 
     _extra_c_sources = [
-        _pkg_root.joinpath('rng_src','base_rng.h'),
-        _pkg_root.joinpath('rng_src','particles_rng.h'),
+        _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
+        _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h'),
         '\n /*placeholder_for_local_particle_src*/ \n'
     ]
 
@@ -180,11 +167,11 @@ class Particles(ParticlesInterface):
                             'Please use `pzeta` instead.')
 
         per_part_input_vars = (
-            per_particle_vars +
-            ((xo.Float64, 'energy0'),
-             (xo.Float64, 'tau'),
-             (xo.Float64, 'pzeta'),
-             (xo.Float64, 'mass_ratio'))
+                per_particle_vars +
+                ((xo.Float64, 'energy0'),
+                 (xo.Float64, 'tau'),
+                 (xo.Float64, 'pzeta'),
+                 (xo.Float64, 'mass_ratio'))
         )
 
         # Determine the number of particles and the capacity, so we can allocate
@@ -444,7 +431,7 @@ class Particles(ParticlesInterface):
         beta0 = self._beta0
         if delta is not None:
             _delta = delta
-            _ptau = _sqrt(_delta**2 + 2 * _delta + 1 / beta0**2) - 1 / beta0
+            _ptau = _sqrt(_delta ** 2 + 2 * _delta + 1 / beta0 ** 2) - 1 / beta0
             _pzeta = _ptau / beta0
         elif ptau is not None:
             _ptau = ptau
@@ -547,25 +534,6 @@ class Particles(ParticlesInterface):
 
         self.name = name
 
-    @classmethod
-    def from_dict(cls, dct, load_rng_state=True, **kwargs):
-        part = cls(**dct, **kwargs)
-        np_to_ctx = part._context.nparray_to_context_array
-
-        def array_to_ctx(ary, default=0):
-            if ary is not None and not np.isscalar(ary):
-                return np_to_ctx(np.array(ary, dtype='uint32'))
-            else:
-                return ary or default
-
-        if load_rng_state:
-            part._rng_s1 = array_to_ctx(dct.get('_rng_s1'))
-            part._rng_s2 = array_to_ctx(dct.get('_rng_s2'))
-            part._rng_s3 = array_to_ctx(dct.get('_rng_s3'))
-            part._rng_s4 = array_to_ctx(dct.get('_rng_s4'))
-
-        return part
-
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
                 remove_unused_space=None,
@@ -593,7 +561,7 @@ class Particles(ParticlesInterface):
         if remove_unused_space:
             p_for_dict = p_for_dict.remove_unused_space()
 
-        dct = Particles.__base__.to_dict(p_for_dict)
+        dct = ParticlesFixed.__base__.to_dict(p_for_dict)
         dct['delta'] = p_for_dict.delta
         dct['ptau'] = p_for_dict.ptau
         dct['rvv'] = p_for_dict.rvv
@@ -608,11 +576,11 @@ class Particles(ParticlesInterface):
                 if kk.startswith('_'):
                     if keep_rng_state and kk.startswith('_rng'):
                         continue
-                    del(dct[kk])
+                    del (dct[kk])
 
         if remove_redundant_variables:
             for kk in ['ptau', 'rpp', 'rvv', 'gamma0', 'beta0']:
-                del(dct[kk])
+                del (dct[kk])
 
         return dct
 
@@ -624,11 +592,11 @@ class Particles(ParticlesInterface):
                   compact=False):
 
         dct = self.to_dict(
-                    remove_underscored=remove_underscored,
-                    remove_unused_space=remove_unused_space,
-                    remove_redundant_variables=remove_redundant_variables,
-                    keep_rng_state=keep_rng_state,
-                    compact=compact)
+            remove_underscored=remove_underscored,
+            remove_unused_space=remove_unused_space,
+            remove_redundant_variables=remove_redundant_variables,
+            keep_rng_state=keep_rng_state,
+            compact=compact)
         import pandas as pd
         return pd.DataFrame(dct)
 
@@ -654,8 +622,8 @@ class Particles(ParticlesInterface):
         Get classical particle radius of the reference particle.
         """
 
-        m0 = self.mass0*qe/(clight**2) # electron volt - kg conversion
-        r0 = (self.q0*qe)**2/(4*np.pi*epsilon_0*m0*clight**2)  #1.5347e-18 is default for protons
+        m0 = self.mass0 * qe / (clight ** 2)  # electron volt - kg conversion
+        r0 = (self.q0 * qe) ** 2 / (4 * np.pi * epsilon_0 * m0 * clight ** 2)  # 1.5347e-18 is default for protons
         return r0
 
     @classmethod
@@ -680,7 +648,7 @@ class Particles(ParticlesInterface):
         # Move everything to cpu
         cpu_lst = []
         for pp in lst:
-            assert isinstance(pp, Particles)
+            assert isinstance(pp, ParticlesFixed)
             if isinstance(pp._buffer.context, xo.ContextCpu):
                 cpu_lst.append(pp)
             else:
@@ -706,9 +674,9 @@ class Particles(ParticlesInterface):
         with new_part_cpu._bypass_linked_vars():
             for pp in cpu_lst:
                 for tt, nn in per_particle_vars:
-                    if not(nn == 'particle_id' or nn == 'parent_id'):
+                    if not (nn == 'particle_id' or nn == 'parent_id'):
                         getattr(new_part_cpu, nn)[
-                                first:first+pp._capacity] = getattr(pp, nn)
+                        first:first + pp._capacity] = getattr(pp, nn)
 
                 # Handle particle_ids and parent_ids
                 mask = pp.particle_id >= 0
@@ -717,9 +685,9 @@ class Particles(ParticlesInterface):
                 if np.min(new_id[mask]) <= max_id_curr:
                     new_id[mask] += (max_id_curr + 1)
                     new_parent_id[mask] += (max_id_curr + 1)
-                new_part_cpu.particle_id[first:first+len(new_id)] = new_id
+                new_part_cpu.particle_id[first:first + len(new_id)] = new_id
                 new_part_cpu.parent_particle_id[
-                        first:first+len(new_id)] = new_parent_id
+                first:first + len(new_id)] = new_parent_id
 
                 max_id_curr = np.max(new_id)
                 first += pp._capacity
@@ -797,9 +765,9 @@ class Particles(ParticlesInterface):
     def _has_valid_rng_state(self):
         # I check only the first particle
         if (self._xobject._rng_s1[0] == 0
-            and self._xobject._rng_s2[0] == 0
-            and self._xobject._rng_s3[0] == 0
-            and self._xobject._rng_s4[0] == 0):
+                and self._xobject._rng_s2[0] == 0
+                and self._xobject._rng_s3[0] == 0
+                and self._xobject._rng_s4[0] == 0):
             return False
         else:
             return True
@@ -822,7 +790,7 @@ class Particles(ParticlesInterface):
         context = self._buffer.context
         seeds_dev = context.nparray_to_context_array(seeds)
         context.kernels.Particles_initialize_rand_gen(particles=self,
-            seeds=seeds_dev, n_init=self._capacity)
+                                                      seeds=seeds_dev, n_init=self._capacity)
 
     def hide_lost_particles(self, _assume_reorganized=False):
         """
@@ -917,9 +885,9 @@ class Particles(ParticlesInterface):
             mask_active_cpu = state_cpu > 0
             mask_lost_cpu = (state_cpu < 1) & (state_cpu > LAST_INVALID_STATE)
             mask_active = self._context.nparray_to_context_array(
-                                                np.where(mask_active_cpu)[0])
+                np.where(mask_active_cpu)[0])
             mask_lost = self._context.nparray_to_context_array(
-                                                np.where(mask_lost_cpu)[0])
+                np.where(mask_lost_cpu)[0])
             n_active = int(np.sum(mask_active_cpu))
             n_lost = int(np.sum(mask_lost_cpu))
             needs_reorganization = not mask_active_cpu[:n_active].all()
@@ -939,7 +907,7 @@ class Particles(ParticlesInterface):
                     vv_lost = vv[mask_lost]
 
                     vv[:n_active] = vv_active
-                    vv[n_active:n_active+n_lost] = vv_lost
+                    vv[n_active:n_active + n_lost] = vv_lost
                     vv[n_active + n_lost:] = tt._dtype.type(LAST_INVALID_STATE)
 
         if isinstance(self._buffer.context, xo.ContextCpu):
@@ -958,7 +926,7 @@ class Particles(ParticlesInterface):
         if keep_lost:
             raise NotImplementedError
         assert not isinstance(self._buffer.context, xo.ContextPyopencl), (
-                'Masking does not work with pyopencl')
+            'Masking does not work with pyopencl')
 
         mask_copy = part.state > 0
         n_copy = np.sum(mask_copy)
@@ -967,23 +935,23 @@ class Particles(ParticlesInterface):
         i_start_copy = n_active + n_lost
         n_free = self._capacity - n_active - n_lost
 
-        max_id = np.max(self.particle_id[:n_active+n_lost])
+        max_id = np.max(self.particle_id[:n_active + n_lost])
 
         if n_copy > n_free:
             raise NotImplementedError("Out of space, need to regenerate xobject")
 
         for tt, nn in self._structure['scalar_vars']:
             assert np.isclose(getattr(self, nn), getattr(part, nn),
-                    rtol=1e-14, atol=1e-14)
+                              rtol=1e-14, atol=1e-14)
 
         with self._bypass_linked_vars():
             for tt, nn in self._structure['per_particle_vars']:
                 vv = getattr(self, nn)
                 vv_copy = getattr(part, nn)[mask_copy]
-                vv[i_start_copy:i_start_copy+n_copy] = vv_copy
+                vv[i_start_copy:i_start_copy + n_copy] = vv_copy
 
-        self.particle_id[i_start_copy:i_start_copy+n_copy] = np.arange(
-                                     max_id+1, max_id+1+n_copy, dtype=np.int64)
+        self.particle_id[i_start_copy:i_start_copy + n_copy] = np.arange(
+            max_id + 1, max_id + 1 + n_copy, dtype=np.int64)
 
         self.reorganize()
 
@@ -995,7 +963,7 @@ class Particles(ParticlesInterface):
         mask_active = ctx2np(self.state) > 0
         ids_active_particles = ctx2np(self.particle_id)[mask_active]
         # Behaves as python range (+1)
-        return np.min(ids_active_particles), np.max(ids_active_particles)+1
+        return np.min(ids_active_particles), np.max(ids_active_particles) + 1
 
     def _contains_lost_or_unallocated_particles(self):
         ctx = self._buffer.context
@@ -1026,10 +994,10 @@ class Particles(ParticlesInterface):
     @property
     def delta(self):
         return self._buffer.context.linked_array_type.from_array(
-                                        self._delta,
-                                        mode='setitem_from_container',
-                                        container=self,
-                                        container_setitem_name='_delta_setitem')
+            self._delta,
+            mode='setitem_from_container',
+            container=self,
+            container_setitem_name='_delta_setitem')
 
     @delta.setter
     def delta(self, value):
@@ -1069,10 +1037,10 @@ class Particles(ParticlesInterface):
     @property
     def ptau(self):
         return self._buffer.context.linked_array_type.from_array(
-                                        self._ptau,
-                                        mode='setitem_from_container',
-                                        container=self,
-                                        container_setitem_name='_ptau_setitem')
+            self._ptau,
+            mode='setitem_from_container',
+            container=self,
+            container_setitem_name='_ptau_setitem')
 
     @ptau.setter
     def ptau(self, value):
@@ -1105,10 +1073,10 @@ class Particles(ParticlesInterface):
     @property
     def p0c(self):
         return self._buffer.context.linked_array_type.from_array(
-                                        self._p0c,
-                                        mode='setitem_from_container',
-                                        container=self,
-                                        container_setitem_name='_p0c_setitem')
+            self._p0c,
+            mode='setitem_from_container',
+            container=self,
+            container_setitem_name='_p0c_setitem')
 
     @p0c.setter
     def p0c(self, value):
@@ -1139,10 +1107,10 @@ class Particles(ParticlesInterface):
     @property
     def gamma0(self):
         return self._buffer.context.linked_array_type.from_array(
-                                        self._gamma0,
-                                        mode='setitem_from_container',
-                                        container=self,
-                                        container_setitem_name='_gamma0_setitem')
+            self._gamma0,
+            mode='setitem_from_container',
+            container=self,
+            container_setitem_name='_gamma0_setitem')
 
     @gamma0.setter
     def gamma0(self, value):
@@ -1173,10 +1141,10 @@ class Particles(ParticlesInterface):
     @property
     def beta0(self):
         return self._buffer.context.linked_array_type.from_array(
-                                        self._beta0,
-                                        mode='setitem_from_container',
-                                        container=self,
-                                        container_setitem_name='_beta0_setitem')
+            self._beta0,
+            mode='setitem_from_container',
+            container=self,
+            container_setitem_name='_beta0_setitem')
 
     @beta0.setter
     def beta0(self, value):
@@ -1185,35 +1153,35 @@ class Particles(ParticlesInterface):
     @property
     def rvv(self):
         return self._buffer.context.linked_array_type.from_array(
-                                            self._rvv, mode='readonly',
-                                            container=self)
+            self._rvv, mode='readonly',
+            container=self)
 
     @property
     def rpp(self):
         return self._buffer.context.linked_array_type.from_array(
-                                            self._rpp, mode='readonly',
-                                            container=self)
+            self._rpp, mode='readonly',
+            container=self)
 
     @property
     def energy0(self):
         energy0 = (self.p0c * self.p0c + self.mass0 * self.mass0) ** 0.5
         return self._buffer.context.linked_array_type.from_array(
-                                            energy0, mode='readonly',
-                                            container=self)
+            energy0, mode='readonly',
+            container=self)
 
     @property
     def energy(self):
         energy = self.energy0 + self.ptau * self.p0c  # eV
         return self._buffer.context.linked_array_type.from_array(
-                                            energy, mode='readonly',
-                                            container=self)
+            energy, mode='readonly',
+            container=self)
 
     @property
     def pzeta(self):
         pzeta = self.ptau / self.beta0
         return self._buffer.context.linked_array_type.from_array(
-                                            pzeta, mode='readonly',
-                                            container=self)
+            pzeta, mode='readonly',
+            container=self)
 
     def add_to_energy(self, delta_energy):
         """
@@ -1224,12 +1192,12 @@ class Particles(ParticlesInterface):
         delta_beta0 = self.delta * beta0
 
         ptau_beta0 = (
-            delta_energy / self.energy0.copy() +
-            (delta_beta0 * delta_beta0 + 2.0 * delta_beta0 * beta0
-             + 1.)**0.5 - 1.)
+                delta_energy / self.energy0.copy() +
+                (delta_beta0 * delta_beta0 + 2.0 * delta_beta0 * beta0
+                 + 1.) ** 0.5 - 1.)
 
         ptau = ptau_beta0 / beta0
-        delta = (ptau * ptau + 2. * ptau / beta0 + 1)**0.5 - 1
+        delta = (ptau * ptau + 2. * ptau / beta0 + 1) ** 0.5 - 1
 
         one_plus_delta = delta + 1.
         rvv = one_plus_delta / (1. + ptau_beta0)
@@ -1257,10 +1225,10 @@ class Particles(ParticlesInterface):
         src_lines.append('typedef struct {')
 
         for tt, vv in _size_vars + _scalar_vars:
-            src_lines.append('                 ' + tt._c_type + '  '+vv+';')
+            src_lines.append('                 ' + tt._c_type + '  ' + vv + ';')
 
         for tt, vv in _per_particle_vars:
-            src_lines.append('    /*gpuglmem*/ ' + tt._c_type + '* '+vv+';')
+            src_lines.append('    /*gpuglmem*/ ' + tt._c_type + '* ' + vv + ';')
 
         src_lines.append('                 int64_t ipart;')
         src_lines.append('    /*gpuglmem*/ int8_t* io_buffer;')
@@ -1274,7 +1242,7 @@ class Particles(ParticlesInterface):
         /*gpuglmem*/ int8_t* LocalParticle_get_io_buffer(LocalParticle* part){
             return part->io_buffer;
         }
-    
+
         ''')
 
         # Particles_to_LocalParticle
@@ -1285,11 +1253,11 @@ class Particles(ParticlesInterface):
                                         int64_t id){''')
         for _, vv in _size_vars + _scalar_vars:
             src_lines.append(
-                    f'  dest->{vv} = ParticlesData_get_'+vv+'(source);')
+                f'  dest->{vv} = ParticlesData_get_' + vv + '(source);')
 
         for _, vv in _per_particle_vars:
             src_lines.append(
-                    f'  dest->{vv} = ParticlesData_getp1_'+vv+'(source, 0);')
+                f'  dest->{vv} = ParticlesData_getp1_' + vv + '(source, 0);')
 
         src_lines.append('  dest->ipart = id;')
         src_lines.append('}')
@@ -1307,14 +1275,14 @@ class Particles(ParticlesInterface):
         src_lines.append('if (set_scalar){')
         for _, vv in _size_vars + _scalar_vars:
             src_lines.append(
-                    f'  ParticlesData_set_' + vv + '(dest,'
-                    f'      LocalParticle_get_{vv}(source));')
+                f'  ParticlesData_set_' + vv + '(dest,'
+                                               f'      LocalParticle_get_{vv}(source));')
         src_lines.append('}')
 
         for _, vv in _per_particle_vars:
             src_lines.append(
-                    f'  ParticlesData_set_' + vv + '(dest, id, '
-                    f'      LocalParticle_get_{vv}(source));')
+                f'  ParticlesData_set_' + vv + '(dest, id, '
+                                               f'      LocalParticle_get_{vv}(source));')
         src_lines.append('}')
         src_local_to_particles = '\n'.join(src_lines)
 
@@ -1323,8 +1291,8 @@ class Particles(ParticlesInterface):
         for tt, vv in _per_particle_vars:
             src_lines.append('''
         /*gpufun*/
-        void LocalParticle_add_to_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
-        +'{')
+        void LocalParticle_add_to_''' + vv + f'(LocalParticle* part, {tt._c_type} value)'
+                             + '{')
             src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
             src_lines.append(f'  part->{vv}[part->ipart] += value;')
             src_lines.append('#endif')
@@ -1336,8 +1304,8 @@ class Particles(ParticlesInterface):
         for tt, vv in _per_particle_vars:
             src_lines.append('''
         /*gpufun*/
-        void LocalParticle_scale_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
-        +'{')
+        void LocalParticle_scale_''' + vv + f'(LocalParticle* part, {tt._c_type} value)'
+                             + '{')
             src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
             src_lines.append(f'  part->{vv}[part->ipart] *= value;')
             src_lines.append('#endif')
@@ -1349,8 +1317,8 @@ class Particles(ParticlesInterface):
         for tt, vv in _per_particle_vars:
             src_lines.append('''
         /*gpufun*/
-        void LocalParticle_set_'''+vv+f'(LocalParticle* part, {tt._c_type} value)'
-        +'{')
+        void LocalParticle_set_''' + vv + f'(LocalParticle* part, {tt._c_type} value)'
+                             + '{')
             src_lines.append(f'#ifndef FREEZE_VAR_{vv}')
             src_lines.append(f'  part->{vv}[part->ipart] = value;')
             src_lines.append('#endif')
@@ -1362,17 +1330,17 @@ class Particles(ParticlesInterface):
 
         for tt, vv in _size_vars + _scalar_vars:
             src_lines.append('/*gpufun*/')
-            src_lines.append(f'{tt._c_type} LocalParticle_get_'+vv
-                            + f'(LocalParticle* part)'
-                            + '{')
+            src_lines.append(f'{tt._c_type} LocalParticle_get_' + vv
+                             + f'(LocalParticle* part)'
+                             + '{')
             src_lines.append(f'  return part->{vv};')
             src_lines.append('}')
 
         for tt, vv in _per_particle_vars:
             src_lines.append('/*gpufun*/')
-            src_lines.append(f'{tt._c_type} LocalParticle_get_'+vv
-                            + f'(LocalParticle* part)'
-                            + '{')
+            src_lines.append(f'{tt._c_type} LocalParticle_get_' + vv
+                             + f'(LocalParticle* part)'
+                             + '{')
             src_lines.append(f'  return part->{vv}[part->ipart];')
             src_lines.append('}')
 
@@ -1385,167 +1353,150 @@ class Particles(ParticlesInterface):
     '''
         for tt, vv in _per_particle_vars:
             src_exchange += '\n'.join([
-              '\n    {',
-              f'    {tt._c_type} temp = part->{vv}[i2];',
-              f'    part->{vv}[i2] = part->{vv}[i1];',
-              f'    part->{vv}[i1] = temp;',
-              '     }'])
+                '\n    {',
+                f'    {tt._c_type} temp = part->{vv}[i2];',
+                f'    part->{vv}[i2] = part->{vv}[i1];',
+                f'    part->{vv}[i1] = temp;',
+                '     }'])
         src_exchange += '}\n'
 
-
-        custom_source='''
+        custom_source = '''
     /*gpufun*/
     double LocalParticle_get_energy0(LocalParticle* part){
-    
+
         double const p0c = LocalParticle_get_p0c(part);
         double const m0  = LocalParticle_get_mass0(part);
-    
+
         return sqrt( p0c * p0c + m0 * m0 );
     }
-    
+
     /*gpufun*/
     void LocalParticle_update_ptau(LocalParticle* part, double new_ptau_value){
-    
+
         double const beta0 = LocalParticle_get_beta0(part);
-    
+
         double const ptau = new_ptau_value;
-    
+
         double const irpp = sqrt(ptau*ptau + 2*ptau/beta0 +1);
-    
+
         double const new_rpp = 1./irpp;
         LocalParticle_set_delta(part, irpp - 1.);
-    
+
         double const new_rvv = irpp/(1 + beta0*ptau);
         LocalParticle_set_rvv(part, new_rvv);
         LocalParticle_set_ptau(part, ptau);
-    
+
         LocalParticle_set_rpp(part, new_rpp );
     }
     /*gpufun*/
     void LocalParticle_add_to_energy(LocalParticle* part, double delta_energy, int pz_only ){
-    
+
         double ptau = LocalParticle_get_ptau(part);
         double const p0c = LocalParticle_get_p0c(part);
-    
+
         ptau += delta_energy/p0c;
-        double const old_rpp = LocalParticle_get_rpp(part);
-    
+
         LocalParticle_update_ptau(part, ptau);
-    
-        if (!pz_only) {
-            double const new_rpp = LocalParticle_get_rpp(part);
-            double const f = old_rpp / new_rpp;
-            LocalParticle_scale_px(part, f);
-            LocalParticle_scale_py(part, f);
-        }
+
+        // Skip, as px and py are not used
+        // if (!pz_only) {
+        //     double const old_rpp = LocalParticle_get_rpp(part);
+        //     double const new_rpp = LocalParticle_get_rpp(part);
+        //     double const f = old_rpp / new_rpp;
+        //     LocalParticle_scale_px(part, f);
+        //     LocalParticle_scale_py(part, f);
+        // }
     }
-    
+
     /*gpufun*/
     void LocalParticle_update_delta(LocalParticle* part, double new_delta_value){
         double const beta0 = LocalParticle_get_beta0(part);
         double const delta_beta0 = new_delta_value * beta0;
         double const ptau_beta0  = sqrt( delta_beta0 * delta_beta0 +
                                     2. * delta_beta0 * beta0 + 1. ) - 1.;
-    
+
         double const one_plus_delta = 1. + new_delta_value;
         double const rvv    = ( one_plus_delta ) / ( 1. + ptau_beta0 );
         double const rpp    = 1. / one_plus_delta;
         double const ptau = ptau_beta0 / beta0;
-    
+
         LocalParticle_set_delta(part, new_delta_value);
-    
+
         LocalParticle_set_rvv(part, rvv );
         LocalParticle_set_rpp(part, rpp );
         LocalParticle_set_ptau(part, ptau );
-    
+
     }
-    
+
     /*gpufun*/
     void LocalParticle_update_p0c(LocalParticle* part, double new_p0c_value){
-    
+
         double const mass0 = LocalParticle_get_mass0(part);
         double const old_p0c = LocalParticle_get_p0c(part);
         double const old_delta = LocalParticle_get_delta(part);
         double const old_beta0 = LocalParticle_get_beta0(part);
-    
+
         double const ppc = old_p0c * old_delta + old_p0c;
         double const new_delta = (ppc - new_p0c_value)/new_p0c_value;
-    
+
         double const new_energy0 = sqrt(new_p0c_value*new_p0c_value + mass0 * mass0);
         double const new_beta0 = new_p0c_value / new_energy0;
         double const new_gamma0 = new_energy0 / mass0;
-    
+
         LocalParticle_set_p0c(part, new_p0c_value);
         LocalParticle_set_gamma0(part, new_gamma0);
         LocalParticle_set_beta0(part, new_beta0);
-    
+
         LocalParticle_update_delta(part, new_delta);
-    
-        LocalParticle_scale_px(part, old_p0c/new_p0c_value);
-        LocalParticle_scale_py(part, old_p0c/new_p0c_value);
-    
+
+        // Skip, as px and py are not used
+        // LocalParticle_scale_px(part, old_p0c/new_p0c_value);
+        // LocalParticle_scale_py(part, old_p0c/new_p0c_value);
+
         LocalParticle_scale_zeta(part, new_beta0/old_beta0);
-    
+
     }
-    
+
     /*gpufun*/
     double LocalParticle_get_pzeta(LocalParticle* part){
-    
+
         double const ptau = LocalParticle_get_ptau(part);
         double const beta0 = LocalParticle_get_beta0(part);
-    
+
         return ptau/beta0;
-    
+
     }
-    
+
     /*gpufun*/
     void LocalParticle_update_pzeta(LocalParticle* part, double new_pzeta_value){
-    
+
         double const beta0 = LocalParticle_get_beta0(part);
         LocalParticle_update_ptau(part, beta0*new_pzeta_value);
-    
+
     }
-    
-    
+
+
     #ifdef XTRACK_GLOBAL_POSLIMIT
-    
+
     /*gpufun*/
     void global_aperture_check(LocalParticle* part0){
-    
-    
-        //start_per_particle_block (part0->part)
-            double const x = LocalParticle_get_x(part);
-            double const y = LocalParticle_get_y(part);
-    
-        int64_t const is_alive = (int64_t)(
-                          (x >= -XTRACK_GLOBAL_POSLIMIT) &&
-                  (x <=  XTRACK_GLOBAL_POSLIMIT) &&
-                  (y >= -XTRACK_GLOBAL_POSLIMIT) &&
-                  (y <=  XTRACK_GLOBAL_POSLIMIT) );
-    
-        // I assume that if I am in the function is because
-            if (!is_alive){
-               LocalParticle_set_state(part, -1);
-        }
-        //end_per_particle_block
-    
-    
+        // Skip, since x and y are not present
     }
     #endif
-    
+
     /*gpufun*/
     void increment_at_element(LocalParticle* part0){
-    
+
        //start_per_particle_block (part0->part)
             LocalParticle_add_to_at_element(part, 1);
        //end_per_particle_block
-    
-    
+
+
     }
-    
+
     /*gpufun*/
     void increment_at_turn(LocalParticle* part0, int flag_reset_s){
-    
+
         //start_per_particle_block (part0->part)
         LocalParticle_add_to_at_turn(part, 1);
         LocalParticle_set_at_element(part, 0);
@@ -1554,14 +1505,14 @@ class Particles(ParticlesInterface):
         }
         //end_per_particle_block
     }
-    
-    
+
+
     // check_is_active has different implementation on CPU and GPU
-    
+
     #define CPUIMPLEM //only_for_context cpu_serial cpu_openmp
-    
+
     #ifdef CPUIMPLEM
-    
+
     /*gpufun*/
     int64_t check_is_active(LocalParticle* part) {
         int64_t ipart=0;
@@ -1576,26 +1527,26 @@ class Particles(ParticlesInterface):
             ipart++;
         }
         }
-    
+
         if (part->_num_active_particles==0){
-            return 0;//All particles lost
+            return 0; //All particles lost
         } else {
             return 1; //Some stable particles are still present
         }
     }
-    
+
     #else
-    
+
     /*gpufun*/
     int64_t check_is_active(LocalParticle* part) {
         return LocalParticle_get_state(part)>0;
     };
-    
+
     #endif
-    
+
     #undef CPUIMPLEM //only_for_context cpu_serial cpu_openmp
-    
-    
+
+
     '''
 
         source = '\n\n'.join([src_typedef, src_adders, src_getters,
@@ -1604,7 +1555,3 @@ class Particles(ParticlesInterface):
                               custom_source])
 
         return source
-
-
-def part_energy_varnames():
-    return [vv for _, vv in part_energy_vars]

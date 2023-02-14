@@ -7,6 +7,15 @@ import xobjects as xo
 
 from ..general import _pkg_root
 
+from scipy.constants import e as qe
+from scipy.constants import c as clight
+from scipy.constants import m_p
+
+
+pmass = m_p * clight * clight / qe
+
+LAST_INVALID_STATE = -999999999
+
 size_vars = (
     (xo.Int64, '_capacity'),
     (xo.Int64, '_num_active_particles'),
@@ -35,10 +44,10 @@ per_particle_vars = (
         (xo.Float64, 'gamma0'),
         (xo.Float64, 'beta0'),
         (xo.Float64, 's'),
-        (xo.Float64, 'x'),
-        (xo.Float64, 'y'),
-        (xo.Float64, 'px'),
-        (xo.Float64, 'py'),
+        # (xo.Float64, 'x'),
+        # (xo.Float64, 'y'),
+        # (xo.Float64, 'px'),
+        # (xo.Float64, 'py'),
         (xo.Float64, 'zeta'),
     )
     + part_energy_vars +
@@ -75,3 +84,10 @@ class ParticlesInterface(xo.HybridClass):
         _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h'),
         '\n /*placeholder_for_local_particle_src*/ \n'
     ]
+
+    def __init__(self, *args, **kwargs):  # noqa
+        raise NotImplementedError('ParticlesInterface is an abstract class to '
+                                  'be used as a template for usable concrete '
+                                  'implementations. It serves only a purpose of'
+                                  'defining the bare minimum C-API. Therefore, '
+                                  'it cannot be instantiated.')
