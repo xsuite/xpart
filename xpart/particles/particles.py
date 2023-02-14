@@ -88,7 +88,6 @@ def _contains_nan(arr, ctx):
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
 class Particles(xo.HybridClass):
-
     """
         Particle objects have the following fields:
 
@@ -138,8 +137,8 @@ class Particles(xo.HybridClass):
             'rpp': '_rpp'}
 
     _extra_c_sources = [
-        _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
-        _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h'),
+        _pkg_root.joinpath('rng_src','base_rng.h'),
+        _pkg_root.joinpath('rng_src','particles_rng.h'),
         '\n /*placeholder_for_local_particle_src*/ \n'
         ]
 
