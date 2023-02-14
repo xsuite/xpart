@@ -27,8 +27,6 @@ def test_random_generation():
             _depends_on = [RandomGenerator]
 
             _extra_c_sources = [
-            xp._pkg_root.joinpath('random_number_generator/rng_src/local_particle_rng.h'),
-
             '''
                 /*gpufun*/
                 void TestElement_track_local_particle(
@@ -57,5 +55,19 @@ def test_random_generation():
             assert np.all(x>0)
             assert np.all(x<1)
             hstgm, bin_edges = np.histogram(x,  bins=50, range=(0, 1), density=True)
+            assert np.allclose(hstgm, 1, rtol=1e-10, atol=0.03)
+
+
+def test_direct_sampling():
+    for ctx in xo.context.get_test_contexts():
+        print(f'{ctx}')
+        n_seeds = 3
+        ran = RandomGenerator(_capacity=3e6)
+        samples, _ = ran.sample(distribution='uniform', n_samples=1e6, n_seeds=n_seeds)
+
+        for i_part in range(n_seeds):
+            assert np.all(samples[i_part]>0)
+            assert np.all(samples[i_part]<1)
+            hstgm, bin_edges = np.histogram(samples[i_part],  bins=50, range=(0, 1), density=True)
             assert np.allclose(hstgm, 1, rtol=1e-10, atol=0.03)
 

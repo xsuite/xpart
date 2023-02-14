@@ -1,1 +1,1 @@
-from .random_generator import RandomGenerator, RandomSampler
+from .random_generator import RandomGenerator
