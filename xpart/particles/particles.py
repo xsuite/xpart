@@ -1178,8 +1178,8 @@ void LocalParticle_update_pzeta(LocalParticle* part, double new_pzeta_value){
 
 }
 
-
-#ifdef XTRACK_GLOBAL_POSLIMIT
+#define XP_LOST_ON_GLOBAL_AP -1
+#ifdef  XTRACK_GLOBAL_POSLIMIT
 
 /*gpufun*/
 void global_aperture_check(LocalParticle* part0){
@@ -1197,7 +1197,7 @@ void global_aperture_check(LocalParticle* part0){
 
 	// I assume that if I am in the function is because
     	if (!is_alive){
-           LocalParticle_set_state(part, -1);
+           LocalParticle_set_state(part, XP_LOST_ON_GLOBAL_AP);
 	}
     //end_per_particle_block
 
