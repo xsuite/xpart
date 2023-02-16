@@ -86,7 +86,6 @@ def _contains_nan(arr, ctx):
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
 class Particles(xo.HybridClass):
-
     """
         Particle objects have the following fields:
 
@@ -140,8 +139,8 @@ class Particles(xo.HybridClass):
     }
 
     _extra_c_sources = [
-        _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
-        _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h'),
+        _pkg_root.joinpath('rng_src','base_rng.h'),
+        _pkg_root.joinpath('rng_src','particles_rng.h'),
         '\n /*placeholder_for_local_particle_src*/ \n'
         ]
 
@@ -545,6 +544,18 @@ class Particles(xo.HybridClass):
         """
 
         self.name = name
+
+    @classmethod
+    def from_dict(cls, dct, load_rng_state=True, **kwargs):
+        part = cls(**dct, **kwargs)
+
+        if load_rng_state:
+            part._rng_s1 = dct.get('_rng_s1', 0)
+            part._rng_s2 = dct.get('_rng_s2', 0)
+            part._rng_s3 = dct.get('_rng_s3', 0)
+            part._rng_s4 = dct.get('_rng_s4', 0)
+
+        return part
 
     def to_dict(self, copy_to_cpu=True,
                 remove_underscored=None,
@@ -1491,8 +1502,8 @@ void LocalParticle_update_pzeta(LocalParticle* part, double new_pzeta_value){
 
 }
 
-
-#ifdef XTRACK_GLOBAL_POSLIMIT
+#define XP_LOST_ON_GLOBAL_AP -1
+#ifdef  XTRACK_GLOBAL_POSLIMIT
 
 /*gpufun*/
 void global_aperture_check(LocalParticle* part0){
@@ -1510,7 +1521,7 @@ void global_aperture_check(LocalParticle* part0){
 
 	// I assume that if I am in the function is because
     	if (!is_alive){
-           LocalParticle_set_state(part, -1);
+           LocalParticle_set_state(part, XP_LOST_ON_GLOBAL_AP);
 	}
     //end_per_particle_block
 
