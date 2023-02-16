@@ -3,6 +3,6 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-from .particles import Particles
+from .particles import Particles, part_energy_varnames
 from .particles_fixed import ParticlesFixed
 from .particles_interface import *
