@@ -127,8 +127,8 @@ class ParticlesFixed(ParticlesInterface):
     }
 
     _extra_c_sources = [
-        _pkg_root.joinpath('random_number_generator/rng_src/base_rng.h'),
-        _pkg_root.joinpath('random_number_generator/rng_src/particles_rng.h'),
+        _pkg_root.joinpath('rng_src', 'base_rng.h'),
+        _pkg_root.joinpath('rng_src', 'particles_rng.h'),
         '\n /*placeholder_for_local_particle_src*/ \n'
     ]
 
