@@ -23,6 +23,8 @@ class SingleRFHarmonicMatcher:
 
         self.verbose = verbose
         self.transformation_particles = transformation_particles
+        
+        self.length = length 
 
         # Hamoltonian: H = A cos(B tau) - C ptau^2
         # normalized Hamiltonian: m = ( sin(B/2*tau) )^2 + C/(2A) ptau^ 2
@@ -167,5 +169,5 @@ class SingleRFHarmonicMatcher:
     def generate(self, n_particles=20000):
         tau, ptau = self.sample_tau_ptau(n_particles=n_particles)
 
-    def synchrotron_tune(self):
-        return -self.B*np.sqrt(2*self.A*self.C)
+    def get_synchrotron_tune(self):
+        return self.B*np.sqrt(2*self.A*self.C)*self.length/(2*np.pi)
