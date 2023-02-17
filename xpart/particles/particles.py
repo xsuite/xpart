@@ -548,12 +548,19 @@ class Particles(xo.HybridClass):
     @classmethod
     def from_dict(cls, dct, load_rng_state=True, **kwargs):
         part = cls(**dct, **kwargs)
+        np_to_ctx = part._context.nparray_to_context_array
+
+        def array_to_ctx(ary, default=0):
+            if ary is not None and not np.isscalar(ary):
+                return np_to_ctx(np.array(ary, dtype='uint32'))
+            else:
+                return ary or default
 
         if load_rng_state:
-            part._rng_s1 = dct.get('_rng_s1', 0)
-            part._rng_s2 = dct.get('_rng_s2', 0)
-            part._rng_s3 = dct.get('_rng_s3', 0)
-            part._rng_s4 = dct.get('_rng_s4', 0)
+            part._rng_s1 = array_to_ctx(dct.get('_rng_s1'))
+            part._rng_s2 = array_to_ctx(dct.get('_rng_s2'))
+            part._rng_s3 = array_to_ctx(dct.get('_rng_s3'))
+            part._rng_s4 = array_to_ctx(dct.get('_rng_s4'))
 
         return part
 
