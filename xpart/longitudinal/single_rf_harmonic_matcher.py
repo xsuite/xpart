@@ -166,3 +166,6 @@ class SingleRFHarmonicMatcher:
 
     def generate(self, n_particles=20000):
         tau, ptau = self.sample_tau_ptau(n_particles=n_particles)
+
+    def synchrotron_tune(self):
+        return -self.B*np.sqrt(2*self.A*self.C)
