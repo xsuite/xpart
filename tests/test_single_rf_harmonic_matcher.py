@@ -14,14 +14,14 @@ import xpart as xp
 from xpart.test_helpers import flaky_assertions, retry
 
 
-@pytest.mark.parametrize('scenario', ['ions', 'protons'])
+@pytest.mark.parametrize('scenario', ['sps_ions', 'lhc_protons'])
 @pytest.mark.parametrize('distribution', ['gaussian', 'parabolic'])
 @retry(n_times=3)
 def test_single_rf_harmonic_matcher_rms_and_profile(scenario, distribution):
     for ctx in xo.context.get_test_contexts():
         print(f"Test {ctx.__class__}")
 
-        if scenario == "protons":
+        if scenario == "lhc_protons":
             # Build a reference particle
             p0 = xp.Particles(mass0=xp.PROTON_MASS_EV, q0=1, p0c=7e12, x=1, y=3,
                               delta=[10], _context=ctx)
@@ -33,7 +33,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile(scenario, distribution):
             tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data['line']))
             tracker.line.particle_ref = p0
 
-        elif scenario == "ions":
+        elif scenario == "sps_ions":
             # Load machine model (spsion)
             filename = xt._pkg_root.parent.joinpath('test_data/sps_ions/line_and_particle.json')
             with open(filename, 'r') as fid:
