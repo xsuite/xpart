@@ -14,10 +14,10 @@ import xpart as xp
 from xpart.test_helpers import flaky_assertions, retry
 
 
-@pytest.mark.parametrize('scenario', ['sps_ions', 'lhc_protons'])
+@pytest.mark.parametrize('scenario', ['sps_ions', 'lhc_protons', 'psb_injection'])
 @pytest.mark.parametrize('distribution', ['gaussian', 'parabolic'])
 @retry(n_times=3)
-def test_single_rf_harmonic_matcher_rms_and_profile(scenario, distribution):
+def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(scenario, distribution):
     for ctx in xo.context.get_test_contexts():
         print(f"Test {ctx.__class__}")
 
@@ -32,6 +32,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile(scenario, distribution):
                 input_data = json.load(fid)
             tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data['line']))
             tracker.line.particle_ref = p0
+            rms_bunch_length = 0.10
 
         elif scenario == "sps_ions":
             # Load machine model (spsion)
@@ -39,10 +40,17 @@ def test_single_rf_harmonic_matcher_rms_and_profile(scenario, distribution):
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
             tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data))
+            rms_bunch_length = 0.10
+        elif scenario == "psb_injection":
+            # Load machine model (psb injection)
+            filename = xt._pkg_root.parent.joinpath('test_data/psb_injection/line_and_particle.json')
+            with open(filename, 'r') as fid:
+                input_data = json.load(fid)
+            tracker = xt.Tracker(_context=ctx, line=xt.Line.from_dict(input_data))
+            rms_bunch_length = 17.
         else:
             raise NotImplementedError
 
-        rms_bunch_length = 0.10
 
         zeta, delta, matcher = xp.generate_longitudinal_coordinates(tracker=tracker, # particle_ref=p0,
                                                          num_particles=1000000,
@@ -54,6 +62,13 @@ def test_single_rf_harmonic_matcher_rms_and_profile(scenario, distribution):
         dx = tau_distr_x[1] - tau_distr_x[0]
         hist, _ = np.histogram(tau, range=(tau_distr_x[0]-dx/2., tau_distr_x[-1]+dx/2.), bins=len(tau_distr_x))
         hist = hist / sum(hist) * sum(tau_distr_y)
+        
+        twiss_tune = tracker.twiss()['qs']
+        theoretical_synchrotron_tune = matcher.get_synchrotron_tune()
+        print(twiss_tune, theoretical_synchrotron_tune)
+        print(twiss_tune - theoretical_synchrotron_tune, (theoretical_synchrotron_tune - twiss_tune)/(theoretical_synchrotron_tune))
+
+        assert np.isclose(theoretical_synchrotron_tune, twiss_tune, rtol=3.e-3, atol=1.e-15)
 
         with flaky_assertions():
             assert np.isclose(rms_bunch_length, np.std(zeta), rtol=2e-2, atol=1e-15)
