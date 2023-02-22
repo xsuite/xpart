@@ -238,9 +238,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             tracker.line.get_s_elements())<=match_at_s)[0][-1]
         assert at_element == expected_at_element or (
                 at_element < expected_at_element and
-                      all([tracker.line.element_dict[nn].__class__.__name__.startswith('Limit')
-                           or (hasattr(tracker.line.element_dict[nn], 'behaves_like_drift')
-                               and tracker.line.element_dict[nn].behaves_like_drift)
+                      all([ xt._is_aperture(tracker.line.element_dict[nn])
+                           or xt._behaves_like_drift(tracker.line.element_dict[nn])
                 for nn in tracker.line.element_names[at_element:expected_at_element]])), (
             "`match_at_s` can only be placed in the drifts downstream of the "
             "specified `at_element`. No active element can be present in between."
