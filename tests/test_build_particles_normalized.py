@@ -125,27 +125,24 @@ def test_build_particles_normalized_match_at_s(test_context):
         filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
         with open(filename, 'r') as fid:
             input_data = json.load(fid)
-        tracker = xt.Tracker(_context=test_context, line=xt.Line.from_dict(input_data['line']))
+        line = xt.Line.from_dict(input_data['line'])
 
         at_element = 'ip6'
-        i_start = tracker.line.element_names.index(at_element)
-        s_start = tracker.line.get_s_position(i_start)
-        # Get the last contigous Drift or Marker after IP6 with non-zero length
-        i = i_start
-        while True:
-            i += 1
-            if tracker.line[i].__class__.__name__ not in ['Drift', 'Marker']:
+        i_start = line.element_names.index(at_element)
+        s_start = line.get_s_position(i_start)
+        # Find first active element
+        for iele in range(i_start, len(line)):
+            ee = line[iele]
+            if not isinstance(ee, (xt.Drift, xt.Marker)):
+                i_next_active = iele
                 break
-        i_end = i
-        ll = 0
-        while ll==0:
-            i -= 1
-            ll = tracker.line[i].length
-        match_at_s = tracker.line.get_s_position(i) + 0.76*ll
+
+        match_at_s = line.get_s_position(i_next_active) - 0.11
 
         # Ensure there is a Marker between at_element and match_at_s (to test behave_likes_drift)
-        # TODO: this won't be needed once test lattices contain Markers
-        tracker.line.insert_element(element=xt.Marker, name='test_marker', at_s=s_start + 0.7*(match_at_s-s_start))
+        line.insert_element(element=xt.Marker(), name='test_marker', at_s=s_start + 0.3*(match_at_s-s_start))
+
+        tracker = line.build_tracker()
 
         # Built a set of three particles with different x coordinates
         particles = xp.build_particles(_context=test_context,
@@ -159,11 +156,13 @@ def test_build_particles_normalized_match_at_s(test_context):
                                        nemitt_x=3e-6, nemitt_y=3e-6,
                                        at_element=at_element, match_at_s=match_at_s)
 
-        assert not np.allclose(particles.x, 0.02, atol=1e-5)
-        tracker.line.insert_element(element=xt.Marker, name='match_at_s', at_s=match_at_s)
-        tracker.track(particles, num_elements=(i_start - i_end + 1))
-#         print(particles.at_element)
-#         print(tracker.line[particles.at_element])
-        assert np.allclose(particles.x, 0.02, atol=1e-5)
+        assert not np.allclose(particles.x, 0.02, atol=1e-20)
+        line.unfreeze()
+        line.tracker = None
+        line.insert_element(element=xt.Marker(), name='match_at_s', at_s=match_at_s)
+        tracker = line.build_tracker()
+        tracker.track(particles, ele_stop='match_at_s')
+        assert np.unique(particles.at_element[particles.state>0])[0] == line.element_names.index('match_at_s')
+        assert np.allclose(particles.x, 0.02, atol=1e-20)
 
 
