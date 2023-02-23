@@ -9,6 +9,7 @@ import numpy as np
 
 import xpart as xp
 import xtrack as xt
+import xobjects as xo
 
 from xobjects.test_helpers import for_all_test_contexts
 
@@ -142,7 +143,7 @@ def test_build_particles_normalized_match_at_s(test_context):
         # Ensure there is a Marker between at_element and match_at_s (to test behave_likes_drift)
         line.insert_element(element=xt.Marker(), name='test_marker', at_s=s_start + 0.3*(match_at_s-s_start))
 
-        tracker = line.build_tracker()
+        tracker = line.build_tracker(_context=test_context)
 
         # Built a set of three particles with different x coordinates
         particles = xp.build_particles(_context=test_context,
@@ -156,12 +157,15 @@ def test_build_particles_normalized_match_at_s(test_context):
                                        nemitt_x=3e-6, nemitt_y=3e-6,
                                        at_element=at_element, match_at_s=match_at_s)
 
+        particles.move(_context=xo.context_default)
         assert not np.allclose(particles.x, 0.02, atol=1e-20)
         line.unfreeze()
         line.tracker = None
         line.insert_element(element=xt.Marker(), name='match_at_s', at_s=match_at_s)
-        tracker = line.build_tracker()
+        tracker = line.build_tracker(_context=test_context)
+        particles.move(_context=test_context)
         tracker.track(particles, ele_stop='match_at_s')
+        particles.move(_context=xo.context_default)
         assert np.unique(particles.at_element[particles.state>0])[0] == line.element_names.index('match_at_s')
         assert np.allclose(particles.x, 0.02, atol=1e-20)
 
