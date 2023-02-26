@@ -7,12 +7,11 @@ import json
 
 import numpy as np
 import pytest
-import xobjects as xo
 import xtrack as xt
 
 import xpart as xp
 from xpart.test_helpers import flaky_assertions, retry
-
+from xobjects.test_helpers import for_all_test_contexts
 
 @pytest.mark.parametrize('scenario', ['sps_ions', 'lhc_protons', 'psb_injection'])
 @pytest.mark.parametrize('distribution', ['gaussian', 'parabolic'])
