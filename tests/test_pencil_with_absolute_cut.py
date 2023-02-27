@@ -13,6 +13,7 @@ import xobjects as xo
 from xobjects.test_helpers import for_all_test_contexts
 from xpart.test_helpers import flaky_assertions, retry
 
+
 @for_all_test_contexts
 @retry()
 def test_pencil_with_absolute_cut(test_context):
