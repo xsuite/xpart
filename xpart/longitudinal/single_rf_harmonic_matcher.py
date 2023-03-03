@@ -16,18 +16,21 @@ class SingleRFHarmonicMatcher:
                  freq=None,
                  p0c=None,
                  slip_factor=None,
+                 beta0=None,
                  rms_bunch_length=None, distribution="parabolic",
                  transformation_particles=400000, n_points_in_distribution=300,
                  verbose=0):
 
         self.verbose = verbose
         self.transformation_particles = transformation_particles
+        
+        self.length = length 
 
         # Hamoltonian: H = A cos(B tau) - C ptau^2
         # normalized Hamiltonian: m = ( sin(B/2*tau) )^2 + C/(2A) ptau^ 2
         self.A = q0*voltage/(2.*np.pi*freq*p0c/c*length)
         self.B = 2*np.pi*freq/c
-        self.C = abs(slip_factor)/2.
+        self.C = abs(slip_factor)/(2.*beta0*beta0)
         # the difference between above and below transition is that the Hamiltonian flips sign
         # (considering always the absolute value of the slip factor)a. This is the same as if
         # the particle goes back in turns. For the purpose of matching, this is of no concern.
@@ -165,3 +168,6 @@ class SingleRFHarmonicMatcher:
 
     def generate(self, n_particles=20000):
         tau, ptau = self.sample_tau_ptau(n_particles=n_particles)
+
+    def get_synchrotron_tune(self):
+        return self.B*np.sqrt(2*self.A*self.C)*self.length/(2*np.pi)
