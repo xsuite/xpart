@@ -8,6 +8,7 @@ import json
 import numpy as np
 import pytest
 import xtrack as xt
+import xobjects as xo
 
 import xpart as xp
 from xpart.test_helpers import flaky_assertions, retry
