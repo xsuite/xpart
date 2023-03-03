@@ -170,3 +170,50 @@ def test_build_particles_normalized_match_at_s(test_context):
         assert np.allclose(particles.x, 0.02, atol=1e-20)
 
 
+@for_all_test_contexts
+def test_build_perticles_dispersion(test_context):
+
+    # Load machine model (from pymask)
+    filename = xt._pkg_root.parent.joinpath(
+                                'test_data/lhc_no_bb/line_and_particle.json')
+    with open(filename, 'r') as fid:
+        input_data = json.load(fid)
+
+    line=xt.Line.from_dict(input_data['line'])
+    line.particle_ref = xp.Particles(mass0=xp.PROTON_MASS_EV,
+                                               q0=1, p0c=7e12)
+    line.build_tracker(_context=test_context)
+
+    particles = line.build_particles(nemitt_x=3e-6, nemitt_y=3e-6,
+                    x=[1e-3, -1e-3], x_norm=0, px_norm=0, y_norm=0, py_norm=0)
+
+
+    tw = line.twiss()
+    norm_coords = tw.get_normalized_coordinates(
+                                    particles, nemitt_x=3e-6, nemitt_y=3e-6)
+    particles.move(_context=test_context)
+
+    assert np.allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
+    assert np.allclose((particles.x-tw.x[0])/particles.delta, tw.dx[0],
+                       atol=5e-3, rtol=0)
+
+    assert np.allclose(norm_coords['x_norm'], 0, 1e-12)
+    assert np.allclose(norm_coords['px_norm'], 0, 1e-12)
+    assert np.allclose(norm_coords['y_norm'], 0, 1e-12)
+    assert np.allclose(norm_coords['py_norm'], 0, 1e-12)
+
+    particles = line.build_particles(nemitt_x=3e-6, nemitt_y=3e-6,
+                    x=[1e-3, -1e-3], x_norm=[0.3, 0.4], px_norm=[0.5, 0.6],
+                    y_norm=[0.7, 0.8], py_norm=[0.9, 1.0])
+
+    tw = line.twiss()
+    particles.move(_context=test_context)
+    norm_coords = tw.get_normalized_coordinates(
+                                    particles, nemitt_x=3e-6, nemitt_y=3e-6)
+
+    assert np.allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
+
+    assert np.allclose(norm_coords['x_norm'], [0.3, 0.4], 1e-12)
+    assert np.allclose(norm_coords['px_norm'], [0.5, 0.6], 1e-12)
+    assert np.allclose(norm_coords['y_norm'], [0.7, 0.8], 1e-12)
+    assert np.allclose(norm_coords['py_norm'], [0.9, 1.0], 1e-12)
