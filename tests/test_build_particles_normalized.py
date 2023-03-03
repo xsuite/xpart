@@ -191,7 +191,7 @@ def test_build_perticles_dispersion(test_context):
     tw = line.twiss()
     norm_coords = tw.get_normalized_coordinates(
                                     particles, nemitt_x=3e-6, nemitt_y=3e-6)
-    particles.move(_context=test_context)
+    particles.move(_context=xo.ContextCpu())
 
     assert np.allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
     assert np.allclose((particles.x-tw.x[0])/particles.delta, tw.dx[0],
@@ -207,9 +207,9 @@ def test_build_perticles_dispersion(test_context):
                     y_norm=[0.7, 0.8], py_norm=[0.9, 1.0])
 
     tw = line.twiss()
-    particles.move(_context=test_context)
     norm_coords = tw.get_normalized_coordinates(
                                     particles, nemitt_x=3e-6, nemitt_y=3e-6)
+    particles.move(_context=xo.ContextCpu())
 
     assert np.allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
 
