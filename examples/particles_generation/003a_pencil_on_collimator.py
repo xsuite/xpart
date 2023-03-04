@@ -17,12 +17,13 @@ nemitt_y = 3e-6
 filename = ('../../../xtrack/test_data/hllhc15_noerrors_nobb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
-tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
-tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
+line=xt.Line.from_dict(input_data['line'])
+line.particle_ref = xp.Particles.from_dict(input_data['particle'])
+line.build_tracker()
 
 # Location of the collimator
 at_element = 'tcp.d6l7.b1'
-at_s = tracker.line.get_s_position(at_element) + 1.
+at_s = line.line.get_s_position(at_element) + 1.
 y_cut = 3e-3 # position of the jaw
 pencil_dr_sigmas = 3 # width of the pencil
 side = '+' # side of the pencil
@@ -33,30 +34,30 @@ x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
 # Vertical plane: generate pencil beam in absolute coordinates
 y_absolute, py_absolute = xp.generate_2D_pencil_with_absolute_cut(num_particles,
                     plane='y', absolute_cut=y_cut, dr_sigmas=pencil_dr_sigmas,
-                    side=side, tracker=tracker,
+                    side=side, line=line,
                     nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                     at_element=at_element, match_at_s=at_s)
 
 # Longitudinal plane: generate gaussian distribution matched to bucket
 zeta, delta = xp.generate_longitudinal_coordinates(
         num_particles=num_particles, distribution='gaussian',
-        sigma_z=10e-2, tracker=tracker)
+        sigma_z=10e-2, line=line)
 
 # Combine the three planes
 # (the normalized coordinates in y/py are blurred in order to preserve the geometric ones)
-particles = tracker.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+particles = line.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                 y=y_absolute, py=py_absolute,
                 x_norm=x_in_sigmas, px_norm=px_in_sigmas,
                 zeta=zeta, delta=delta,
                 at_element=at_element, match_at_s=at_s)
 
 # Drift to at_s position for checking
-drift_to_at_s = xt.Drift(length=at_s-tracker.line.get_s_position(at_element))
+drift_to_at_s = xt.Drift(length=at_s-line.get_s_position(at_element))
 drift_to_at_s.track(particles)
 
 # Checks and plots
 
-tw_at_s = tracker.twiss(at_s=at_s)
+tw_at_s = line.twiss(at_s=at_s)
 norm_coords = tw_at_s.get_normalized_coordinates(
                 particles, nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                 _force_at_element=0)

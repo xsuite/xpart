@@ -17,8 +17,9 @@ nemitt_y = 3e-6
 filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
-tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
-tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
+line = xt.Line.from_dict(input_data['line'])
+line.particle_ref = xp.Particles.from_dict(input_data['particle'])
+line.build_tracker()
 
 # Horizontal plane: generate cut halo distribution
 (x_in_sigmas, px_in_sigmas, r_points, theta_points
@@ -40,7 +41,7 @@ delta = 1e-3
 #    - transform to physical coordinates (using 1-turn matrix)
 #    - handle dispersion
 #    - center around the closed orbit
-particles = tracker.build_particles(
+particles = line.build_particles(
             zeta=zeta, delta=delta,
             x_norm=x_in_sigmas, px_norm=px_in_sigmas,
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
@@ -49,7 +50,7 @@ particles = tracker.build_particles(
 # Absolute coordinates can be inspected in particle.x, particles.px, etc.
 
 # Tracking can be done with:
-# tracker.track(particles, num_turns=10)
+# line.track(particles, num_turns=10)
 
 #!end-doc-part
 

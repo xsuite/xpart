@@ -14,7 +14,7 @@ with open(filename, 'r') as fid:
     input_data = json.load(fid)
 line = xt.Line.from_dict(input_data['line'])
 line.particle_ref = xp.Particles.from_dict(input_data['particle'])
-tracker = line.build_tracker()
+line.build_tracker()
 
 # Match distribution at a given element
 particles = tracker.build_particles(x_norm=[0,1,2], px_norm=[0,0,0], # in sigmas

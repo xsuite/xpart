@@ -25,12 +25,12 @@ with open(filename, 'r') as fid:
 line = xt.Line.from_dict(ddd['line'])
 line.particle_ref = xp.Particles.from_dict(ddd['particle'])
 
-tracker = line.build_tracker()
+line.build_tracker()
 
 particles = xp.generate_matched_gaussian_bunch(
          num_particles=n_part, total_intensity_particles=bunch_intensity,
          nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-         tracker=tracker)
+         line=line)
 
 
 #!end-doc-part

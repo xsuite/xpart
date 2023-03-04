@@ -47,6 +47,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
                       zeta_norm=None, pzeta_norm=None,
                       tracker=None,
+                      line=None,
                       at_element=None,
                       match_at_s=None,
                       particle_on_co=None,
@@ -130,6 +131,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         - _context: xobjects context in which the particle object is allocated.
 
     """
+
+    if line is not None:
+        assert tracker is None
+        assert line.tracker is not None, ("The line must have a tracker, "
+            "please call Line.build_tracker() first.")
+        tracker = line.tracker
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
     Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state

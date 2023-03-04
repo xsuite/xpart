@@ -26,25 +26,27 @@ if scenario == 'protons':
         line.particle_ref = xp.Particles.from_dict(input_data['particle'])
 elif scenario == 'ions':
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath('test_data/sps_ions/line.json')
+    filename = xt._pkg_root.parent.joinpath(
+        'test_data/sps_ions/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
         line=xt.Line.from_dict(input_data)
 
-tracker = xt.Tracker(_context=ctx, line=line)
+line.build_tracker(_context=ctx)
+
 
 rms_bunch_length=0.25
 distribution = "gaussian"
 n_particles = 100000
-zeta, delta, matcher = xp.generate_longitudinal_coordinates(tracker=tracker,
-                                                 num_particles=n_particles,
-                                                 sigma_z=rms_bunch_length, distribution=distribution,
-                                                 engine="single-rf-harmonic", return_matcher=True)
-                                                 #engine="pyheadtail", return_matcher=True)
+zeta, delta, matcher = xp.generate_longitudinal_coordinates(line=line,
+                        num_particles=n_particles,
+                        sigma_z=rms_bunch_length, distribution=distribution,
+                        engine="single-rf-harmonic", return_matcher=True)
+                        #engine="pyheadtail", return_matcher=True)
 
 # Built a set of three particles with different x coordinates
 particles = xp.build_particles(_context=ctx,
-                               tracker=tracker,
+                               line=line,
                                zeta=zeta, delta=delta,
                                x_norm=0, # in sigmas
                                px_norm=0, # in sigmas
@@ -52,7 +54,7 @@ particles = xp.build_particles(_context=ctx,
                                )
 
 zeta_sep, delta_sep = matcher.get_separatrix()
-beta0 = tracker.line.particle_ref.beta0
+beta0 = line.line.particle_ref.beta0
 plt.close('all')
 plt.figure(1)
 plt.hist2d(zeta, delta, bins=100,
@@ -67,7 +69,9 @@ plt.ylabel('delta')
 zeta_distr_y = matcher.tau_distr_y
 zeta_distr_x = matcher.tau_distr_x * beta0
 dx = zeta_distr_x[1] - zeta_distr_x[0]
-hist, _  = np.histogram(zeta, range=(zeta_distr_x[0]-dx/2., zeta_distr_x[-1]+dx/2.), bins=len(zeta_distr_x))
+hist, _  = np.histogram(zeta,
+                range=(zeta_distr_x[0]-dx/2.,
+                zeta_distr_x[-1]+dx/2.), bins=len(zeta_distr_x))
 hist = hist / sum(hist) * sum(zeta_distr_y)
 plt.figure(2)
 plt.plot(zeta_distr_x, hist, 'bo', label="sampled line density")
