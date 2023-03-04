@@ -26,11 +26,12 @@ def test_build_particles_normalized(test_context):
         filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
         with open(filename, 'r') as fid:
             input_data = json.load(fid)
-        tracker = xt.Tracker(_context=test_context, line=xt.Line.from_dict(input_data['line']))
+        line = xt.Line.from_dict(input_data['line'])
+        line.build_tracker(_context=test_context)
 
         # Built a set of three particles with different x coordinates
         particles = xp.build_particles(_context=test_context,
-                                       tracker=tracker, particle_ref=p0,
+                                       line=line, particle_ref=p0,
                                        zeta=0, delta=1e-3,
                                        x_norm=[1, 0, -1],  # in sigmas
                                        px_norm=[0, 1, 0],  # in sigmas
@@ -44,7 +45,7 @@ def test_build_particles_normalized(test_context):
         assert np.all(dct['p0c'] == 7e12)
 
         # Same as before with R matrix provided as input
-        tw = tracker.twiss(particle_ref=p0)
+        tw = line.twiss(particle_ref=p0)
         R_matrix = tw.R_matrix
         particle_on_co = tw.particle_on_co.copy()
         particles = xp.build_particles(_context=test_context,
@@ -62,13 +63,13 @@ def test_build_particles_normalized(test_context):
         assert np.all(dct['p0c'] == 7e12)
 
         # Test the 4d mode
-        for ee in tracker.line.elements:
+        for ee in line.elements:
             if isinstance(ee, xt.Cavity):
                 ee.voltage = 0
 
         # Built a set of three particles with different x coordinates
         particles = xp.build_particles(_context=test_context, method='4d',
-                                       tracker=tracker, particle_ref=p0,
+                                       line=line, particle_ref=p0,
                                        zeta=0, delta=1e-3,
                                        x_norm=[1,0,-1], # in sigmas
                                        px_norm=[0,1,0], # in sigmas
@@ -94,14 +95,15 @@ def test_build_particles_normalized_closed_orbit(test_context):
         filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
         with open(filename, 'r') as fid:
             input_data = json.load(fid)
-        tracker = xt.Tracker(_context=test_context, line=xt.Line.from_dict(input_data['line']))
+        line = xt.Line.from_dict(input_data['line'])
+        line.build_tracker(_context=test_context)
 
         particle_co_guess = xp.build_particles(particle_ref=p0)
-        particle_on_co = tracker.find_closed_orbit(particle_co_guess=particle_co_guess)
+        particle_on_co = line.find_closed_orbit(particle_co_guess=particle_co_guess)
 
         # Built a set of three particles with different x coordinates
         particles = xp.build_particles(_context=test_context,
-                                       tracker=tracker, particle_ref=p0,
+                                       line=line, particle_ref=p0,
                                        zeta=particle_on_co._xobject.zeta[0],
                                        delta=particle_on_co._xobject.delta[0],
                                        x_norm=0, # in sigmas
@@ -143,11 +145,11 @@ def test_build_particles_normalized_match_at_s(test_context):
         # Ensure there is a Marker between at_element and match_at_s (to test behave_likes_drift)
         line.insert_element(element=xt.Marker(), name='test_marker', at_s=s_start + 0.3*(match_at_s-s_start))
 
-        tracker = line.build_tracker(_context=test_context)
+        line.build_tracker(_context=test_context)
 
         # Built a set of three particles with different x coordinates
         particles = xp.build_particles(_context=test_context,
-                                       tracker=tracker, particle_ref=p0,
+                                       line=line, particle_ref=p0,
                                        x=0.02, # in meters
                                        px_norm=np.random.normal(scale=0.1, size=300), # in sigmas
                                        y_norm=np.random.normal(scale=0.1, size=300),  # in sigmas
@@ -160,13 +162,13 @@ def test_build_particles_normalized_match_at_s(test_context):
         particles.move(_context=xo.context_default)
         assert not np.allclose(particles.x, 0.02, atol=1e-20)
         line.unfreeze()
-        line.tracker = None
         line.insert_element(element=xt.Marker(), name='match_at_s', at_s=match_at_s)
-        tracker = line.build_tracker(_context=test_context)
+        line.build_tracker(_context=test_context)
         particles.move(_context=test_context)
-        tracker.track(particles, ele_stop='match_at_s')
+        line.track(particles, ele_stop='match_at_s')
         particles.move(_context=xo.context_default)
-        assert np.unique(particles.at_element[particles.state>0])[0] == line.element_names.index('match_at_s')
+        assert (np.unique(particles.at_element[particles.state>0])[0]
+                         == line.element_names.index('match_at_s'))
         assert np.allclose(particles.x, 0.02, atol=1e-20)
 
 

@@ -24,20 +24,20 @@ def test_phase_monitor(test_context):
     line = xt.Line.from_dict(ddd['line'])
     line.particle_ref = xp.Particles.from_dict(ddd['particle'])
 
-    tracker = xt.Tracker(line=line, _context=test_context)
+    line.build_tracker(_context=test_context)
 
-    particles = xp.build_particles(tracker=tracker, x_norm=[0.1, 0.2],
+    particles = xp.build_particles(line=line, x_norm=[0.1, 0.2],
                                    y_norm=[0.3, 0.4],
                                    nemitt_x=2e-6, nemitt_y=2e-6,
                                    _context=test_context)
-    phase_monitor = xp.PhaseMonitor(tracker=tracker, num_particles=2,
-                                    twiss=tracker.twiss())
+    phase_monitor = xp.PhaseMonitor(line=line, num_particles=2,
+                                    twiss=line.twiss())
 
     for _ in range(5):
         phase_monitor.measure(particles)
-        tracker.track(particles)
+        line.track(particles)
 
-    tw = tracker.twiss()
+    tw = line.twiss()
     assert np.allclose(phase_monitor.qx[:], np.mod(tw['qx'], 1),
                        rtol=0, atol=1e-3)
     assert np.allclose(phase_monitor.qy[:], np.mod(tw['qy'], 1),

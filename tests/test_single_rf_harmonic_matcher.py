@@ -32,9 +32,9 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
                 'test_data/lhc_no_bb/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
-            tracker = xt.Tracker(_context=ctx,
-                line=xt.Line.from_dict(input_data['line']))
-            tracker.line.particle_ref = p0
+            line = xt.Line.from_dict(input_data['line'])
+            line.build_tracker(_context=ctx)
+            line.particle_ref = p0
             rms_bunch_length = 0.10
 
         elif scenario == "sps_ions":
@@ -43,8 +43,8 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
                 'test_data/sps_ions/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
-            tracker = xt.Tracker(
-                _context=ctx, line=xt.Line.from_dict(input_data))
+            line = xt.Line.from_dict(input_data)
+            line.build_tracker(_context=ctx)
             rms_bunch_length = 0.10
         elif scenario == "psb_injection":
             # Load machine model (psb injection)
@@ -52,18 +52,18 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
                 'test_data/psb_injection/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
-            tracker = xt.Tracker(
-                _context=ctx, line=xt.Line.from_dict(input_data))
+            line = xt.Line.from_dict(input_data)
+            line.build_tracker(_context=ctx)
             rms_bunch_length = 17.
         else:
             raise NotImplementedError
 
         zeta, delta, matcher = xp.generate_longitudinal_coordinates(
-            tracker=tracker, # particle_ref=p0,
+            line=line, # particle_ref=p0,
             num_particles=1000000,
             sigma_z=rms_bunch_length, distribution=distribution,
             engine="single-rf-harmonic", return_matcher=True)
-        tau = zeta / tracker.line.particle_ref._xobject.beta0[0]
+        tau = zeta / line.particle_ref._xobject.beta0[0]
         tau_distr_y = matcher.tau_distr_y
         tau_distr_x = matcher.tau_distr_x
         dx = tau_distr_x[1] - tau_distr_x[0]
@@ -72,7 +72,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
                     bins=len(tau_distr_x))
         hist = hist / sum(hist) * sum(tau_distr_y)
 
-        twiss_tune = tracker.twiss()['qs']
+        twiss_tune = line.twiss()['qs']
         theoretical_synchrotron_tune = matcher.get_synchrotron_tune()
         print(twiss_tune, theoretical_synchrotron_tune)
         print(twiss_tune - theoretical_synchrotron_tune,

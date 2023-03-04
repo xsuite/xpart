@@ -33,18 +33,18 @@ def test_gaussian_bunch_generation(test_context):
                            _context=test_context # for testing purposes
                            )
 
-    tracker = xt.Tracker(line=line, _context=test_context)
+    line.build_tracker(_context=test_context)
 
-    part_on_co = tracker.find_closed_orbit()
+    part_on_co = line.find_closed_orbit()
 
     part = xp.generate_matched_gaussian_bunch(
              _context=test_context,
-             tracker=tracker,
+             line=line,
              num_particles=n_part,
              total_intensity_particles=bunch_intensity,
              nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z)
 
-    tw = tracker.twiss()
+    tw = line.twiss()
 
     # CHECKS
     y_rms = np.std(test_context.nparray_from_context_array(part.y))
@@ -80,15 +80,15 @@ def test_short_bunch(test_context):
         ddd = json.load(fid)
     line = xt.Line.from_dict(ddd['line'])
     particle_ref = xp.Particles.from_dict(ddd['particle'])
-    tracker = xt.Tracker(_context=test_context, line=line)
+    line.build_tracker(_context=test_context)
 
-    tw = tracker.twiss(particle_ref=particle_ref)
+    tw = line.twiss(particle_ref=particle_ref)
 
     part = xp.generate_matched_gaussian_bunch(
              _context=test_context,
              num_particles=n_part, total_intensity_particles=bunch_intensity,
              nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-             particle_ref=particle_ref, tracker=tracker)
+             particle_ref=particle_ref, line=line)
 
     # CHECKS
     y_rms = np.std(test_context.nparray_from_context_array(part.y))
@@ -109,5 +109,5 @@ def test_short_bunch(test_context):
                       rtol=5e-2, atol=1e-15)
 
     for iturn in range(100):
-        tracker.track(part)
+        line.track(part)
         assert np.isclose(zeta_rms, sigma_z, rtol=5e-2, atol=1e-15)
