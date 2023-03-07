@@ -57,6 +57,7 @@ def _characterize_tracker(tracker, particle_ref,
 
 def generate_longitudinal_coordinates(
                                     tracker=None,
+                                    line=None,
                                     particle_ref=None,
                                     mass0=None, q0=None, gamma0=None,
                                     num_particles=None,
@@ -72,6 +73,10 @@ def generate_longitudinal_coordinates(
                                     return_matcher=False,
                                     **kwargs # passed to twiss
                                     ):
+
+    if line is not None:
+        assert tracker is None
+        tracker = line.tracker
 
     if tracker is not None:
         if particle_ref is None:
@@ -169,6 +174,7 @@ def generate_longitudinal_coordinates(
                                           freq=dct['freq_list'][0],
                                           p0c=particle_ref._xobject.p0c[0],
                                           slip_factor=eta,
+                                          beta0=particle_ref._xobject.beta0[0],
                                           rms_bunch_length=sigma_tau,
                                           distribution=distribution)
 

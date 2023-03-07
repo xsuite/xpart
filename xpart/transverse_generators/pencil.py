@@ -64,9 +64,14 @@ def generate_2D_pencil(num_particles, pos_cut_sigmas, dr_sigmas,
 
 
 def generate_2D_pencil_with_absolute_cut(num_particles,
-    plane, absolute_cut, dr_sigmas, side='+', tracker=None,
+    plane, absolute_cut, dr_sigmas, side='+', tracker=None, line=None,
     nemitt_x=None, nemitt_y=None,
     at_element=None, match_at_s=None, **kwargs):
+
+    if line is not None:
+        assert tracker is None
+        assert line.tracker is not None
+        tracker = line.tracker
 
     # kwargs are passed to tracker.twiss
 

@@ -22,12 +22,20 @@ def generate_matched_gaussian_bunch(num_particles,
                                     rf_phase=None,
                                     p_increment=0.,
                                     tracker=None,
+                                    line=None,
                                     particle_ref=None,
                                     particles_class=None,
                                     engine='pyheadtail',
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs, # They are passed to build_particles
                                     ):
+
+    if line is not None:
+        if tracker is not None:
+            raise ValueError("Cannot provide both `line` and `tracker`!")
+        assert line.track is not None, ("The line has no tracker. Please use "
+                                        "`Line.build_tracker()`")
+        tracker = line.tracker
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"

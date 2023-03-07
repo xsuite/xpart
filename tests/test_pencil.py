@@ -22,7 +22,8 @@ def test_pencil(test_context):
     filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
-    tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
+    line = xt.Line.from_dict(input_data['line'])
+    line.build_tracker()
     particle_sample = xp.Particles.from_dict(input_data['particle'])
 
     # Horizontal plane: generate gaussian distribution in normalized coordinates
@@ -40,7 +41,7 @@ def test_pencil(test_context):
     # Longitudinal plane: generate gaussian distribution matched to bucket
     zeta, delta = xp.generate_longitudinal_coordinates(
             num_particles=num_particles, distribution='gaussian',
-            sigma_z=10e-2, particle_ref=particle_sample, tracker=tracker)
+            sigma_z=10e-2, particle_ref=particle_sample, line=line)
 
     # Build particles:
     #    - scale with given emittances
@@ -48,7 +49,7 @@ def test_pencil(test_context):
     #    - handle dispersion
     #    - center around the closed orbit
     particles = xp.build_particles(_context=test_context,
-                                   tracker=tracker,
+                                   line=line,
                                    particle_ref=particle_sample,
                                    zeta=zeta, delta=delta,
                                    x_norm=x_in_sigmas, px_norm=px_in_sigmas,

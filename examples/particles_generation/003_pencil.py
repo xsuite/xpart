@@ -17,8 +17,9 @@ nemitt_y = 3e-6
 filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
-tracker = xt.Tracker(line=xt.Line.from_dict(input_data['line']))
-tracker.particle_ref = xp.Particles.from_dict(input_data['particle'])
+line=xt.Line.from_dict(input_data['line'])
+line.particle_ref = xp.Particles.from_dict(input_data['particle'])
+line.build_tracker()
 
 # Horizontal plane: generate gaussian distribution in normalized coordinates
 x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
@@ -35,14 +36,14 @@ y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
 # Longitudinal plane: generate gaussian distribution matched to bucket 
 zeta, delta = xp.generate_longitudinal_coordinates(
         num_particles=num_particles, distribution='gaussian',
-        sigma_z=10e-2, tracker=tracker)
+        sigma_z=10e-2, line=line)
 
 # Build particles:
 #    - scale with given emittances
 #    - transform to physical coordinates (using 1-turn matrix)
 #    - handle dispersion
 #    - center around the closed orbit
-particles = tracker.build_particles(
+particles = line.build_particles(
             zeta=zeta, delta=delta,
             x_norm=x_in_sigmas, px_norm=px_in_sigmas,
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
