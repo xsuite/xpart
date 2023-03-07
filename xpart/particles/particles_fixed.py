@@ -2,7 +2,11 @@ import numpy as np
 import xobjects as xo
 
 from ..general import _pkg_root
-from .particles_interface import ParticlesInterface, pmass, LAST_INVALID_STATE
+from .particles_interface import (ParticlesInterface, pmass, LAST_INVALID_STATE,
+                                  scalar_vars as pi_scalar_vars,
+                                  part_energy_vars as pi_part_energy_vars,
+                                  per_particle_vars as pi_per_particle_vars,
+                                  size_vars as pi_size_vars)
 
 from scipy.constants import e as qe
 from scipy.constants import c as clight
@@ -10,56 +14,14 @@ from scipy.constants import epsilon_0
 
 from xobjects import BypassLinked
 
-size_vars = (
-    (xo.Int64, '_capacity'),
-    (xo.Int64, '_num_active_particles'),
-    (xo.Int64, '_num_lost_particles'),
-    (xo.Int64, 'start_tracking_at_element'),
-)
+size_vars = pi_size_vars
 # Capacity is always kept up to date
 # the other two are placeholders to be used if needed
 # i.e. on ContextCpu
 
-scalar_vars = (
-    (xo.Float64, 'q0'),
-    (xo.Float64, 'mass0'),
-)
-
-part_energy_vars = (
-    (xo.Float64, 'ptau'),
-    (xo.Float64, 'delta'),
-    (xo.Float64, 'rpp'),
-    (xo.Float64, 'rvv'),
-)
-
-per_particle_vars = (
-        (
-            (xo.Float64, 'p0c'),
-            (xo.Float64, 'gamma0'),
-            (xo.Float64, 'beta0'),
-            (xo.Float64, 's'),
-            # (xo.Float64, 'x'),
-            # (xo.Float64, 'y'),
-            # (xo.Float64, 'px'),
-            # (xo.Float64, 'py'),
-            (xo.Float64, 'zeta'),
-        )
-        + part_energy_vars +
-        (
-            (xo.Float64, 'chi'),
-            (xo.Float64, 'charge_ratio'),
-            (xo.Float64, 'weight'),
-            (xo.Int64, 'particle_id'),
-            (xo.Int64, 'at_element'),
-            (xo.Int64, 'at_turn'),
-            (xo.Int64, 'state'),
-            (xo.Int64, 'parent_particle_id'),
-            (xo.UInt32, '_rng_s1'),
-            (xo.UInt32, '_rng_s2'),
-            (xo.UInt32, '_rng_s3'),
-            (xo.UInt32, '_rng_s4')
-        )
-)
+scalar_vars = pi_scalar_vars
+part_energy_vars = pi_part_energy_vars
+per_particle_vars = pi_per_particle_vars
 
 fields = {}
 for tt, nn in size_vars + scalar_vars:
