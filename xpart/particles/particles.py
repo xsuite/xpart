@@ -84,15 +84,7 @@ class Particles(ParticlesInterface):
 
     _xofields = fields
 
-    _rename = {
-        'delta': '_delta',
-        'ptau': '_ptau',
-        'rvv': '_rvv',
-        'rpp': '_rpp',
-        'p0c': '_p0c',
-        'gamma0': '_gamma0',
-        'beta0': '_beta0',
-    }
+    _rename = ParticlesInterface._rename
 
     _extra_c_sources = [
         _pkg_root.joinpath('rng_src', 'base_rng.h'),
@@ -1510,6 +1502,16 @@ class Particles(ParticlesInterface):
         //end_per_particle_block
     }
     
+    /*gpufun*/
+    void LocalParticle_kill_particle(LocalParticle* part, int64_t kill_state) {
+        LocalParticle_set_x(part, 1e30);
+        LocalParticle_set_px(part, 1e30);
+        LocalParticle_set_y(part, 1e30);
+        LocalParticle_set_py(part, 1e30);
+        LocalParticle_set_zeta(part, 1e30);
+        LocalParticle_update_delta(part, -1);  // zero energy
+        LocalParticle_set_state(part, kill_state);
+    }
     
     // check_is_active has different implementation on CPU and GPU
     

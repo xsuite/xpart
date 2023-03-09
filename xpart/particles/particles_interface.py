@@ -84,6 +84,15 @@ class ParticlesInterface(xo.HybridClass):
         _pkg_root.joinpath('rng_src', 'particles_rng.h'),
         '\n /*placeholder_for_local_particle_src*/ \n'
     ]
+    _rename = {
+        'delta': '_delta',
+        'ptau': '_ptau',
+        'rvv': '_rvv',
+        'rpp': '_rpp',
+        'p0c': '_p0c',
+        'gamma0': '_gamma0',
+        'beta0': '_beta0',
+    }
 
     def __init__(self, *args, **kwargs):  # noqa
         raise NotImplementedError('ParticlesInterface is an abstract class to '
