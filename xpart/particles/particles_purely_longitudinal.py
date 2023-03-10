@@ -2,7 +2,7 @@ import numpy as np
 import xobjects as xo
 
 from ..general import _pkg_root
-from .particles_interface import ParticlesInterface, pmass, LAST_INVALID_STATE
+from .particles_base import ParticlesBase, pmass, LAST_INVALID_STATE
 
 
 def _contains_nan(arr, ctx):
@@ -13,7 +13,7 @@ def _contains_nan(arr, ctx):
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
 
-class ParticlesFixed(ParticlesInterface):
+class ParticlesPurelyLongitudinal(ParticlesBase):
     """
         Particle objects have the following fields:
 
@@ -51,8 +51,8 @@ class ParticlesFixed(ParticlesInterface):
     """
     _cname = 'ParticlesData'
 
-    _xofields = ParticlesInterface._xofields
-    _rename = ParticlesInterface._rename
+    _xofields = ParticlesBase._xofields
+    _rename = ParticlesBase._rename
 
     _extra_c_sources = [
         _pkg_root.joinpath('rng_src', 'base_rng.h'),
@@ -71,7 +71,7 @@ class ParticlesFixed(ParticlesInterface):
 
     @classmethod
     def gen_local_particle_api(cls, mode='no_local_copy'):
-        source = super(ParticlesFixed, cls).gen_local_particle_api(mode)
+        source = super(ParticlesPurelyLongitudinal, cls).gen_local_particle_api(mode)
         source += """
             #ifdef XTRACK_GLOBAL_POSLIMIT
 

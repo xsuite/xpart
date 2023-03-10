@@ -21,7 +21,7 @@ pmass = m_p * clight * clight / qe
 LAST_INVALID_STATE = -999999999
 
 
-class ParticlesInterface(xo.HybridClass):
+class ParticlesBase(xo.HybridClass):
     _cname = 'ParticlesData'
 
     size_vars = (
@@ -98,9 +98,9 @@ class ParticlesInterface(xo.HybridClass):
             _no_reorganize=False,
             **kwargs,
     ):
-        if type(self) is ParticlesInterface:
+        if type(self) is ParticlesBase:
             raise NotImplementedError(
-                'ParticlesInterface is an abstract class to be used as a template '
+                'ParticlesBase is an abstract class to be used as a template '
                 'for usable concrete implementations. It serves only a purpose of '
                 'defining the bare minimum C-API. Therefore, it cannot be '
                 'instantiated.'
