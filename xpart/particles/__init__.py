@@ -4,5 +4,5 @@
 # ######################################### #
 
 from .particles import Particles
-from .particles_fixed import ParticlesFixed
-from .particles_interface import *
+from .particles_purely_longitudinal import ParticlesPurelyLongitudinal
+from .particles_base import *

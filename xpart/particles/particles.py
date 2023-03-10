@@ -7,7 +7,7 @@ import numpy as np
 import xobjects as xo
 
 from ..general import _pkg_root
-from .particles_interface import ParticlesInterface, pmass, LAST_INVALID_STATE
+from .particles_base import ParticlesBase, pmass, LAST_INVALID_STATE
 
 
 def _contains_nan(arr, ctx):
@@ -18,7 +18,7 @@ def _contains_nan(arr, ctx):
         return ctx.nplike_lib.any(ctx.nplike_lib.isnan(arr))
 
 
-class Particles(ParticlesInterface):
+class Particles(ParticlesBase):
     """
         Particle objects have the following fields:
 
@@ -60,9 +60,9 @@ class Particles(ParticlesInterface):
     """
     _cname = 'ParticlesData'
 
-    size_vars = ParticlesInterface.size_vars
-    scalar_vars = ParticlesInterface.scalar_vars
-    per_particle_vars = ParticlesInterface.per_particle_vars + \
+    size_vars = ParticlesBase.size_vars
+    scalar_vars = ParticlesBase.scalar_vars
+    per_particle_vars = ParticlesBase.per_particle_vars + \
                         ((xo.Float64, 'x'),
                          (xo.Float64, 'y'),
                          (xo.Float64, 'px'),
@@ -73,7 +73,7 @@ class Particles(ParticlesInterface):
         **{nn: tt[:] for tt, nn in per_particle_vars},
     }
 
-    _rename = ParticlesInterface._rename
+    _rename = ParticlesBase._rename
 
     _extra_c_sources = [
         _pkg_root.joinpath('rng_src', 'base_rng.h'),
