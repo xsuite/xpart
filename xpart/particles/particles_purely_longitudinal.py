@@ -88,7 +88,6 @@ class ParticlesPurelyLongitudinal(ParticlesBase):
                 double const p0c = LocalParticle_get_p0c(part);
 
                 ptau += delta_energy/p0c;
-                double const old_rpp = LocalParticle_get_rpp(part);
 
                 LocalParticle_update_ptau(part, ptau);
             }

@@ -760,8 +760,8 @@ class ParticlesBase(xo.HybridClass):
 
         context = self._buffer.context
         seeds_dev = context.nparray_to_context_array(seeds)
-        context.kernels.Particles_initialize_rand_gen(particles=self,
-                                                      seeds=seeds_dev, n_init=self._capacity)
+        kernel = context.kernels['Particles_initialize_rand_gen', (self._XoStruct,)]
+        kernel(particles=self, seeds=seeds_dev, n_init=self._capacity)
 
     def hide_lost_particles(self, _assume_reorganized=False):
         """
