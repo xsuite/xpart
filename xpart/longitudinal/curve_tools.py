@@ -24,5 +24,3 @@ def extrema(x, y=None):
     """Get extrema of curve x"""
     zix = np.where(np.abs(np.diff(np.sign(np.diff(x)))) == 2)[0]
     return zix
-    if not y:
-        print(zix)
