@@ -43,7 +43,7 @@ def _characterize_tracker(tracker, particle_ref,
                 h_list.append(eecp.frequency*T_rev)
 
     tw = tracker.twiss(
-        particle_ref=particle_ref, at_elements=[line.element_names[0]], **kwargs)
+        particle_ref=particle_ref, **kwargs)
 
     dct={}
     dct['T_rev'] = T_rev
