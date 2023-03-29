@@ -133,6 +133,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     """
 
+    if tracker is not None:
+        warnings.warn(
+            "The argument tracker is deprecated. Please use line instead.",
+            DeprecationWarning)
+
     if line is not None:
         assert tracker is None
         assert line.tracker is not None, ("The line must have a tracker, "
