@@ -3,6 +3,7 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
+import warnings
 import numpy as np
 
 from .longitudinal import generate_longitudinal_coordinates
@@ -29,13 +30,17 @@ def generate_matched_gaussian_bunch(num_particles,
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs, # They are passed to build_particles
                                     ):
+    if tracker is not None:
+        warnings.warn(
+            "The argument tracker is deprecated. Please use line instead.",
+            DeprecationWarning)
+        line = tracker.line
 
     if line is not None:
         if tracker is not None:
             raise ValueError("Cannot provide both `line` and `tracker`!")
         assert line.track is not None, ("The line has no tracker. Please use "
                                         "`Line.build_tracker()`")
-        tracker = line.tracker
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"
@@ -44,8 +49,8 @@ def generate_matched_gaussian_bunch(num_particles,
     if particle_ref is None:
         if particle_on_co is not None:
             particle_ref = particle_on_co
-        elif tracker is not None and tracker.line.particle_ref is not None:
-            particle_ref = tracker.line.particle_ref
+        elif line is not None and line.particle_ref is not None:
+            particle_ref = line.particle_ref
         else:
             raise ValueError(
                 "`particle_ref` or `particle_on_co` must be provided!")
@@ -55,7 +60,7 @@ def generate_matched_gaussian_bunch(num_particles,
             num_particles=num_particles,
             particle_ref=(particle_ref if particle_ref is not None
                           else particle_on_co),
-            tracker=tracker,
+            line=line,
             circumference=circumference,
             momentum_compaction_factor=momentum_compaction_factor,
             rf_harmonic=rf_harmonic,
@@ -84,7 +89,7 @@ def generate_matched_gaussian_bunch(num_particles,
                       particle_on_co=particle_on_co,
                       particle_ref=(
                           particle_ref if particle_on_co is  None else None),
-                      tracker=tracker,
+                      line=line,
                       zeta=zeta, delta=delta,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,

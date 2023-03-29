@@ -86,7 +86,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
               for these variable`. The transverse coordinates are computed from
               normalized values `x_norm`, `px_norm`, `y_norm`, `py_norm` using
               the closed-orbit information and the linear transfer map obtained
-              from the `tracker` or provided by the user.
+              from the `line` or provided by the user.
 
             The default mode is `set`. `normalized_transverse` is used if any
             of x_norm, px_norm, y_norm, pynorm is provided.
@@ -111,7 +111,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         - px_norm: transverse normalized coordinate px (in sigmas).
         - y_norm: transverse normalized coordinate y (in sigmas).
         - py_norm: transverse normalized coordinate py (in sigmas).
-        - tracker: tracker object used to find the closed orbit and the
+        - line: line object used to find the closed orbit and the
           one-turn matrix.
         - particle_on_co: Particle on closed orbit
         - R_matrix: 6x6 matrix defining the linearized one-turn map to be used
@@ -124,7 +124,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         - weight: weights to be assigned to the particles.
         - at_element: location within the line at which particles are generated.
           It can be an index or an element name. It can be given  only if
-          `at_tracker` is provided and `transverse_mode` is "normalized".
+          `at_element` is provided and `transverse_mode` is "normalized".
         - match_at_s: s coordinate of a location in the drifts downstream the
           specified `at_element` at which the particles are generated before
           being backdrifted to the location specified by `at_element`.
@@ -137,12 +137,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         warnings.warn(
             "The argument tracker is deprecated. Please use line instead.",
             DeprecationWarning)
+        line = tracker.line
 
     if line is not None:
         assert tracker is None
         assert line.tracker is not None, ("The line must have a tracker, "
             "please call Line.build_tracker() first.")
-        tracker = line.tracker
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
     Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
@@ -164,8 +164,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                 " cannot be provided at the same time")
 
     if particle_on_co is None and particle_ref is None:
-        if tracker is not None:
-            particle_ref = tracker.particle_ref
+        if line is not None:
+            particle_ref = line.particle_ref
 
     if particle_ref is None:
         assert particle_on_co is not None, (
@@ -193,9 +193,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     zeta_norm = (zeta_norm.get() if hasattr(zeta_norm, "get") else zeta_norm)
     pzeta_norm = (pzeta_norm.get() if hasattr(pzeta_norm, "get") else pzeta_norm)
 
-    if tracker is not None and tracker.iscollective:
+    if line is not None and line.iscollective:
         logger.warning('Ignoring collective elements in particles generation.')
-        tracker = tracker._supertracker
+        line = line.tracker._supertracker.line
 
     # Compute ptau from delta
     if delta is not None:
@@ -232,10 +232,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if at_element is not None or match_at_s is not None:
         # Only this case is covered if not starting at element 0
-        assert tracker is not None
+        assert line is not None
         assert mode == 'normalized_transverse'
         if isinstance(at_element, str):
-            at_element = tracker.line.element_names.index(at_element)
+            at_element = line.element_names.index(at_element)
         assert R_matrix is None # Not clear if it is at the element or at start machine
         if particle_on_co is not None:
             assert particle_on_co._xobject.at_element == 0
@@ -248,34 +248,36 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         )
         # Match at a position where there is no marker and backtrack to the previous marker
         expected_at_element = np.where(np.array(
-            tracker.line.get_s_elements())<=match_at_s)[0][-1]
+                    line.get_s_elements())<=match_at_s)[0][-1]
         assert at_element == expected_at_element or (
                 at_element < expected_at_element and
-                      all([ xt._is_aperture(tracker.line.element_dict[nn])
-                           or xt._behaves_like_drift(tracker.line.element_dict[nn])
-                for nn in tracker.line.element_names[at_element:expected_at_element]])), (
+                      all([ xt._is_aperture(line.element_dict[nn])
+                           or xt._behaves_like_drift(line.element_dict[nn])
+                for nn in line.element_names[at_element:expected_at_element]])), (
             "`match_at_s` can only be placed in the drifts downstream of the "
             "specified `at_element`. No active element can be present in between."
             )
         (tracker_rmat, _
             ) = xt.twiss._build_auxiliary_tracker_with_extra_markers(
-                tracker=tracker, at_s=[match_at_s], marker_prefix='xpart_rmat_')
-        at_element_tracker_rmat = tracker_rmat.line.element_names.index(
+                tracker=line.tracker, at_s=[match_at_s],
+                marker_prefix='xpart_rmat_')
+        at_element_line_rmat = tracker_rmat.line.element_names.index(
                                                                  'xpart_rmat_0')
+        line_rmat = tracker_rmat.line
     else:
-        tracker_rmat = tracker
-        at_element_tracker_rmat = at_element
+        line_rmat = line
+        at_element_line_rmat = at_element
 
     if mode == 'normalized_transverse':
 
-        if W_matrix is None and tracker is not None:
+        if W_matrix is None and line is not None:
             if method is not None:
                 kwargs['method'] = method
-            tw = tracker_rmat.twiss(particle_on_co=particle_on_co,
+            tw = line_rmat.twiss(particle_on_co=particle_on_co,
                                     particle_ref=particle_ref,
                                     R_matrix=R_matrix, **kwargs)
             tw_state = tw.get_twiss_init(at_element=
-                (at_element_tracker_rmat if at_element_tracker_rmat is not None else 0))
+                (at_element_line_rmat if at_element_line_rmat is not None else 0))
 
             WW = tw_state.W_matrix
             particle_on_co = tw_state.particle_on_co
@@ -463,8 +465,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
 
-    if _context is None and _buffer is None and tracker is not None:
-        _context = tracker._buffer.context
+    if _context is None and _buffer is None and line is not None:
+        _context = line._buffer.context
 
     particles = Particles(_context=_context, _buffer=_buffer, _offset=_offset,
                           _capacity=_capacity,**part_dict)
@@ -476,10 +478,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if match_at_s is not None:
         # Backtrack to at_element
-        length_aux_drift = -match_at_s + tracker.line.get_s_position(at_element)
+        length_aux_drift = -match_at_s + line.get_s_position(at_element)
         assert length_aux_drift <= 0
         auxdrift = xt.Drift(length=length_aux_drift,
-                            _context=tracker._buffer.context)
+                            _context=line._buffer.context)
         auxdrift.track(particles)
 
     if at_element is not None:
