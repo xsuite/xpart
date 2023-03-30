@@ -110,7 +110,7 @@ class Particles(ParticlesBase):
                     double const y = LocalParticle_get_y(part);
         
                 int64_t const is_alive = (int64_t)(
-                                  (x >= -XTRACK_GLOBAL_XY_LIMIT) &&
+                          (x >= -XTRACK_GLOBAL_XY_LIMIT) &&
                           (x <=  XTRACK_GLOBAL_XY_LIMIT) &&
                           (y >= -XTRACK_GLOBAL_XY_LIMIT) &&
                           (y <=  XTRACK_GLOBAL_XY_LIMIT) );
