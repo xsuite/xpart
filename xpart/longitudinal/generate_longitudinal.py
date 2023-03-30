@@ -74,6 +74,9 @@ def generate_longitudinal_coordinates(
                                     **kwargs # passed to twiss
                                     ):
 
+    if line is not None and tracker is not None:
+        raise ValueError(
+            'line and tracker cannot be provided at the same time.')
 
     if tracker is not None:
         warnings.warn(

@@ -30,6 +30,11 @@ def generate_matched_gaussian_bunch(num_particles,
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs, # They are passed to build_particles
                                     ):
+
+    if line is not None and tracker is not None:
+        raise ValueError(
+            'line and tracker cannot be provided at the same time.')
+
     if tracker is not None:
         warnings.warn(
             "The argument tracker is deprecated. Please use line instead.",
@@ -37,10 +42,8 @@ def generate_matched_gaussian_bunch(num_particles,
         line = tracker.line
 
     if line is not None:
-        if tracker is not None:
-            raise ValueError("Cannot provide both `line` and `tracker`!")
-        assert line.track is not None, ("The line has no tracker. Please use "
-                                        "`Line.build_tracker()`")
+        assert line.tracker is not None, ("The line has no tracker. Please use "
+                                          "`Line.build_tracker()`")
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"
