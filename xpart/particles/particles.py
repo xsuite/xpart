@@ -101,7 +101,7 @@ class Particles(ParticlesBase):
     def gen_local_particle_api(cls, mode='no_local_copy'):
         source = super(Particles, cls).gen_local_particle_api(mode)
         source += """
-            #ifdef XTRACK_GLOBAL_POSLIMIT
+            #ifdef XTRACK_GLOBAL_XY_LIMIT
         
             /*gpufun*/
             void global_aperture_check(LocalParticle* part0) {
@@ -110,10 +110,10 @@ class Particles(ParticlesBase):
                     double const y = LocalParticle_get_y(part);
         
                 int64_t const is_alive = (int64_t)(
-                                  (x >= -XTRACK_GLOBAL_POSLIMIT) &&
-                          (x <=  XTRACK_GLOBAL_POSLIMIT) &&
-                          (y >= -XTRACK_GLOBAL_POSLIMIT) &&
-                          (y <=  XTRACK_GLOBAL_POSLIMIT) );
+                                  (x >= -XTRACK_GLOBAL_XY_LIMIT) &&
+                          (x <=  XTRACK_GLOBAL_XY_LIMIT) &&
+                          (y >= -XTRACK_GLOBAL_XY_LIMIT) &&
+                          (y <=  XTRACK_GLOBAL_XY_LIMIT) );
         
                 // I assume that if I am in the function is because
                     if (!is_alive){
