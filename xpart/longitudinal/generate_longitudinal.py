@@ -85,7 +85,6 @@ def generate_longitudinal_coordinates(
         line = tracker.line
 
     if line is not None:
-        assert tracker is None
         if particle_ref is None:
             particle_ref = line.particle_ref
         assert particle_ref is not None
