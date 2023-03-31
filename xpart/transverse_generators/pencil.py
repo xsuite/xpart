@@ -5,7 +5,7 @@
 
 import numpy as np
 from .polar import generate_2D_uniform_circular_sector
-from .general import _print
+from ..general import _print
 
 import xtrack as xt
 import xpart as xp
