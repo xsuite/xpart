@@ -16,7 +16,7 @@ from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
 from ..particles import Particles
 from .single_rf_harmonic_matcher import SingleRFHarmonicMatcher
-from .general import _print
+from ..general import _print
 
 logger = logging.getLogger(__name__)
 
