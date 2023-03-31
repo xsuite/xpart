@@ -3,8 +3,9 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-import warnings
 import numpy as np
+
+from .general import _print
 
 from .longitudinal import generate_longitudinal_coordinates
 from .build_particles import build_particles
@@ -36,7 +37,7 @@ def generate_matched_gaussian_bunch(num_particles,
             'line and tracker cannot be provided at the same time.')
 
     if tracker is not None:
-        warnings.warn(
+        _print(
             "The argument tracker is deprecated. Please use line instead.",
             DeprecationWarning)
         line = tracker.line

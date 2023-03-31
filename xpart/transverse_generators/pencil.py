@@ -3,10 +3,9 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-import warnings
-
 import numpy as np
 from .polar import generate_2D_uniform_circular_sector
+from .general import _print
 
 import xtrack as xt
 import xpart as xp
@@ -75,9 +74,8 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
             'line and tracker cannot be provided at the same time.')
 
     if tracker is not None:
-        warnings.warn(
-            "The argument tracker is deprecated. Please use line instead.",
-            DeprecationWarning)
+        _print('Warning! '
+            "The argument tracker is deprecated. Please use line instead.")
         line = tracker.line
 
     if line is not None:

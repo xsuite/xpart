@@ -4,7 +4,6 @@
 # ######################################### #
 
 import logging
-import warnings
 
 import numpy as np
 from scipy.constants import c as clight
@@ -17,6 +16,7 @@ from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
 from ..particles import Particles
 from .single_rf_harmonic_matcher import SingleRFHarmonicMatcher
+from .general import _print
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ def generate_longitudinal_coordinates(
             'line and tracker cannot be provided at the same time.')
 
     if tracker is not None:
-        warnings.warn(
+        _print('Warning! '
             "The argument tracker is deprecated. Please use line instead.",
             DeprecationWarning)
         line = tracker.line

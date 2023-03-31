@@ -4,7 +4,6 @@
 # ######################################### #
 
 import logging
-import warnings
 
 import numpy as np
 
@@ -138,9 +137,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             'line and tracker cannot be provided at the same time.')
 
     if tracker is not None:
-        warnings.warn(
-            "The argument tracker is deprecated. Please use line instead.",
-            DeprecationWarning)
+        _print('Warning! '
+            "The argument tracker is deprecated. Please use line instead.")
         line = tracker.line
 
     if line is not None:
@@ -157,10 +155,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     # Deprecation warning for scale_with_transverse_norm_emitt
     if scale_with_transverse_norm_emitt is not None:
-        warnings.warn(
+        _print('Warning! '
             "scale_with_transverse_norm_emitt is deprecated. Use "
-            "nemitt_x and nemitt_y instead.",
-            DeprecationWarning)
+            "nemitt_x and nemitt_y instead.")
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"

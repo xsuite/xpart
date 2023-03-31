@@ -10,7 +10,6 @@
 '''
 import numpy as np
 import logging
-import warnings
 
 from scipy.optimize import brentq, newton
 from scipy.integrate import fixed_quad
@@ -44,11 +43,12 @@ class RFBucketMatcher:
                  *args, **kwargs):
 
         if psi is not None:
-            warnings.warn('Keyword argument "psi" will be removed in a future '
-                          'PyHEADTAIL release!', DeprecationWarning)
-            if distribution_type is not None:
-                raise TypeError('RFBucketMatcher accepts either '
-                                'distribution_type or psi as argument. ')
+            raise NotImplemented
+            # _print('Warning! Keyword argument "psi" will be removed in a future '
+            #               'PyHEADTAIL release!')
+            # if distribution_type is not None:
+            #     raise TypeError('RFBucketMatcher accepts either '
+            #                     'distribution_type or psi as argument. ')
         else:
             if distribution_type is None:
                 raise TypeError(
