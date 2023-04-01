@@ -195,7 +195,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if line is not None and line.iscollective:
         logger.warning('Ignoring collective elements in particles generation.')
-        line = line.tracker._supertracker.line
+        line = line._get_non_collective_line()
 
     # Compute ptau from delta
     if delta is not None:
