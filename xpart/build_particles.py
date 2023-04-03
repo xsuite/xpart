@@ -62,86 +62,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     ):
 
     """
-    Create a Particles object from arrays containing physical or
-    normalized coordinates.
+    Same as `xtrack.Line.build_particles`. See there for documentation.
 
-    Parameters
-    ----------
-
-    particle_ref : Particle object
-        Reference particle defining the reference quantities (mass0, q0, p0c,
-        gamma0, etc.). Its coordinates (x, py, y, py, zeta, delta) are ignored 
-        unless `mode`='shift' is selected.
-    num_particles : int
-        Number of particles to be generated (used if provided coordinates are
-        all scalar).
-    x : float or array
-        x coordinate of the particles (default is 0).
-    px : float or array
-        px coordinate of the particles (default is 0).
-    y : float or array
-        y coordinate of the particles (default is 0).
-    py : float or array
-        py coordinate of the particles (default is 0).
-    zeta : float or array
-        zeta coordinate of the particles (default is 0).
-    delta : float or array
-        delta coordinate of the particles (default is 0).
-    x_norm : float or array
-        transverse normalized coordinate x (in sigmas) used in combination with
-        the one turn matrix and with the transverse emittances provided
-        in the argument `scale_with_transverse_norm_emitt` to generate x, px,
-        y, py (x, px, y, py cannot be provided if x_norm, px_norm, y_norm,
-        py_norm are provided).
-    px_norm : float or array
-        transverse normalized coordinate px (in sigmas) used in combination
-        with the one turn matrix and with the transverse emittances (as above).
-    y_norm : float or array
-        transverse normalized coordinate y (in sigmas) used in combination
-        with the one turn matrix and with the transverse emittances (as above).
-    py_norm : float or array
-        transverse normalized coordinate py (in sigmas) used in combination
-        with the one turn matrix and with the transverse emittances (as above).
-    line : Line object
-        Line object used to find the closed orbit and the one-turn matrix.
-    nemitt_x : float
-        Transverse normalized emittance in the `x` plane.
-    nemitt_y : float
-        Transverse normalized emittance in the `y` plane.
-    at_element : str or int
-        Location within the line at which particles are generated. It can be an
-        index or an element name.
-    weight : float or array
-        weights to be assigned to the particles.
-    mode : str
-        To be chosen between `set`,  `shift` and `normalized_transverse` (the
-        default mode is `set`. `normalized_transverse` is used if any if any
-        of `x_norm`, `px_norm`, `y_norm`, `py_norm` is provided):
-            - `set`: reference quantities including mass0, q0, p0c, gamma0,
-                etc. are taken from the provided reference particle. Particles
-                coordinates are set according to the provided input x, px, y, py,
-                zeta, delta (zero is assumed as default for these variables).
-            - `shift`: reference quantities including mass0, q0, p0c, gamma0,
-                etc. are taken from the provided reference particle. Particles
-                coordinates are set from the reference particles and shifted
-                according to the provided input x, px, y, py, zeta, delta (zero
-                is assumed as default for these variables).
-            - `normalized_transverse`: reference quantities including mass0,
-                q0, p0c, gamma0, etc. are taken from the provided reference
-                particle. The longitudinal coordinates are set according to the
-                provided input `zeta`, `delta` (zero is assumed as default for
-                these variables). The transverse coordinates are set according
-                to the provided input `x_norm`, `px_norm`, `y_norm`, `py_norm`
-                (zero is assumed as default for these variables). The
-                transverse coordinates are normalized according to the
-                transverse emittance provided in `nemitt_x` and `nemitt_y`.
-                The transverse coordinates are then transformed into physical
-                space using the linearized one-turn matrix.
-
-    Returns
-    -------
-    particles : Particles object
-        Particles object containing the generated particles.
     """
 
     if line is not None and tracker is not None:
