@@ -177,8 +177,9 @@ def test_sort():
     p = xp.Particles(x=[0, 1, 2, 3, 4, 5, 6], _capacity=10)
     p.state[[0, 3, 4]] = 0
 
-    tracker = xt.Tracker(line=xt.Line(elements=[xt.Cavity()]))
-    tracker.track(p)
+    line = xt.Line(elements=[xt.Cavity()])
+    line.build_tracker()
+    line.track(p)
 
     assert np.all(p.particle_id == np.array([6, 1, 2, 5, 4, 3, 0,
                                              -999999999, -999999999,
@@ -219,7 +220,7 @@ def test_sort():
     p = xp.Particles(x=[6, 5, 4, 3, 2, 1, 0], _capacity=10)
     p.state[[0,3,4]] = 0
 
-    tracker.track(p)
+    line.track(p)
 
     assert np.all(p.particle_id == np.array([6, 1, 2, 5, 4, 3, 0,
                                              -999999999, -999999999,

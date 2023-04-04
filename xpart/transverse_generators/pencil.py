@@ -5,6 +5,7 @@
 
 import numpy as np
 from .polar import generate_2D_uniform_circular_sector
+from ..general import _print
 
 import xtrack as xt
 import xpart as xp
@@ -68,16 +69,23 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     nemitt_x=None, nemitt_y=None,
     at_element=None, match_at_s=None, **kwargs):
 
-    if line is not None:
-        assert tracker is None
-        assert line.tracker is not None
-        tracker = line.tracker
+    if line is not None and tracker is not None:
+        raise ValueError(
+            'line and tracker cannot be provided at the same time.')
 
-    # kwargs are passed to tracker.twiss
+    if tracker is not None:
+        _print('Warning! '
+            "The argument tracker is deprecated. Please use line instead.")
+        line = tracker.line
+
+    if line is not None:
+        assert line.tracker is not None
+
+    # kwargs are passed to line.twiss
 
     assert side == '+' or side == '-'
     assert plane == 'x' or plane == 'y'
-    assert tracker is not None
+    assert line is not None
 
     if match_at_s is not None:
         assert at_element is not None
@@ -86,12 +94,12 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         at_element = 0
 
     if match_at_s is not None:
-        drift_to_at_s = xt.Drift(_context=tracker._context,
-            length=match_at_s - tracker.line.get_s_position(at_element))
+        drift_to_at_s = xt.Drift(_context=line._context,
+            length=match_at_s - line.get_s_position(at_element))
     else:
         drift_to_at_s = None
 
-    tw_at_s = tracker.twiss(at_s=match_at_s,
+    tw_at_s = line.twiss(at_s=match_at_s,
         at_elements=([at_element] if match_at_s is None else None),
         **kwargs)
 
@@ -101,7 +109,7 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         assert tw_at_s[plane][0] > absolute_cut, 'The cut is on the wrong side'
 
     # Generate a particle exactly on the jaw with no amplitude in other eigemvectors
-    p_on_cut_at_element = tracker.build_particles(
+    p_on_cut_at_element = line.build_particles(
         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
         x={'x': absolute_cut, 'y': None}[plane],
         y={'x': None, 'y': absolute_cut}[plane],
@@ -135,7 +143,7 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
 
     # Generate geometric coordinates in the selected plane only
     # (by construction y_cut is preserved)
-    p_pencil_at_element = tracker.build_particles(
+    p_pencil_at_element = line.build_particles(
                     nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                     x_norm={'x': w_in_sigmas, 'y': None}[plane],
                     px_norm={'x': pw_in_sigmas, 'y': None}[plane],

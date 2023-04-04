@@ -4,26 +4,24 @@
 # ######################################### #
 
 import numpy as np
-from scipy.constants import e,c
+from scipy.constants import e, c
 
 from PyHEADTAIL.particles.particles import Particles as PyHtParticles
 from xpart import Particles as XtParticles
 
-import xobjects as xo
 
 class PyHtXtParticles(XtParticles, PyHtParticles):
-
-    def __init__(self,circumference=None, particlenumber_per_mp=None, **kwargs):
+    def __init__(self, circumference=None, particlenumber_per_mp=None, **kwargs):
         XtParticles.__init__(self, **kwargs)
         self.circumference = circumference
         if particlenumber_per_mp is not None:
             self.particlenumber_per_mp = particlenumber_per_mp
         self._slice_sets = {}
-        self.coords_n_momenta = set(['x','xp','y','yp','z','dp'])
+        self.coords_n_momenta = {'x', 'xp', 'y', 'yp', 'z', 'dp'}
 
     @classmethod
     def from_pyheadtail(cls, particles):
-        new  = cls(_capacity=particles.macroparticlenumber)
+        new = cls(_capacity=particles.macroparticlenumber)
 
         new.particlenumber_per_mp = particles.particlenumber_per_mp
         new.charge = particles.charge
@@ -93,8 +91,8 @@ class PyHtXtParticles(XtParticles, PyHtParticles):
 
     @property
     def particlenumber_per_mp(self):
-        return self.weight[0] # I avoid checking that they are all the same
-                         # not to compromise on performance
+        return self.weight[0]  # I avoid checking that they are all the same
+                               # not to compromise on performance
 
     @particlenumber_per_mp.setter
     def particlenumber_per_mp(self, value):
@@ -102,7 +100,7 @@ class PyHtXtParticles(XtParticles, PyHtParticles):
 
     @property
     def _gamma(self):
-	# I assume that they are all the same and take the first
+        # I assume that they are all the same and take the first
         # An assert would be too expensive...
         return self.gamma0[0]
 
@@ -112,7 +110,7 @@ class PyHtXtParticles(XtParticles, PyHtParticles):
 
     @property
     def _beta(self):
-	# I assume that they are all the same and take the first
+        # I assume that they are all the same and take the first
         # An assert would be too expensive...
         return self.beta0[0]
 
@@ -122,7 +120,7 @@ class PyHtXtParticles(XtParticles, PyHtParticles):
 
     @property
     def _p0(self):
-	# I assume that they are all the same and take the first
+        # I assume that they are all the same and take the first
         # An assert would be too expensive...
         return self.p0c[0]/c*e
 
@@ -133,4 +131,3 @@ class PyHtXtParticles(XtParticles, PyHtParticles):
     @property
     def id(self):
         return self.particle_id
-

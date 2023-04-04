@@ -16,24 +16,24 @@ from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
 from ..particles import Particles
 from .single_rf_harmonic_matcher import SingleRFHarmonicMatcher
+from ..general import _print
 
 logger = logging.getLogger(__name__)
 
-def _characterize_tracker(tracker, particle_ref,
+def _characterize_line(line, particle_ref,
                           **kwargs # passed to twiss
                           ):
 
-    if tracker.iscollective:
+    if line.iscollective:
         logger.warning('Ignoring collective elements in particles generation.')
-        tracker = tracker._supertracker
+        line = line._get_non_collective_line()
 
-    line = tracker.line
     T_rev = line.get_length()/(particle_ref._xobject.beta0[0]*clight)
     freq_list = []
     lag_list_deg = []
     voltage_list = []
     h_list = []
-    for ee in tracker.line.elements:
+    for ee in line.elements:
         if ee.__class__.__name__ == 'Cavity':
             eecp = ee.copy(_context=xo.ContextCpu())
             if ee.voltage != 0:
@@ -42,8 +42,8 @@ def _characterize_tracker(tracker, particle_ref,
                 voltage_list.append(eecp.voltage)
                 h_list.append(eecp.frequency*T_rev)
 
-    tw = tracker.twiss(
-        particle_ref=particle_ref, at_elements=[line.element_names[0]], **kwargs)
+    tw = line.twiss(
+        particle_ref=particle_ref, **kwargs)
 
     dct={}
     dct['T_rev'] = T_rev
@@ -74,15 +74,21 @@ def generate_longitudinal_coordinates(
                                     **kwargs # passed to twiss
                                     ):
 
-    if line is not None:
-        assert tracker is None
-        tracker = line.tracker
+    if line is not None and tracker is not None:
+        raise ValueError(
+            'line and tracker cannot be provided at the same time.')
 
     if tracker is not None:
+        _print('Warning! '
+            "The argument tracker is deprecated. Please use line instead.",
+            DeprecationWarning)
+        line = tracker.line
+
+    if line is not None:
         if particle_ref is None:
-            particle_ref = tracker.line.particle_ref
+            particle_ref = line.particle_ref
         assert particle_ref is not None
-        dct = _characterize_tracker(tracker, particle_ref, **kwargs)
+        dct = _characterize_line(line, particle_ref, **kwargs)
 
     assert particle_ref is not None
 
@@ -99,23 +105,23 @@ def generate_longitudinal_coordinates(
         gamma0 = particle_ref._xobject.gamma0[0]
 
     if circumference is None:
-        assert tracker is not None
-        circumference = tracker.line.get_length()
+        assert line is not None
+        circumference = line.get_length()
 
     if momentum_compaction_factor is None:
-        assert tracker is not None
+        assert line is not None
         momentum_compaction_factor = dct['momentum_compaction_factor']
 
     if rf_harmonic is None:
-        assert tracker is not None
+        assert line is not None
         rf_harmonic=dct['h_list']
 
     if rf_voltage is None:
-        assert tracker is not None
+        assert line is not None
         rf_voltage=dct['voltage_list']
 
     if rf_phase is None:
-        assert tracker is not None
+        assert line is not None
         rf_phase=(np.array(dct['lag_list_deg']) - 180)/180*np.pi
 
 

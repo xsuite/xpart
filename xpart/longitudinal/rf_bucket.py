@@ -702,9 +702,6 @@ class RFBucket:
             if np.isnan(emittance):
                 raise ValueError
 
-            if verbose:
-                self.prints('... distance to target emittance: ' +
-                            '{:.4e}'.format(emittance-epsn_z))
             return emittance - epsn_z
 
         sigma = newton(emittance_from_zcut, 1)

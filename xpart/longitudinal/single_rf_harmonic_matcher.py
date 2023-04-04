@@ -7,6 +7,8 @@ import numpy as np
 from scipy.constants import c
 import scipy.special
 
+from ..general import _print
+
 
 class SingleRFHarmonicMatcher:
     def __init__(self,
@@ -23,8 +25,8 @@ class SingleRFHarmonicMatcher:
 
         self.verbose = verbose
         self.transformation_particles = transformation_particles
-        
-        self.length = length 
+
+        self.length = length
 
         # Hamoltonian: H = A cos(B tau) - C ptau^2
         # normalized Hamiltonian: m = ( sin(B/2*tau) )^2 + C/(2A) ptau^ 2
@@ -51,9 +53,9 @@ class SingleRFHarmonicMatcher:
             self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
             self.tau_distr_y[abs(self.tau_distr_x) > tau_max] = 0
             if tau_max >= tau_ufp:
-                print(f"WARNING SingleRFHarmonicMatcher: longitudinal profile larger than bucket, truncating to unstable fixed point. tau_max = {tau_max:.4f}, tau_ufp = {tau_ufp:.4f} ")
+                _print(f"WARNING SingleRFHarmonicMatcher: longitudinal profile larger than bucket, truncating to unstable fixed point. tau_max = {tau_max:.4f}, tau_ufp = {tau_ufp:.4f} ")
 
-            print(f"SingleRFHarmonicMatcher: Parabolic parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
+            _print(f"SingleRFHarmonicMatcher: Parabolic parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         elif distribution == "gaussian":
             lambda_dist = lambda tau, rms: np.exp(-tau**2/2./rms**2)
 
@@ -61,7 +63,7 @@ class SingleRFHarmonicMatcher:
             func_to_solve = lambda new_rms: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_rms), -tau_lim, tau_lim))[0]
             corrected_rms = scipy.optimize.fsolve(func_to_solve, x0=rms_bunch_length)[0]
 
-            print(f"SingleRFHarmonicMatcher: Gaussian parameter is equal to {corrected_rms:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
+            _print(f"SingleRFHarmonicMatcher: Gaussian parameter is equal to {corrected_rms:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
 
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_rms)
         else:
@@ -84,7 +86,7 @@ class SingleRFHarmonicMatcher:
             if dens == 0.:
                 continue
             if self.verbose:
-                print(f"tau = {tau:.3f}, f(tau) = {dens:.3f}")
+                _print(f"tau = {tau:.3f}, f(tau) = {dens:.3f}")
 
             m0 = self.get_m(tau=tau - dx/2.)
             m1 = self.get_m(tau=tau + dx/2.)
@@ -92,7 +94,7 @@ class SingleRFHarmonicMatcher:
             m = self.get_m(tau=tau)
             if m == 1.0:
                 continue
-            print('SingleRFHarmonicMatcher: Transforming distribution: '
+            _print('SingleRFHarmonicMatcher: Transforming distribution: '
                         f'{round(ii/N*100):2d}%  ',end="\r", flush=True)
             tau_test, ptau_test = self.get_airbag_from_m(m=m, n_particles=self.transformation_particles)
             hist, bin_edges = np.histogram(tau_test, bins=len(xp), range=(min(xp)-dx/2., max(xp)+dx/2.))
@@ -108,7 +110,7 @@ class SingleRFHarmonicMatcher:
         m_distr_x = m_distr_x[::-1]
         m_distr_y = m_distr_y[::-1]
 
-        print('SingleRFHarmonicMatcher: Done transforming distribution.')
+        _print('SingleRFHarmonicMatcher: Done transforming distribution.')
         return m_distr_x, m_distr_y
 
 
@@ -160,9 +162,9 @@ class SingleRFHarmonicMatcher:
             tau_new.extend(list(tau[mask]))
             ptau_new.extend(list(ptau[mask]))
             counter += sum(mask)
-            print('SingleRFHarmonicMatcher: Sampling particles: '
+            _print('SingleRFHarmonicMatcher: Sampling particles: '
                         f'{round(counter/n_particles*100):2d}%  ',end="\r", flush=True)
-        print(f"SingleRFHarmonicMatcher: Sampled {n_particles} particles")
+        _print(f"SingleRFHarmonicMatcher: Sampled {n_particles} particles")
 
         return tau_new[:n_particles], ptau_new[:n_particles]
 
