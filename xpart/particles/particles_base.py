@@ -98,6 +98,85 @@ class ParticlesBase(xo.HybridClass):
             _no_reorganize=False,
             **kwargs,
     ):
+
+
+        """
+        The Particles class contains coordinates and other data associated to a
+        set of particles. Parameters can be provided as arrays of the same
+        length or as scalars. If arrays are provided, the length of the arrays
+        must be equal to the number of particles. If scalars are provided, the
+        same value is assigned to all particles. When parameters are not
+        provided, they are initialized to default values, or inferred from the
+        other parameters.
+
+        Parameters
+        ----------
+        _capacity: int
+            The maximum number of particles that can be stored in the object.
+            If not provided, it is inferred from the size of the provided
+            coordinates arrays.
+        s : array_like of float, optional
+            Reference accumulated path length [m]
+        x : array_like of float, optional
+            Horizontal position [m]
+        px : array_like of float, optional
+            Px / (m/m0 * p0c) = beta_x gamma /(beta0 gamma0)
+        y : array_like of float, optional
+            Vertical position [m]
+        py : array_like of float, optional
+            Py / (m/m0 * p0c)
+        delta : array_like of float, optional
+            (Pc m0/m - p0c) /p0c
+        ptau : array_like of float, optional
+            (Energy m0/m - Energy0) / p0c
+        pzeta : array_like of float, optional
+            ptau / beta0
+        rvv : array_like of float, optional
+            beta / beta0
+        rpp : array_like of float, optional
+            m/m0 P0c / Pc = 1/(1+delta)
+        zeta : array_like of float, optional
+            (s - beta0 c t)
+        tau : array_like of float, optional
+            (s / beta0 - ct)
+        mass0 : float, optional
+            Reference rest mass [eV]
+        q0 : float, optional
+            Reference charge [e]
+        p0c : array_like of float, optional
+            Reference momentum [eV]
+        energy0 : array_like of float, optional
+            Reference energy [eV]
+        gamma0 : array_like of float, optional
+            Reference relativistic gamma
+        beta0 : array_like of float, optional
+            Reference relativistic beta
+        mass_ratio : array_like of float, optional
+            mass/mass0 (this is used to track particles of
+            different species. Note that mass is the rest mass
+            of the considered particle species and not the
+            relativistic mass)
+        chi : array_like of float, optional
+            q / q0 * m0 / m = qratio / mratio
+        charge_ratio : array_like of float, optional
+            q / q0
+        particle_id : array_like of int, optional
+            Identifier of the particle
+        at_turn : array_like of int, optional
+            Number of tracked turns
+        state : array_like of int, optional
+            It is <= 0 if the particle is lost, > 0 otherwise
+            (different values are used to record information on how the particle
+            is lost or generated).
+        weight : array_like of float, optional
+            Particle weight in number of particles (for collective simulations)
+        at_element : array_like of int, optional
+            Identifier of the last element through which the particle has been
+        parent_particle_id : array_like of int, optional
+            Identifier of the parent particle (secondary production processes)
+
+        """
+
         if type(self) is ParticlesBase:
             raise NotImplementedError(
                 'ParticlesBase is an abstract class to be used as a template '
