@@ -97,7 +97,7 @@ def generate_matched_gaussian_bunch(num_particles,
                       zeta=zeta, delta=delta,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,
-                      scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y),
+                      nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                       weight=total_intensity_particles/num_particles,
                       **kwargs)
     return part
