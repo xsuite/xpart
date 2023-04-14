@@ -881,7 +881,7 @@ class ParticlesBase(xo.HybridClass):
                     vv[n_active:n_active + n_lost] = vv_lost
                     vv[n_active + n_lost:] = tt._dtype.type(LAST_INVALID_STATE)
 
-        if isinstance(self._buffer.context, xo.ContextCpu):
+        if isinstance(self._buffer.context, xo.ContextCpu) and self._buffer.context.omp_num_threads == 0:
             self._num_active_particles = n_active
             self._num_lost_particles = n_lost
 
@@ -1197,6 +1197,7 @@ class ParticlesBase(xo.HybridClass):
             src_lines.append('    /*gpuglmem*/ ' + tt._c_type + '* ' + vv + ';')
 
         src_lines.append('                 int64_t ipart;')
+        src_lines.append('                 int64_t endpart;')
         src_lines.append('    /*gpuglmem*/ int8_t* io_buffer;')
         src_lines.append('} LocalParticle;')
         src_typedef = '\n'.join(src_lines)
@@ -1216,7 +1217,8 @@ class ParticlesBase(xo.HybridClass):
         /*gpufun*/
         void Particles_to_LocalParticle(ParticlesData source,
                                         LocalParticle* dest,
-                                        int64_t id){''')
+                                        int64_t id,
+                                        int64_t eid){''')
         for _, vv in cls.size_vars + cls.scalar_vars:
             src_lines.append(
                 f'  dest->{vv} = ParticlesData_get_' + vv + '(source);')
@@ -1226,6 +1228,7 @@ class ParticlesBase(xo.HybridClass):
                 f'  dest->{vv} = ParticlesData_getp1_' + vv + '(source, 0);')
 
         src_lines.append('  dest->ipart = id;')
+        src_lines.append('  dest->endpart = eid;')
         src_lines.append('}')
         src_particles_to_local = '\n'.join(src_lines)
 
@@ -1400,7 +1403,6 @@ class ParticlesBase(xo.HybridClass):
             LocalParticle_add_to_at_element(part, 1);
        //end_per_particle_block
 
-
     }
 
     /*gpufun*/
@@ -1417,9 +1419,10 @@ class ParticlesBase(xo.HybridClass):
 
     // check_is_active has different implementation on CPU and GPU
 
-    #define CPUIMPLEM //only_for_context cpu_serial cpu_openmp
+    #define CPU_SERIAL_IMPLEM //only_for_context cpu_serial
+    #define CPU_OMP_IMPLEM //only_for_context cpu_openmp
 
-    #ifdef CPUIMPLEM
+    #ifdef CPU_SERIAL_IMPLEM
 
     /*gpufun*/
     int64_t check_is_active(LocalParticle* part) {
@@ -1431,9 +1434,9 @@ class ParticlesBase(xo.HybridClass):
                 part->_num_active_particles--;
                 part->_num_lost_particles++;
             }
-        else{
-            ipart++;
-        }
+            else{
+                ipart++;
+            }
         }
 
         if (part->_num_active_particles==0){
@@ -1443,16 +1446,54 @@ class ParticlesBase(xo.HybridClass):
         }
     }
 
+    #else // not CPU_SERIAL_IMPLEM
+    #ifdef CPU_OMP_IMPLEM
+    
+    /*gpufun*/
+    int64_t check_is_active(LocalParticle* part) {
+    #ifndef SKIP_SWAPS
+        int64_t ipart = part->ipart;
+        int64_t endpart = part->endpart;
+        
+        int64_t left = ipart;
+        int64_t right = endpart - 1;
+        int64_t swap_made = 0;
+        int64_t has_alive = 0;
+        
+        if (left == right) return part->state[left] > 0;
+        
+        while (left < right) {
+            if (part->state[left] > 0) {
+                left++;
+                has_alive = 1;
+            }
+            else if (part->state[right] <= 0) right--;
+            else {
+                LocalParticle_exchange(part, left, right);
+                left++;
+                right--;
+                swap_made = 1;
+            }
+        }
+
+        return swap_made || has_alive;
     #else
+        return 1;
+    #endif
+    }
+    
+    #else // not CPU_SERIAL_IMPLEM and not CPU_OMP_IMPLEM
 
     /*gpufun*/
     int64_t check_is_active(LocalParticle* part) {
         return LocalParticle_get_state(part)>0;
     };
 
-    #endif
+    #endif // CPU_OMP_IMPLEM
+    #endif // CPU_SERIAL_IMPLEM
 
-    #undef CPUIMPLEM //only_for_context cpu_serial cpu_openmp
+    #undef CPU_SERIAL_IMPLEM //only_for_context cpu_serial
+    #undef CPU_OMP_IMPLEM //only_for_context cpu_openmp
 
 
     '''
