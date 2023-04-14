@@ -1399,9 +1399,9 @@ class ParticlesBase(xo.HybridClass):
     /*gpufun*/
     void increment_at_element(LocalParticle* part0){
 
-       //start_per_particle_block (part0->part)
+        //start_per_particle_block (part0->part)
             LocalParticle_add_to_at_element(part, 1);
-       //end_per_particle_block
+        //end_per_particle_block
 
     }
 
