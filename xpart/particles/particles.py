@@ -19,45 +19,7 @@ def _contains_nan(arr, ctx):
 
 
 class Particles(ParticlesBase):
-    """
-        Particle objects have the following fields:
 
-             - s [m]: Reference accumulated path length
-             - x [m]: Horizontal position
-             - px[1]: Px / (m/m0 * p0c) = beta_x gamma /(beta0 gamma0)
-             - y [m]: Vertical position
-             - py [1]: Py / (m/m0 * p0c)
-             - delta [1]: (Pc m0/m - p0c) /p0c
-             - ptau [1]: (Energy m0/m - Energy0) / p0c
-             - pzeta [1]: ptau / beta0
-             - rvv [1]: beta / beta0
-             - rpp [1]: m/m0 P0c / Pc = 1/(1+delta)
-             - zeta [m]: (s - beta0 c t )
-             - tau [m]: (s / beta0 - ct)
-             - mass0 [eV]: Reference rest mass
-             - q0 [e]: Reference charge
-             - p0c [eV]: Reference momentum
-             - energy0 [eV]: Reference energy
-             - gamma0 [1]: Reference relativistic gamma
-             - beta0 [1]: Reference relativistic beta
-             - mass_ratio [1]: mass/mass0 (this is used to track particles of
-                               different species. Note that mass is the rest mass
-                               of the considered particle species and not the
-                               relativistic mass)
-             - chi [1]: q / q0 * m0 / m = qratio / mratio
-             - charge_ratio [1]: q / q0
-             - particle_id [int]: Identifier of the particle
-             - at_turn [int]: Number of tracked turns
-             - state [int]: It is <= 0 if the particle is lost, > 0 otherwise
-                            (different values are used to record information
-                            on how the particle is lost or generated).
-             - weight [int]: Particle weight in number of particles
-                              (for collective sims.)
-             - at_element [int]: Identifier of the last element through which
-                                 the particle has been
-             - parent_particle_id [int]: Identifier of the parent particle
-                                         (secondary production processes)
-    """
     _cname = 'ParticlesData'
 
     size_vars = ParticlesBase.size_vars
