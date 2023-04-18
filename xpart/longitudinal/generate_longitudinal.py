@@ -204,7 +204,7 @@ def generate_longitudinal_coordinates(
                             phi_offset_list=np.atleast_1d(rf_phase),
                             p_increment=p_increment)
 
-        if sigma_z < 0.1 * circumference/np.max(np.atleast_1d(rf_harmonic)):
+        if sigma_z < 0.03 * circumference/np.max(np.atleast_1d(rf_harmonic)):
             logger.info('short bunch, use linear matching')
             eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
             beta_z = np.abs(eta) * circumference / 2.0 / np.pi / rfbucket.Q_s
