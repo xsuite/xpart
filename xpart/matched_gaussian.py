@@ -27,7 +27,7 @@ def generate_matched_gaussian_bunch(num_particles,
                                     line=None,
                                     particle_ref=None,
                                     particles_class=None,
-                                    engine='pyheadtail',
+                                    engine=None,
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs, # They are passed to build_particles
                                     ):

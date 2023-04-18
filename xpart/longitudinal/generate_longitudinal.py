@@ -33,6 +33,7 @@ def _characterize_line(line, particle_ref,
     lag_list_deg = []
     voltage_list = []
     h_list = []
+    found_linear_longitudinal = False
     for ee in line.elements:
         if ee.__class__.__name__ == 'Cavity':
             eecp = ee.copy(_context=xo.ContextCpu())
@@ -41,6 +42,20 @@ def _characterize_line(line, particle_ref,
                 lag_list_deg.append(eecp.lag)
                 voltage_list.append(eecp.voltage)
                 h_list.append(eecp.frequency*T_rev)
+        elif ee.__class__.__name__ == 'SimplifiedAcceleratorSegment':
+            eecp = ee.copy(_context=xo.ContextCpu())
+            assert eecp.longitudinal_mode in ['nonlinear', 'linear_fixed_qs']
+            if eecp.longitudinal_mode == 'nonlinear':
+                freq_list += list(eecp.frequency_rf)
+                lag_list_deg += list(eecp.lag_rf)
+                voltage_list += list(eecp.voltage_rf)
+                h_list += [ff*T_rev for ff in eecp.frequency_rf]
+            elif eecp.longitudinal_mode == 'linear_fixed_qs':
+                found_linear_longitudinal = True
+
+    if found_linear_longitudinal:
+        assert len(freq_list) == 0, (
+            "Cannot mix linear and nonlinear longitudinal kicks")
 
     tw = line.twiss(
         particle_ref=particle_ref, **kwargs)
@@ -53,6 +68,9 @@ def _characterize_line(line, particle_ref,
     dct['h_list'] = h_list
     dct['momentum_compaction_factor'] = tw['momentum_compaction_factor']
     dct['slip_factor'] = tw['slip_factor']
+    dct['qs'] = tw['qs']
+    dct['bets0'] = tw['betz0']
+    dct['found_linear_longitudinal'] = found_linear_longitudinal
     return dct
 
 def generate_longitudinal_coordinates(
@@ -69,7 +87,7 @@ def generate_longitudinal_coordinates(
                                     p_increment=0.,
                                     distribution='gaussian',
                                     sigma_z=None,
-                                    engine="pyheadtail",
+                                    engine=None,
                                     return_matcher=False,
                                     **kwargs # passed to twiss
                                     ):
@@ -124,10 +142,22 @@ def generate_longitudinal_coordinates(
         assert line is not None
         rf_phase=(np.array(dct['lag_list_deg']) - 180)/180*np.pi
 
-
     assert sigma_z is not None
 
-    if engine == "pyheadtail":
+    if engine is None:
+        if line is not None and dct['found_linear_longitudinal']:
+            engine = 'linear'
+        else:
+            engine = 'pyheadtail'
+
+    if engine == "linear":
+        if distribution != 'gaussian':
+            raise NotImplementedError
+        assert line is not None, ('Not yet implemented if line is not provided')
+        sigma_dp = sigma_z / np.abs(dct['bets0'])
+        z_particles = sigma_z * np.random.normal(size=num_particles)
+        delta_particles = sigma_dp * np.random.normal(size=num_particles)
+    elif engine == "pyheadtail":
         if distribution != 'gaussian':
             raise NotImplementedError
 
