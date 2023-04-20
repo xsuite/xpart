@@ -881,7 +881,7 @@ class ParticlesBase(xo.HybridClass):
                     vv[n_active:n_active + n_lost] = vv_lost
                     vv[n_active + n_lost:] = tt._dtype.type(LAST_INVALID_STATE)
 
-        if isinstance(self._buffer.context, xo.ContextCpu) and self._buffer.context.omp_num_threads == 0:
+        if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
             self._num_lost_particles = n_lost
 
@@ -1480,6 +1480,21 @@ class ParticlesBase(xo.HybridClass):
     #else
         return 1;
     #endif
+    }
+    
+    /*gpufun*/
+    void count_reorganized_particles(LocalParticle* part) {
+        int64_t num_active = 0;
+        int64_t num_lost = 0;
+        
+        for (int64_t i = part->ipart; i < part->endpart; i++) {
+            if (part->state[i] <= -999999999) break;
+            else if (part->state[i] > 0) num_active++;
+            else num_lost++;
+        }
+        
+        part->_num_active_particles = 1;//num_active;
+        part->_num_lost_particles = 1;//num_lost;
     }
     
     #else // not CPU_SERIAL_IMPLEM and not CPU_OMP_IMPLEM
