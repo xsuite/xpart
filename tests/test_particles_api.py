@@ -11,7 +11,7 @@ import xpart as xp
 
 
 def test_check_is_active_sorting_openmp():
-    test_context = xo.ContextCpu(omp_num_threads=4)
+    test_context = xo.ContextCpu(omp_num_threads=5)
 
     class TestElement(xt.BeamElement):
         _xofields = {
@@ -46,13 +46,17 @@ def test_check_is_active_sorting_openmp():
             0, 1, 0, 1, 1,  # should be reordered to 1, 1, 1, 0, 0
             1, 1, 0,        # should be left intact
         ],
+        _capacity=22,       # there are 4 particles that are unallocated
         _no_reorganize=True,
     )
 
     el.track(particles)
 
-    # We have four threads, so the particles should be split into chunks
-    # of 5, 5, 5, 3. Check that each chunk is reorganized correctly.
+    # We have five threads, so the particles should be split into chunks
+    # of 5, 5, 5, 3 + 2 (unallocated), 2 (unallocated).
+    assert len(particles.state) == 22
+
+    # Check that each chunk is reorganized correctly.
     # First batch:
     assert np.all(particles.state[0:5] == [1, 1, 1, 0, 0])
     assert set(particles.particle_id[0:3]) == {0, 2, 4}
@@ -69,9 +73,12 @@ def test_check_is_active_sorting_openmp():
     assert set(particles.particle_id[13:15]) == {10, 12}
 
     # Fourth batch:
-    assert np.all(particles.state[15:18] == [1, 1, 0])
+    assert np.all(particles.state[15:20] == [1, 1, 0, -999999999, -999999999])
     # Don't reorder if not needed:
     assert np.all(particles.particle_id[15:18] == [15, 16, 17])
+
+    # Fifth batch (unallocated):
+    assert np.all(particles.state[20:22] == [-999999999, -999999999])
 
 
 @pytest.mark.parametrize(
