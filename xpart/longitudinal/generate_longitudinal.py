@@ -44,8 +44,9 @@ def _characterize_line(line, particle_ref,
                 h_list.append(eecp.frequency*T_rev)
         elif ee.__class__.__name__ == 'SimplifiedAcceleratorSegment':
             eecp = ee.copy(_context=xo.ContextCpu())
-            assert eecp.longitudinal_mode in ['nonlinear', 'linear_fixed_qs']
-            if eecp.longitudinal_mode == 'nonlinear':
+            assert eecp.longitudinal_mode in [
+                'nonlinear', 'linear_fixed_qs', 'linear_fixed_rf', None]
+            if eecp.longitudinal_mode in ['nonlinear' , 'linear_fixed_rf']:
                 freq_list += list(eecp.frequency_rf)
                 lag_list_deg += list(eecp.lag_rf)
                 voltage_list += list(eecp.voltage_rf)
