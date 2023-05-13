@@ -1427,10 +1427,10 @@ class ParticlesBase(xo.HybridClass):
     }
 
     /*gpufun*/
-    void increment_at_element(LocalParticle* part0){
+    void increment_at_element(LocalParticle* part0, int64_t const increment){
 
         //start_per_particle_block (part0->part)
-            LocalParticle_add_to_at_element(part, 1);
+            LocalParticle_add_to_at_element(part, increment);
         //end_per_particle_block
 
     }
@@ -1443,6 +1443,20 @@ class ParticlesBase(xo.HybridClass):
         LocalParticle_set_at_element(part, 0);
         if (flag_reset_s>0){
             LocalParticle_set_s(part, 0.);
+        }
+        //end_per_particle_block
+    }
+
+    /*gpufun*/
+    void increment_at_turn_backtrack(LocalParticle* part0, int flag_reset_s,
+                                     double const line_length,
+                                     int64_t const num_elements){
+
+        //start_per_particle_block (part0->part)
+        LocalParticle_add_to_at_turn(part, -1);
+        LocalParticle_set_at_element(part, num_elements);
+        if (flag_reset_s>0){
+            LocalParticle_set_s(part, line_length);
         }
         //end_per_particle_block
     }
