@@ -13,6 +13,29 @@ import xpart as xp
 def generate_2D_pencil(num_particles, pos_cut_sigmas, dr_sigmas,
                        side='+'):
 
+    '''
+    Generate a 2D pencil beam distribution.
+
+    Parameters
+    ----------
+    num_particles : int
+        Number of particles to be generated.
+    pos_cut_sigmas : float
+        Position cut in sigmas.
+    dr_sigmas : float
+        Radius of the pencil beam in sigmas.
+    side : str
+        Side of the pencil beam. Can be '+', '-' or '+-'.
+
+    Returns
+    -------
+    x1 : np.ndarray
+        First normalized coordinate.
+    x2 : np.ndarray
+        Second normalized coordinate.
+
+    '''
+
     assert side == '+' or side == '-' or side == '+-'
 
     if side == '+-':
@@ -68,6 +91,35 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     plane, absolute_cut, dr_sigmas, side='+', tracker=None, line=None,
     nemitt_x=None, nemitt_y=None,
     at_element=None, match_at_s=None, **kwargs):
+
+    '''
+    Generate a 2D pencil beam distribution with an absolute cut.
+
+    Parameters
+    ----------
+    line: xtrack.Line
+        Line for which the coordinates are generated.
+    num_particles : int
+        Number of particles to be generated.
+    plane : str
+        Plane of the pencil beam. Can be 'x' or 'y'.
+    absolute_cut : float
+        Absolute cut in meters.
+    dr_sigmas : float
+        Radius of the pencil beam in sigmas.
+    side : str
+        Side of the pencil beam. Can be '+' or '-'.
+
+    Returns
+    -------
+    x1 : np.ndarray
+        First normalized coordinate.
+    x2 : np.ndarray
+        Second normalized coordinate.
+
+    '''
+
+
 
     if line is not None and tracker is not None:
         raise ValueError(

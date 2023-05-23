@@ -32,6 +32,31 @@ def generate_matched_gaussian_bunch(num_particles,
                                     **kwargs, # They are passed to build_particles
                                     ):
 
+    '''
+    Generate a matched Gaussian bunch.
+
+    Parameters
+    ----------
+    line : xpart.Line
+        Line for which the bunch is generated.
+    num_particles : int
+        Number of particles to be generated.
+    nemitt_x : float
+        Normalized emittance in the horizontal plane (in m rad).
+    nemitt_y : float
+        Normalized emittance in the vertical plane (in m rad).
+    sigma_z : float
+        RMS bunch length in meters.
+    total_intensity_particles : float
+        Total intensity of the bunch in particles.
+
+    Returns
+    -------
+    part : xpart.Particles
+        Particles object containing the generated particles.
+
+    '''
+
     if line is not None and tracker is not None:
         raise ValueError(
             'line and tracker cannot be provided at the same time.')
@@ -97,7 +122,7 @@ def generate_matched_gaussian_bunch(num_particles,
                       zeta=zeta, delta=delta,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,
-                      scale_with_transverse_norm_emitt=(nemitt_x, nemitt_y),
+                      nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                       weight=total_intensity_particles/num_particles,
                       **kwargs)
     return part

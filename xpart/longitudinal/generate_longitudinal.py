@@ -56,23 +56,56 @@ def _characterize_line(line, particle_ref,
     return dct
 
 def generate_longitudinal_coordinates(
-                                    tracker=None,
                                     line=None,
+                                    num_particles=None,
+                                    distribution='gaussian',
+                                    sigma_z=None,
+                                    engine="pyheadtail",
+                                    return_matcher=False,
                                     particle_ref=None,
                                     mass0=None, q0=None, gamma0=None,
-                                    num_particles=None,
                                     circumference=None,
                                     momentum_compaction_factor=None,
                                     rf_harmonic=None,
                                     rf_voltage=None,
                                     rf_phase=None,
                                     p_increment=0.,
-                                    distribution='gaussian',
-                                    sigma_z=None,
-                                    engine="pyheadtail",
-                                    return_matcher=False,
+                                    tracker=None,
                                     **kwargs # passed to twiss
                                     ):
+
+    '''
+    Generate longitudinal coordinates matched to given RF parameters (non-linar
+    bucket).
+
+    Parameters
+    ----------
+    line: xline.Line
+        Line for which the longitudinal coordinates are generated.
+    num_particles: int
+        Number of particles to be generated.
+    distribution: str
+        Distribution of the particles. Possible values are `gaussian` and
+        `parabolic`.
+    sigma_z: float
+        RMS bunch length in meters.
+    engine: str
+        Engine to be used for the generation. Possible values are `pyheadtail`
+        and `single-rf-harmonic`.
+    return_matcher: bool
+        If True, the matcher object is returned.
+
+    Returns
+    -------
+    zeta: np.ndarray
+        Longitudinal position of the generated particles.
+    delta: np.ndarray
+        Longitudinal momentum deviation of the generated particles.
+    matcher: object
+        Matcher object used for the generation. Returned only if
+        `return_matcher` is True.
+
+    '''
 
     if line is not None and tracker is not None:
         raise ValueError(
