@@ -787,7 +787,10 @@ class ParticlesBase(xo.HybridClass):
 
                     vv[:n_active] = vv_active
                     vv[n_active:n_active + n_lost] = vv_lost
-                    vv[n_active + n_lost:] = tt._dtype.type(LAST_INVALID_STATE)
+                    if nn.startswith('_rng'):
+                        vv[n_active + n_lost:] = 0
+                    else:
+                        vv[n_active + n_lost:] = tt._dtype.type(LAST_INVALID_STATE)
 
         if isinstance(self._buffer.context, xo.ContextCpu):
             self._num_active_particles = n_active
