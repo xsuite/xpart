@@ -10,7 +10,8 @@ def parabolic_longitudinal_distribution(_context=None,
                 			particle_ref=None, 
                 			total_intensity_particles=None,
                 			tracker=None,
-                			line=None
+                			line=None,
+                			return_matcher=False
                 			):
 
 	"""
@@ -49,10 +50,10 @@ def parabolic_longitudinal_distribution(_context=None,
 		nemitt_y = 1.0
 	
 	# Generate longitudinal coordinates s
-	zeta, delta = generate_longitudinal_coordinates(line=line, distribution='parabolic', 
+	zeta, delta, matcher = generate_longitudinal_coordinates(line=line, distribution='parabolic', 
 							num_particles=num_particles, 
 							engine='single-rf-harmonic', sigma_z=sigma_z,
-							particle_ref=particle_ref)
+							particle_ref=particle_ref, return_matcher=True)
 	
 	# Initiate normalized coordinates 
 	x_norm = np.random.normal(size=num_particles)
@@ -71,4 +72,7 @@ def parabolic_longitudinal_distribution(_context=None,
 				nemitt_x=nemitt_x, nemitt_y=nemitt_y,
 				weight=total_intensity_particles/num_particles, line=line)
 
-	return particles
+	if return_matcher:
+		return particles, matcher
+	else:
+		return particles
