@@ -150,7 +150,7 @@ def test_linked_arrays(test_context):
     [
         ('p0c', [4e9, 5e11, 6e13]),
         ('gamma0', [3., 4., 5.]),
-        ('beta0', [0.9, 1.0, 1.1]),
+        ('beta0', [0.8, 0.9, 0.99999999]),
     ]
 )
 def test_particles_update_ref_vars(test_context, varname, values):

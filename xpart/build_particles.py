@@ -213,6 +213,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             tw_state = tw.get_twiss_init(at_element=
                 (at_element_line_rmat if at_element_line_rmat is not None else 0))
 
+            # This is not initialized by get_twiss_init
+            tw_state.particle_on_co.at_element = line_rmat.element_names.index(
+                                                        tw_state.element_name)
+
             WW = tw_state.W_matrix
             particle_on_co = tw_state.particle_on_co
         elif W_matrix is None and R_matrix is not None:
