@@ -12,7 +12,7 @@ import xpart as xp
 import xtrack as xt
 import xobjects as xo
 
-from xpart.longitudinal import parabolic_longitudinal_distribution
+from xpart import parabolic_longitudinal_distribution
 import matplotlib.pyplot as plt
 import numpy as np
 
