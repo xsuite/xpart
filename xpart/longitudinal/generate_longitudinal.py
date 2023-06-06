@@ -58,6 +58,10 @@ def _characterize_line(line, particle_ref,
         assert len(freq_list) == 0, (
             "Cannot mix linear and nonlinear longitudinal kicks")
 
+    if not found_linear_longitudinal and len(freq_list) == 0:
+        raise ValueError('No longitudinal focusing found in the line. '
+                         'Cannot generate matched longitudinal coordinates.')
+
     tw = line.twiss(
         particle_ref=particle_ref, **kwargs)
 
