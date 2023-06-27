@@ -28,9 +28,6 @@ double rng_get (uint32_t *s1, uint32_t *s2, uint32_t *s3, uint32_t *s4 ){
 
 /*gpufun*/
 void rng_set (uint32_t *s1, uint32_t *s2, uint32_t *s3, uint32_t *s4, uint32_t s ){
-  if (s == 0)
-    s = 1;      /* default seed is 1 */
-
   *s1 = LCG (s, 69069, 0);
   if (*s1 < 2) *s1 += 2UL;
   *s2 = LCG (*s1, 69069, 0);
