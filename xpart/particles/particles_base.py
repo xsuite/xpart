@@ -1591,7 +1591,7 @@ class ParticlesBase(xo.HybridClass):
             if mask is not None:
                 a = a[mask]
                 b = b[mask]
-            return np.allclose(a, b, rtol, atol)
+            return np.allclose(a, b, rtol, atol, equal_nan=True)
 
     def _assert_values_consistent(self, given_value, computed_value, mask=None):
         """Check if the given value is consistent with the computed value."""
