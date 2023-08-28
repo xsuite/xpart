@@ -17,6 +17,7 @@ from xobjects import BypassLinked
 
 
 pmass = m_p * clight * clight / qe
+proton_pdg = 2212
 
 LAST_INVALID_STATE = -999999999
 
@@ -59,6 +60,7 @@ class ParticlesBase(xo.HybridClass):
             (xo.Float64, 'chi'),
             (xo.Float64, 'charge_ratio'),
             (xo.Float64, 'weight'),
+            (xo.Int64, 'pdg_id'),
             (xo.Int64, 'particle_id'),
             (xo.Int64, 'at_element'),
             (xo.Int64, 'at_turn'),
@@ -1750,6 +1752,7 @@ class ParticlesBase(xo.HybridClass):
                                  mass_ratio=None, mask=None):
         num_args = sum(ff is not None for ff in (chi, charge_ratio, mass_ratio))
 
+        if pdg_id is None
         if num_args == 0:
             self.chi = 1.0
             self.charge_ratio = 1.0
