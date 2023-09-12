@@ -13,7 +13,10 @@ from .build_particles import build_particles
 import xpart as xp # To get the right Particles class depending on pyheatail interface state
 
 def generate_matched_gaussian_bunch(num_particles,
-                                    nemitt_x, nemitt_y, sigma_z,
+                                    nemitt_x, nemitt_y, 
+                                    coasting=None,
+                                    sigma_z=None, 
+                                    sigma_dp=None,
                                     total_intensity_particles=None,
                                     particle_on_co=None,
                                     R_matrix=None,
@@ -45,8 +48,12 @@ def generate_matched_gaussian_bunch(num_particles,
         Normalized emittance in the horizontal plane (in m rad).
     nemitt_y : float
         Normalized emittance in the vertical plane (in m rad).
+    coasting : bool
+        If True, particles will be uniformly spread along circumference.
     sigma_z : float
-        RMS bunch length in meters.
+        RMS bunch length in meters. Ignored if coasting.
+    sigma_dp : float
+        RMS momentum spread. Ignored if not coasting and sigma_z is provided.
     total_intensity_particles : float
         Total intensity of the bunch in particles.
 
@@ -86,6 +93,7 @@ def generate_matched_gaussian_bunch(num_particles,
 
     zeta, delta = generate_longitudinal_coordinates(
             distribution='gaussian',
+            coasting=coasting,
             num_particles=num_particles,
             particle_ref=(particle_ref if particle_ref is not None
                           else particle_on_co),
@@ -97,6 +105,7 @@ def generate_matched_gaussian_bunch(num_particles,
             rf_phase=rf_phase,
             p_increment=p_increment,
             sigma_z=sigma_z,
+            sigma_dp=sigma_dp,
             engine=engine,
             **kwargs)
 
@@ -124,5 +133,6 @@ def generate_matched_gaussian_bunch(num_particles,
                       y_norm=y_norm, py_norm=py_norm,
                       nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                       weight=total_intensity_particles/num_particles,
+                      method='4d',
                       **kwargs)
     return part
