@@ -7,7 +7,6 @@ import numpy as np
 from .polar import generate_2D_uniform_circular_sector
 from ..general import _print
 
-import xtrack as xt
 import xpart as xp
 
 def generate_2D_pencil(num_particles, pos_cut_sigmas, dr_sigmas,
@@ -146,6 +145,7 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         at_element = 0
 
     if match_at_s is not None:
+        import xtrack as xt
         drift_to_at_s = xt.Drift(_context=line._context,
             length=match_at_s - line.get_s_position(at_element))
     else:
