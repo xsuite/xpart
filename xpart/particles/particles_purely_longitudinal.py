@@ -2,7 +2,7 @@ import numpy as np
 import xobjects as xo
 
 from ..general import _pkg_root
-from .particles_base import ParticlesBase, pmass, LAST_INVALID_STATE
+from .particles_base import ParticlesBase, LAST_INVALID_STATE
 
 
 def _contains_nan(arr, ctx):
