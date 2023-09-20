@@ -1762,6 +1762,7 @@ class ParticlesBase(xo.HybridClass):
             self.pdg_id = pdg_id
             self.chi = 1.0
             self.charge_ratio = 1.0
+            return
 
         elif num_args == 1:
             raise ValueError('Two of `chi`, `charge_ratio` and `mass_ratio` '
