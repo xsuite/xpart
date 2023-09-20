@@ -161,6 +161,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         'p0c': particle_ref.p0c[0],
         'gamma0': particle_ref.gamma0[0],
         'beta0': particle_ref.beta0[0],
+        'pdg_id': particle_ref.pdg_id[0]
     }
     part_dict = ref_dict.copy()
 
