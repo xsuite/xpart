@@ -1752,32 +1752,16 @@ class ParticlesBase(xo.HybridClass):
                                     computed_value=_zeta,
                                     mask=mask)
 
-    def _initialise_by_pdg_id(self, pdg_id):
-        self.pdg_id = pdg_id
-        q, _, _, _ = get_properties_from_pdg_id(pdg_id)
-        self.charge_ratio = q / self.q0
-        try:
-            mass = get_mass_from_pdg_id(pdg_id, allow_approximation=False,
-                                        expected_mass=self.mass0)
-            mass_ratio = mass / self.mass0
-            self.chi = self.charge_ratio / mass_ratio
-        except:
-            raise NotImplementedError("Masses are only available for protons, "
-                                    + "electrons, muons, and Pb208. For any "
-                                    + "other particle, use `mass_ratio`.")
-
     def _update_chi_charge_ratio(self, chi=None, charge_ratio=None,
                                  pdg_id=None, mass_ratio=None, mask=None):
         num_args = sum(ff is not None for ff in (chi, charge_ratio, mass_ratio))
 
         if num_args == 0:
             if pdg_id is None:
-                self.pdg_id = get_pdg_id_from_name('proton')
-                self.chi = 1.0
-                self.charge_ratio = 1.0
-            else:
-                self._initialise_by_pdg_id(pdg_id)
-            return
+                pdg_id = get_pdg_id_from_name('proton')
+            self.pdg_id = pdg_id
+            self.chi = 1.0
+            self.charge_ratio = 1.0
 
         elif num_args == 1:
             raise ValueError('Two of `chi`, `charge_ratio` and `mass_ratio` '
