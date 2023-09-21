@@ -9,6 +9,12 @@ from numbers import Number
 from .constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV
 
 
+# Monte Carlo numbering scheme as defined by the Particle Data Group
+# See https://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf for implementation
+# details.
+# Not all particles are implemented yet; this can be appended later
+
+
 _PDG = {
 #   ID       q  NAME
     0:     [0.,  'undefined'],
