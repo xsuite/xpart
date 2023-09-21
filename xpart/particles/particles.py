@@ -60,6 +60,26 @@ class Particles(ParticlesBase):
         self.py = kwargs.get('py', 0)
 
     @classmethod
+    def build_reference_particle(cls, *args, **kwargs):
+        pdg_id = kwargs.get('pdg_id')
+        if pdg_id is not None:
+            pdg_id = get_pdg_id_from_name(pdg_id)
+            q0 = kwargs.get('q0')
+            mass0 = kwargs.get('mass0')
+            if q0 is None:
+                q, _, _, _ = get_properties_from_pdg_id(pdg_id)
+                kwargs['q0'] = q
+            if mass0 is None:
+                kwargs['mass0'] = get_mass_from_pdg_id(pdg_id)
+                                          
+        particle_ref = cls(args, kwargs)
+        if particle_ref._capacity > 1:
+            raise ValueError("The method `build_reference_particle` should have "
+                           + "a `_capacity` of 1. Make sure all properties are "
+                           + "single entries!")
+        return particle_ref
+
+    @classmethod
     def gen_local_particle_api(cls, mode='no_local_copy'):
         source = super(Particles, cls).gen_local_particle_api(mode)
         source += """
