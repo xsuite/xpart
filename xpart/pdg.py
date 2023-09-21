@@ -10,6 +10,7 @@ from .constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV
 
 _PDG = {
 #   ID       q  NAME
+    0:     [0.,  'undefined'],
     11:    [-1., 'electron'],
     -11:   [1.,  'positron'],
     13:    [-1., 'muon'],
@@ -84,9 +85,13 @@ def get_name_from_pdg_id(pdg_id):
     return get_properties_from_pdg_id(pdg_id)[-1]
 
 
-def get_pdg_id_from_name(name):
-    if hasattr(name, '__len__') and not isinstance(name, str):
+def get_pdg_id_from_name(name=None):
+    if name is None:
+        return 0  # undefined
+    elif hasattr(name, '__len__') and not isinstance(name, str):
         return np.array([get_pdg_id_from_name(nn) for nn in name])
+    elif isinstance(name, int):
+        return name # fallback
 
     _PDG_inv      = {val[1].lower(): pdg_id for pdg_id, val in _PDG.items()}
 
@@ -273,7 +278,7 @@ def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
         return MUON_MASS_EV
     elif name == 'Pb208':
         return Pb208_MASS_EV
-    elif allow_approximation:
+    elif allow_approximation and A>0:
         print(f"Warning: approximating the mass as {A}u!")
         return A*U_MASS_EV
     else:

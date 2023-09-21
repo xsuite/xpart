@@ -172,8 +172,8 @@ class ParticlesBase(xo.HybridClass):
             is lost or generated)
         pdg_id : array_like of float, optional
             PDG id of the particle under consideration (needed when tracking
-            ions to distinguish different particle types). The default is 2212
-            (for a proton)
+            ions to distinguish different particle types). The default is 0
+            (undefined)
         weight : array_like of float, optional
             Particle weight in number of particles (for collective simulations)
         at_element : array_like of int, optional
@@ -1582,6 +1582,7 @@ class ParticlesBase(xo.HybridClass):
         self.at_turn = kwargs.get('at_turn', 0)
         self.at_element = kwargs.get('at_element', 0)
         self.weight = kwargs.get('weight', 1)
+        self.pdg_id = get_pdg_id_from_name(kwargs.get('pdg_id'))
 
     def _allclose(self, a, b, rtol=1e-05, atol=1e-08, mask=None):
         """Substitute for np.allclose that works with all contexts, and
@@ -1753,13 +1754,10 @@ class ParticlesBase(xo.HybridClass):
                                     mask=mask)
 
     def _update_chi_charge_ratio(self, chi=None, charge_ratio=None,
-                                 pdg_id=None, mass_ratio=None, mask=None):
+                                 mass_ratio=None, mask=None):
         num_args = sum(ff is not None for ff in (chi, charge_ratio, mass_ratio))
 
         if num_args == 0:
-            if pdg_id is None:
-                pdg_id = get_pdg_id_from_name('proton')
-            self.pdg_id = pdg_id
             self.chi = 1.0
             self.charge_ratio = 1.0
             return
@@ -1783,22 +1781,6 @@ class ParticlesBase(xo.HybridClass):
 
         else:  # num_args == 3
             _chi, _charge_ratio, _mass_ratio = chi, charge_ratio, mass_ratio
-
-        if pdg_id is None:
-            try:
-                self.pdg_id = get_pdg_id_from_mass_charge(
-                                                _mass_ratio*self.mass0,
-                                                _charge_ratio*self.q0
-                                                )
-            except:
-                raise ValueError("Could not deduce particle type. Please "
-                               + "provide `pdg_id`.")
-        else:
-            self.pdg_id = pdg_id
-            if not _mass_consistent(self.pdg_id, _mass_ratio*self.mass0, mask=mask):
-                raise ValueError(f"The `pdg_id` {self.pdg_id} is not "
-                               + f"consistent with the provided mass of "
-                               + f"{_mass_ratio*self.mass0}eV!")
 
         self._assert_values_consistent(mass_ratio, _mass_ratio, mask)
         self._setattr_if_consistent('chi',
