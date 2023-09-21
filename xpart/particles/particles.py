@@ -8,6 +8,7 @@ import xobjects as xo
 
 from ..general import _pkg_root
 from .particles_base import ParticlesBase, LAST_INVALID_STATE
+from ..pdg import get_pdg_id_from_name, get_properties_from_pdg_id, get_mass_from_pdg_id
 
 
 def _contains_nan(arr, ctx):
@@ -64,6 +65,7 @@ class Particles(ParticlesBase):
         pdg_id = kwargs.get('pdg_id')
         if pdg_id is not None:
             pdg_id = get_pdg_id_from_name(pdg_id)
+            kwargs['pdg_id'] = pdg_id
             q0 = kwargs.get('q0')
             mass0 = kwargs.get('mass0')
             if q0 is None:
@@ -72,7 +74,7 @@ class Particles(ParticlesBase):
             if mass0 is None:
                 kwargs['mass0'] = get_mass_from_pdg_id(pdg_id)
                                           
-        particle_ref = cls(args, kwargs)
+        particle_ref = cls(*args, **kwargs)
         if particle_ref._capacity > 1:
             raise ValueError("The method `build_reference_particle` should have "
                            + "a `_capacity` of 1. Make sure all properties are "

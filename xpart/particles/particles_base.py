@@ -8,8 +8,7 @@ import xobjects as xo
 
 from ..general import _pkg_root
 from ..constants import PROTON_MASS_EV
-from ..pdg import get_properties_from_pdg_id, get_mass_from_pdg_id, _mass_consistent, \
-                  get_pdg_id_from_name, get_pdg_id_from_mass_charge
+from ..pdg import get_pdg_id_from_name
 
 from scipy.constants import e as qe
 from scipy.constants import c as clight

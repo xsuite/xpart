@@ -4,6 +4,7 @@
 # ######################################### #
 
 import numpy as np
+from numbers import Number
 
 from .constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV
 
@@ -90,8 +91,8 @@ def get_pdg_id_from_name(name=None):
         return 0  # undefined
     elif hasattr(name, '__len__') and not isinstance(name, str):
         return np.array([get_pdg_id_from_name(nn) for nn in name])
-    elif isinstance(name, int):
-        return name # fallback
+    elif isinstance(name, Number):
+        return int(name) # fallback
 
     _PDG_inv      = {val[1].lower(): pdg_id for pdg_id, val in _PDG.items()}
 

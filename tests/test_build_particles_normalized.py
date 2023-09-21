@@ -102,7 +102,7 @@ def test_build_particles_normalized_ions(test_context):
                                        nemitt_x=3e-6, nemitt_y=3e-6)
 
         dct = particles.to_dict() # transfers it to cpu
-        assert np.allclose(dct['x'], [6.5395e-3, 1.20e-5, -6.5154e-3],
+        assert np.allclose(dct['x'], [6.5404e-3, 1.21e-5, -6.5163e-3],
                            rtol=0, atol=1e-7)
         assert np.isclose(dct['ptau'][1], 9.906e-6, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-5, rtol=0, atol=1e-10)
