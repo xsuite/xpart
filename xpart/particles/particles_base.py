@@ -343,6 +343,7 @@ class ParticlesBase(xo.HybridClass):
         self._update_chi_charge_ratio(
             chi=kwargs.get('chi'),
             charge_ratio=kwargs.get('charge_ratio'),
+            mass_ratio=kwargs.get('mass_ratio'),
             mask=input_mask,
         )
 
