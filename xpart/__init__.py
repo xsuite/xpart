@@ -33,3 +33,6 @@ def enable_pyheadtail_interface():
 def disable_pyheadtail_interface():
     import xpart as xp
     xp.Particles = xp.particles.Particles
+
+def build_reference_particle(*args, **kwargs):
+    return Particles.build_reference_particle(*args, **kwargs)
