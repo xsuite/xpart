@@ -1622,10 +1622,7 @@ class ParticlesBase(xo.HybridClass):
 
         # Assign with a mask
         if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
-            if hasattr(mask, 'get'):
-                mask = mask.get()
-            mask = np.where(mask)[0]
-            mask = self._context.nparray_to_context_array(mask)
+            mask = _mask_to_bool(mask, self._context)
 
         getattr(self, varname)[mask] = target_val[mask]
 
@@ -1782,3 +1779,32 @@ class ParticlesBase(xo.HybridClass):
                                     computed_value=_charge_ratio,
                                     mask=mask)
 
+    def update_p0c_and_energy_deviations(self, p0c):
+
+        assert np.isscalar(p0c), 'p0c must be a scalar'
+
+        # Assign with a mask
+        mask = self.state > 0
+        if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
+            mask = _mask_to_bool(mask, self._context)
+
+        old_p0c = self.p0c.copy()[mask]
+        old_beta0 = self.beta0.copy()[mask]
+        old_delta = self.delta.copy()[mask]
+
+        PC = (old_delta + 1) * old_p0c
+        new_delta = PC / p0c - 1
+
+        new_p0c = p0c + 0 * old_p0c
+
+        self._update_refs(p0c=new_p0c, mask=mask)
+        self._update_energy_deviations(mask=mask, delta=new_delta)
+        self._update_zeta(mask=mask, zeta=self.zeta[mask] * self.beta0[mask] / old_beta0)
+
+
+def _mask_to_bool(mask, ctx):
+    if hasattr(mask, 'get'):
+        mask = mask.get()
+    mask = np.where(mask)[0]
+    mask = ctx.nparray_to_context_array(mask)
+    return mask
