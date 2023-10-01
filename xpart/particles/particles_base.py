@@ -1788,9 +1788,9 @@ class ParticlesBase(xo.HybridClass):
         if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
             mask = _mask_to_bool(mask, self._context)
 
-        old_p0c = self.p0c.copy()[mask]
-        old_beta0 = self.beta0.copy()[mask]
-        old_delta = self.delta.copy()[mask]
+        old_p0c = self.p0c.copy()
+        old_beta0 = self.beta0.copy()
+        old_delta = self.delta.copy()
 
         PC = (old_delta + 1) * old_p0c
         new_delta = PC / p0c - 1
@@ -1799,7 +1799,7 @@ class ParticlesBase(xo.HybridClass):
 
         self._update_refs(p0c=new_p0c, mask=mask)
         self._update_energy_deviations(mask=mask, delta=new_delta)
-        self._update_zeta(mask=mask, zeta=self.zeta[mask] * self.beta0[mask] / old_beta0)
+        self._update_zeta(mask=mask, zeta=self.zeta * self.beta0 / old_beta0)
 
 
 def _mask_to_bool(mask, ctx):
