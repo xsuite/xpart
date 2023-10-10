@@ -542,3 +542,63 @@ def test_LocalParticle_update_p0c(test_context):
     assert np.all(particles.zeta == zeta_before*particles.beta0/beta0_before)
     assert np.all(particles.px == px_before*p0c_before/particles.p0c)
     assert np.all(particles.py == py_before*p0c_before/particles.p0c)
+
+
+
+@for_all_test_contexts
+def test_LocalParticle_angles(test_context):
+    class ScaleX(xt.BeamElement):
+        _xofields={
+            'scale_x': xo.Float64,
+            }
+        _extra_c_sources = ['''
+            /*gpufun*/
+            void ScaleX_track_local_particle(
+                    ScaleXData el, LocalParticle* part0){
+                double const scale_x = ScaleXData_get_scale_x(el);
+                //start_per_particle_block (part0->part)
+                    LocalParticle_scale_xp(part, scale_x);
+                //end_per_particle_block
+            }
+            ''']
+
+    class KickXY(xt.BeamElement):
+        _xofields={
+            'kick_x': xo.Float64,
+            'kick_y': xo.Float64,
+            }
+        _extra_c_sources = ['''
+            /*gpufun*/
+            void KickXY_track_local_particle(
+                    KickXYData el, LocalParticle* part0){
+                double const kick_x = KickXYData_get_kick_x(el);
+                double const kick_y = KickXYData_get_kick_y(el);
+                //start_per_particle_block (part0->part)
+                    LocalParticle_add_to_xp_yp(part, kick_x, kick_y);
+                //end_per_particle_block
+            }
+            ''']
+
+    telem1 = KickXY(_context=test_context, kick_x=12.0e-3, kick_y=-6.0e-3)
+    telem2 = ScaleX(_context=test_context, scale_x=2.5)
+
+    line = xt.Line(elements=[xt.Drift(length=1.2), telem1, xt.Drift(length=0.3),
+                             telem2, xt.Drift(length=2.8)])
+    line.build_tracker(_context=test_context)
+    particles = xp.Particles(_context=test_context, p0c=1.4e9, delta=[0, 1e-3],
+                             px=[1.0e-3, -1.0e-3], py=[2.0e-3, -1.2e-3], zeta=0.1)
+    line.track(particles)
+    particles.move(_context=xo.ContextCpu())
+    assert np.allclose(particles.px, [32.5e-3, 27.53e-3], atol=1e-14, rtol=1e-14)
+    assert np.allclose(particles.py, [-4.0e-3, -7.206e-3], atol=1e-14, rtol=1e-14)
+
+    line = xt.Line(elements=[xt.Drift(length=1.2), telem1, xt.Drift(length=0.3),
+                             telem2, xt.Drift(length=2.8)])
+    line.config.XTRACK_USE_EXACT_DRIFTS = True
+    line.build_tracker(_context=test_context)
+    particles = xp.Particles(_context=test_context, p0c=1.4e9, delta=[0, 1e-3],
+                             px=[1.0e-3, -1.0e-3], py=[2.0e-3, -1.2e-3], zeta=0.1)
+    line.track(particles)
+    particles.move(_context=xo.ContextCpu())
+    assert np.allclose(particles.px, [0.0324826, 0.02751888], atol=1e-14)
+    assert np.allclose(particles.py, [-0.00399963, -0.00720538], atol=1e-14)
