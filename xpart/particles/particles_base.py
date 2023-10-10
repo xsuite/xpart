@@ -1348,6 +1348,92 @@ class ParticlesBase(xo.HybridClass):
 
         src_getters = '\n'.join(src_lines)
 
+        # Angles
+        src_lines = []
+        for xx, yy in [['x', 'y'], ['y', 'x']]:
+            # Getter
+            src_lines.append('/*gpufun*/')
+            src_lines.append(f'double LocalParticle_get_{xx}p(LocalParticle* part){{')
+            src_lines.append(f'    double const p{xx} = LocalParticle_get_p{xx}(part);')
+            src_lines.append(f'#ifndef XTRACK_USE_EXACT_DRIFTS')
+            src_lines.append(f'    double const rpp = LocalParticle_get_rpp(part);')
+            src_lines.append(f'#else')
+            src_lines.append(f'    double const p{yy} = LocalParticle_get_p{yy}(part);')
+            src_lines.append(f'    double const one_plus_delta = 1. + LocalParticle_get_delta(part);')
+            src_lines.append(f'    double const rpp = 1./sqrt(one_plus_delta*one_plus_delta - px*px - py*py);')
+            src_lines.append(f'#endif')
+            src_lines.append(f'    return p{xx}*rpp;  // INFO: this is not the angle, but sin(angle)')
+            src_lines.append('}')
+            src_lines.append('')
+        for xx, yy in [['x', 'y'], ['y', 'x']]:
+            # Setter
+            src_lines.append('/*gpufun*/')
+            src_lines.append(f'void LocalParticle_set_{xx}p(LocalParticle* part, double {xx}p){{')
+            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+            src_lines.append(f'    double const rpp = LocalParticle_get_rpp(part);')
+            src_lines.append(f'#ifdef XTRACK_USE_EXACT_DRIFTS')
+            src_lines.append(f'    // Careful! If {yy}p also changes, use LocalParticle_set_xp_yp!')
+            src_lines.append(f'    double const {yy}p   = LocalParticle_get_{yy}p(part);')
+            src_lines.append(f'    double const rpp *= sqrt(1 + xp*xp + yp*yp);')
+            src_lines.append(f'#endif')
+            src_lines.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);  // INFO: {xx}p is not the angle, but sin(angle)')
+            src_lines.append(f'#endif')
+            src_lines.append('}')
+            src_lines.append('')
+        for xx, yy in [['x', 'y'], ['y', 'x']]:
+            # Adder
+            src_lines.append('/*gpufun*/')
+            src_lines.append(f'void LocalParticle_add_to_{xx}p(LocalParticle* part, double {xx}p){{')
+            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+            src_lines.append(f'    LocalParticle_set_{xx}p(part, LocalParticle_get_{xx}p(part) + {xx}p);')
+            src_lines.append(f'#endif')
+            src_lines.append('}')
+            src_lines.append('')
+            # Scaler
+            src_lines.append('/*gpufun*/')
+            src_lines.append(f'void LocalParticle_scale_{xx}p(LocalParticle* part, double value){{')
+            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+            src_lines.append(f'    LocalParticle_set_{xx}p(part, LocalParticle_get_{xx}p(part) * value);')
+            src_lines.append(f'#endif')
+            src_lines.append('}')
+            src_lines.append('')
+        # Double setter, adder, scaler
+        src_lines.append('/*gpufun*/')
+        src_lines.append(f'void LocalParticle_set_xp_yp(LocalParticle* part, double xp, double yp){{')
+        src_lines.append(f'    double const rpp = LocalParticle_get_rpp(part);')
+        src_lines.append(f'#ifdef XTRACK_USE_EXACT_DRIFTS')
+        src_lines.append(f'    double const rpp *= sqrt(1 + xp*xp + yp*yp);')
+        src_lines.append(f'#endif')
+        for xx in ['x', 'y']:
+            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+            src_lines.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);')
+            src_lines.append(f'#endif')
+        src_lines.append('}')
+        src_lines.append('')
+        src_lines.append('/*gpufun*/')
+        src_lines.append(f'void LocalParticle_add_to_xp_yp(LocalParticle* part, double xp, double yp){{')
+        src_lines.append(f'#ifndef FREEZE_VAR_px')
+        src_lines.append(f'#ifndef FREEZE_VAR_py')
+        src_lines.append(f'    LocalParticle_set_xp_yp(part, LocalParticle_get_xp(part) + xp, '
+                       + f'LocalParticle_get_yp(part) + yp);')
+        src_lines.append(f'#endif')
+        src_lines.append(f'#endif')
+        src_lines.append('}')
+        src_lines.append('')
+        src_lines.append('/*gpufun*/')
+        src_lines.append(f'void LocalParticle_scale_xp_yp(LocalParticle* part, double value_x, double value_y){{')
+        src_lines.append(f'#ifndef FREEZE_VAR_px')
+        src_lines.append(f'#ifndef FREEZE_VAR_py')
+        src_lines.append(f'    LocalParticle_set_xp_yp(part, LocalParticle_get_xp(part) * value_x, '
+                       + f'LocalParticle_get_yp(part) * value_y);')
+        src_lines.append(f'#endif')
+        src_lines.append(f'#endif')
+        src_lines.append('}')
+        src_angles = '\n'.join(src_lines)
+
+
+
+
         # Particle exchangers
         src_exchange = '''
     /*gpufun*/
@@ -1427,79 +1513,6 @@ class ParticlesBase(xo.HybridClass):
         double const beta0 = LocalParticle_get_beta0(part);
         LocalParticle_update_ptau(part, beta0*new_pzeta_value);
 
-    }
-
-    /*gpufun*/
-    double LocalParticle_get_xp(LocalParticle* part){
-        double const px = LocalParticle_get_px(part);
-    #ifndef XTRACK_USE_EXACT_DRIFTS
-        double const rpp = LocalParticle_get_rpp(part);
-    #else
-        double const py = LocalParticle_get_py(part);
-        double const one_plus_delta = 1. + LocalParticle_get_delta(part);
-        double const rpp = 1./sqrt(one_plus_delta*one_plus_delta - px*px - py*py);
-    #endif
-        return px*rpp;    // TODO: this is not the angle, but sin(angle)
-    }
-
-    /*gpufun*/
-    double LocalParticle_get_yp(LocalParticle* part){
-        double const py = LocalParticle_get_py(part);
-    #ifndef XTRACK_USE_EXACT_DRIFTS
-        double const rpp = LocalParticle_get_rpp(part);
-    #else
-        double const px = LocalParticle_get_px(part);
-        double const one_plus_delta = 1. + LocalParticle_get_delta(part);
-        double const rpp = 1./sqrt(one_plus_delta*one_plus_delta - px*px - py*py);
-    #endif
-        return py*rpp;    // TODO: this is not the angle, but sin(angle)
-    }
-
-    /*gpufun*/
-    void LocalParticle_set_xp(LocalParticle* part, double xp){
-        double const rpp = LocalParticle_get_rpp(part);
-    #ifdef XTRACK_USE_EXACT_DRIFTS
-        // Careful! If yp also changes, use a different function!
-        double const yp   = LocalParticle_get_yp(part);
-        double const rpp *= sqrt(1 + xp*xp + yp*yp);
-    #endif
-        LocalParticle_set_px(part, xp/rpp);    // TODO: xp is not the angle, but sin(angle)
-    }
-
-    /*gpufun*/
-    void LocalParticle_set_yp(LocalParticle* part, double yp){
-        double const rpp = LocalParticle_get_rpp(part);
-    #ifdef XTRACK_USE_EXACT_DRIFTS
-        // Careful! If xp also changes, use a different function!
-        double const xp   = LocalParticle_get_xp(part);
-        double const rpp *= sqrt(1 + xp*xp + yp*yp);
-    #endif
-        LocalParticle_set_py(part, yp/rpp);    // TODO: yp is not the angle, but sin(angle)
-    }
-
-    /*gpufun*/
-    void LocalParticle_set_xp_yp(LocalParticle* part, double xp, double yp){
-        double const rpp = LocalParticle_get_rpp(part);
-    #ifdef XTRACK_USE_EXACT_DRIFTS
-        double const rpp *= sqrt(1 + xp*xp + yp*yp);
-    #endif
-        LocalParticle_set_px(part, xp/rpp);    // TODO: xp is not the angle, but sin(angle)
-        LocalParticle_set_py(part, yp/rpp);    // TODO: yp is not the angle, but sin(angle)
-    }
-
-    /*gpufun*/
-    void LocalParticle_add_to_xp(LocalParticle* part, double xp){
-        LocalParticle_set_xp(part, LocalParticle_get_xp(part) + xp);
-    }
-
-    /*gpufun*/
-    void LocalParticle_add_to_yp(LocalParticle* part, double yp){
-        LocalParticle_set_yp(part, LocalParticle_get_yp(part) + yp);
-    }
-
-    /*gpufun*/
-    void LocalParticle_add_to_xp_yp(LocalParticle* part, double xp, double yp){
-        LocalParticle_set_xp_yp(part, LocalParticle_get_xp(part) + xp, LocalParticle_get_yp(part) + yp);
     }
 
     /*gpufun*/
@@ -1636,7 +1649,7 @@ class ParticlesBase(xo.HybridClass):
         source = '\n\n'.join([src_typedef, src_adders, src_getters,
                               src_setters, src_scalers, src_exchange,
                               src_particles_to_local, src_local_to_particles,
-                              custom_source])
+                              src_angles, custom_source])
 
         return source
 
