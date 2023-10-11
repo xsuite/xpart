@@ -203,7 +203,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         at_element_line_rmat = at_element
 
     if mode == 'normalized_transverse':
-
         if W_matrix is None and line is not None:
             if method is not None:
                 kwargs['method'] = method

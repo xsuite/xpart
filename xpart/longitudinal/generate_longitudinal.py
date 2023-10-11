@@ -34,6 +34,7 @@ def _characterize_line(line, particle_ref,
     voltage_list = []
     h_list = []
     found_linear_longitudinal = False
+    found_coasting = False
     for ee in line.elements:
         if ee.__class__.__name__ == 'Cavity':
             eecp = ee.copy(_context=xo.ContextCpu())
@@ -45,7 +46,7 @@ def _characterize_line(line, particle_ref,
         elif ee.__class__.__name__ == 'LineSegmentMap':
             eecp = ee.copy(_context=xo.ContextCpu())
             assert eecp.longitudinal_mode in [
-                'nonlinear', 'linear_fixed_qs', 'linear_fixed_rf', None]
+                'nonlinear', 'linear_fixed_qs', 'linear_fixed_rf', 'frozen', None]
             if eecp.longitudinal_mode in ['nonlinear' , 'linear_fixed_rf']:
                 freq_list += list(eecp.frequency_rf)
                 lag_list_deg += list(eecp.lag_rf)
@@ -59,11 +60,16 @@ def _characterize_line(line, particle_ref,
             "Cannot mix linear and nonlinear longitudinal kicks")
 
     if not found_linear_longitudinal and len(freq_list) == 0:
-        raise ValueError('No longitudinal focusing found in the line. '
-                         'Cannot generate matched longitudinal coordinates.')
-
-    tw = line.twiss(
-        particle_ref=particle_ref, **kwargs)
+        logger.warning('No longitudinal focusing found in the line. '
+                         'Assuming coasting beam uniformly distributed along the line - EXPERIMENTAL!')
+        found_coasting = True
+    
+    if found_coasting:
+        tw = line.twiss(
+            particle_ref=particle_ref, method='4d', **kwargs)
+    else:
+        tw = line.twiss(
+            particle_ref=particle_ref, method='6d', **kwargs)
 
     dct={}
     dct['T_rev'] = T_rev
@@ -76,13 +82,16 @@ def _characterize_line(line, particle_ref,
     dct['qs'] = tw['qs']
     dct['bets0'] = tw['betz0']
     dct['found_linear_longitudinal'] = found_linear_longitudinal
+    dct['found_coasting'] = found_coasting
     return dct
 
 def generate_longitudinal_coordinates(
                                     line=None,
                                     num_particles=None,
                                     distribution='gaussian',
+                                    coasting=None,
                                     sigma_z=None,
+                                    sigma_dp=None,
                                     engine=None,
                                     return_matcher=False,
                                     particle_ref=None,
@@ -110,8 +119,12 @@ def generate_longitudinal_coordinates(
     distribution: str
         Distribution of the particles. Possible values are `gaussian` and
         `parabolic`.
+    coasting: bool
+        If True, a coasting beam will be generated (EXPERIMENTAL!)
     sigma_z: float
         RMS bunch length in meters.
+    sigma_dp: float,
+        RMS momentum spread. This value is used only for coasting beam and for `linear` engine if sigma_z is None.
     engine: str
         Engine to be used for the generation. Possible values are `pyheadtail`
         and `single-rf-harmonic`.
@@ -164,103 +177,123 @@ def generate_longitudinal_coordinates(
         assert line is not None
         circumference = line.get_length()
 
-    if momentum_compaction_factor is None:
+    if coasting is None:
         assert line is not None
-        momentum_compaction_factor = dct['momentum_compaction_factor']
+        coasting = dct['found_coasting']
 
-    if rf_harmonic is None:
-        assert line is not None
-        rf_harmonic=dct['h_list']
-
-    if rf_voltage is None:
-        assert line is not None
-        rf_voltage=dct['voltage_list']
-
-    if rf_phase is None:
-        assert line is not None
-        rf_phase=(np.array(dct['lag_list_deg']) - 180)/180*np.pi
-
-    assert sigma_z is not None
-
-    if engine is None:
-        if line is not None and dct['found_linear_longitudinal']:
-            engine = 'linear'
+    if coasting:
+        logger.warning('EXPERIMENTAL FEATURE: coasting beam.')
+        matcher = None
+        z_particles = circumference * np.random.uniform(low=-0.5, high=0.5, size=num_particles)
+        if sigma_dp is None:
+            delta_particles = np.zeros(num_particles)
         else:
-            engine = 'pyheadtail'
+            delta_particles = sigma_dp * np.random.normal(size=num_particles)
+    else:
+        if momentum_compaction_factor is None:
+            assert line is not None
+            momentum_compaction_factor = dct['momentum_compaction_factor']
 
-    if engine == "linear":
-        if distribution != 'gaussian':
-            raise NotImplementedError
-        assert line is not None, ('Not yet implemented if line is not provided')
-        sigma_dp = sigma_z / np.abs(dct['bets0'])
-        z_particles = sigma_z * np.random.normal(size=num_particles)
-        delta_particles = sigma_dp * np.random.normal(size=num_particles)
-    elif engine == "pyheadtail":
-        if distribution != 'gaussian':
-            raise NotImplementedError
+        if rf_harmonic is None:
+            assert line is not None
+            rf_harmonic=dct['h_list']
 
-        rfbucket = RFBucket(circumference=circumference,
-                            gamma=gamma0,
-                            mass_kg=mass0/(clight**2)*qe,
-                            charge_coulomb=np.abs(q0)*qe,
-                            alpha_array=np.atleast_1d(momentum_compaction_factor),
-                            harmonic_list=np.atleast_1d(rf_harmonic),
-                            voltage_list=np.atleast_1d(rf_voltage),
-                            phi_offset_list=np.atleast_1d(rf_phase),
-                            p_increment=p_increment)
+        if rf_voltage is None:
+            assert line is not None
+            rf_voltage=dct['voltage_list']
 
-        if sigma_z < 0.03 * circumference/np.max(np.atleast_1d(rf_harmonic)):
-            logger.info('short bunch, use linear matching')
-            eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
-            beta_z = np.abs(eta) * circumference / 2.0 / np.pi / rfbucket.Q_s
-            sigma_dp = sigma_z / beta_z
+        if rf_phase is None:
+            assert line is not None
+            rf_phase=(np.array(dct['lag_list_deg']) - 180)/180*np.pi
+        
+        if sigma_z is None:
+            assert sigma_dp is not None, ('Nor sigma_z nor sigma_dp has not been provided')
 
+        if engine is None:
+            if line is not None and dct['found_linear_longitudinal']:
+                engine = 'linear'
+            else:
+                engine = 'pyheadtail'
+
+        if engine == "linear":
+            if distribution != 'gaussian':
+                raise NotImplementedError
+            assert line is not None, ('Not yet implemented if line is not provided')
+            if sigma_z is None:
+                sigma_z = sigma_dp * np.abs(dct['bets0'])
+            else:
+                sigma_dp = sigma_z / np.abs(dct['bets0'])
             z_particles = sigma_z * np.random.normal(size=num_particles)
             delta_particles = sigma_dp * np.random.normal(size=num_particles)
+        elif engine == "pyheadtail":
+            if distribution != 'gaussian':
+                raise NotImplementedError
+            
+            assert sigma_z is not None, ('pyheadtail engine requires sigma_z, not sigma_dp')
 
+            rfbucket = RFBucket(circumference=circumference,
+                                gamma=gamma0,
+                                mass_kg=mass0/(clight**2)*qe,
+                                charge_coulomb=np.abs(q0)*qe,
+                                alpha_array=np.atleast_1d(momentum_compaction_factor),
+                                harmonic_list=np.atleast_1d(rf_harmonic),
+                                voltage_list=np.atleast_1d(rf_voltage),
+                                phi_offset_list=np.atleast_1d(rf_phase),
+                                p_increment=p_increment)
+
+            if sigma_z < 0.03 * circumference/np.max(np.atleast_1d(rf_harmonic)):
+                logger.info('short bunch, use linear matching')
+                eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
+                beta_z = np.abs(eta) * circumference / 2.0 / np.pi / rfbucket.Q_s
+                sigma_dp = sigma_z / beta_z
+
+                z_particles = sigma_z * np.random.normal(size=num_particles)
+                delta_particles = sigma_dp * np.random.normal(size=num_particles)
+
+            else:
+                # Generate longitudinal coordinates
+                matcher = RFBucketMatcher(rfbucket=rfbucket,
+                    distribution_type=ThermalDistribution,
+                    sigma_z=sigma_z)
+                z_particles, delta_particles, _, _ = matcher.generate(
+                                                        macroparticlenumber=num_particles)
+        elif engine == "single-rf-harmonic":
+            if distribution not in ["parabolic", "gaussian"]:
+                raise NotImplementedError
+            assert sigma_z is not None, ('single-rf-harmonic engine requires sigma_z, not sigma_dp')
+            eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
+
+            # if fragment
+            if particle_ref._xobject.chi[0] != 1.0:
+                raise NotImplementedError
+
+            sigma_tau = sigma_z/particle_ref._xobject.beta0[0]
+
+            voltage = np.sum(rf_voltage)
+
+            harmonic_number = np.round(rf_harmonic).astype(int)[0]
+            if not np.allclose(harmonic_number, rf_harmonic, atol=5.e-1, rtol=0.):
+                raise Exception(f"Multiple harmonics detected in lattice: {rf_harmonic}")
+
+            matcher = SingleRFHarmonicMatcher(q0=q0,
+                                            voltage=voltage,
+                                            length=circumference,
+                                            freq=dct['freq_list'][0],
+                                            p0c=particle_ref._xobject.p0c[0],
+                                            slip_factor=eta,
+                                            beta0=particle_ref._xobject.beta0[0],
+                                            rms_bunch_length=sigma_tau,
+                                            distribution=distribution)
+
+            tau, ptau = matcher.sample_tau_ptau(n_particles=num_particles)
+
+            # convert (tau, ptau) to (zeta, delta)
+            z_particles = np.array(particle_ref._xobject.beta0[0]) * np.array(tau)  # zeta
+            temp_particles = Particles(p0c=particle_ref._xobject.p0c[0],
+                                    zeta=z_particles, ptau=ptau)
+            delta_particles = np.array(temp_particles.delta)
         else:
-            # Generate longitudinal coordinates
-            matcher = RFBucketMatcher(rfbucket=rfbucket,
-                distribution_type=ThermalDistribution,
-                sigma_z=sigma_z)
-            z_particles, delta_particles, _, _ = matcher.generate(
-                                                    macroparticlenumber=num_particles)
-    elif engine == "single-rf-harmonic":
-        if distribution not in ["parabolic", "gaussian"]:
-            raise NotImplementedError
-        eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
-
-        # if fragment
-        if particle_ref._xobject.chi[0] != 1.0:
-            raise NotImplementedError
-
-        sigma_tau = sigma_z/particle_ref._xobject.beta0[0]
-
-        voltage = np.sum(rf_voltage)
-
-        harmonic_number = np.round(rf_harmonic).astype(int)[0]
-        if not np.allclose(harmonic_number, rf_harmonic, atol=5.e-1, rtol=0.):
-            raise Exception(f"Multiple harmonics detected in lattice: {rf_harmonic}")
-
-        matcher = SingleRFHarmonicMatcher(q0=q0,
-                                          voltage=voltage,
-                                          length=circumference,
-                                          freq=dct['freq_list'][0],
-                                          p0c=particle_ref._xobject.p0c[0],
-                                          slip_factor=eta,
-                                          beta0=particle_ref._xobject.beta0[0],
-                                          rms_bunch_length=sigma_tau,
-                                          distribution=distribution)
-
-        tau, ptau = matcher.sample_tau_ptau(n_particles=num_particles)
-
-        # convert (tau, ptau) to (zeta, delta)
-        z_particles = np.array(particle_ref._xobject.beta0[0]) * np.array(tau)  # zeta
-        temp_particles = Particles(p0c=particle_ref._xobject.p0c[0],
-                                   zeta=z_particles, ptau=ptau)
-        delta_particles = np.array(temp_particles.delta)
-    else:
-        raise NotImplementedError # TODO better message
+            raise NotImplementedError # TODO better message
 
     if return_matcher:
         return z_particles, delta_particles, matcher
