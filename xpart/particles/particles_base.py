@@ -1349,87 +1349,85 @@ class ParticlesBase(xo.HybridClass):
         src_getters = '\n'.join(src_lines)
 
         # Angles
-        src_lines = []
-        for xx, yy in [['x', 'y'], ['y', 'x']]:
-            # Getter
-            src_lines.append('/*gpufun*/')
-            src_lines.append(f'double LocalParticle_get_{xx}p(LocalParticle* part){{')
-            src_lines.append(f'    double const p{xx} = LocalParticle_get_p{xx}(part);')
-            src_lines.append(f'#ifndef XTRACK_USE_EXACT_DRIFTS')
-            src_lines.append(f'    double const rpp = LocalParticle_get_rpp(part);')
-            src_lines.append(f'#else')
-            src_lines.append(f'    double const p{yy} = LocalParticle_get_p{yy}(part);')
-            src_lines.append(f'    double const one_plus_delta = 1. + LocalParticle_get_delta(part);')
-            src_lines.append(f'    double const rpp = 1./sqrt(one_plus_delta*one_plus_delta - px*px - py*py);')
-            src_lines.append(f'#endif')
-            src_lines.append(f'    return p{xx}*rpp;  // INFO: this is not the angle, but sin(angle)')
-            src_lines.append('}')
-            src_lines.append('')
-        for xx, yy in [['x', 'y'], ['y', 'x']]:
-            # Setter
-            src_lines.append('/*gpufun*/')
-            src_lines.append(f'void LocalParticle_set_{xx}p(LocalParticle* part, double {xx}p){{')
-            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
-            src_lines.append(f'    double rpp = LocalParticle_get_rpp(part);')
-            src_lines.append(f'#ifdef XTRACK_USE_EXACT_DRIFTS')
-            src_lines.append(f'    // Careful! If {yy}p also changes, use LocalParticle_set_xp_yp!')
-            src_lines.append(f'    double const {yy}p = LocalParticle_get_{yy}p(part);')
-            src_lines.append(f'    rpp *= sqrt(1 + xp*xp + yp*yp);')
-            src_lines.append(f'#endif')
-            src_lines.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);  // INFO: {xx}p is not the angle, but sin(angle)')
-            src_lines.append(f'#endif')
-            src_lines.append('}')
-            src_lines.append('')
-        for xx, yy in [['x', 'y'], ['y', 'x']]:
-            # Adder
-            src_lines.append('/*gpufun*/')
-            src_lines.append(f'void LocalParticle_add_to_{xx}p(LocalParticle* part, double {xx}p){{')
-            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
-            src_lines.append(f'    LocalParticle_set_{xx}p(part, LocalParticle_get_{xx}p(part) + {xx}p);')
-            src_lines.append(f'#endif')
-            src_lines.append('}')
-            src_lines.append('')
-            # Scaler
-            src_lines.append('/*gpufun*/')
-            src_lines.append(f'void LocalParticle_scale_{xx}p(LocalParticle* part, double value){{')
-            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
-            src_lines.append(f'    LocalParticle_set_{xx}p(part, LocalParticle_get_{xx}p(part) * value);')
-            src_lines.append(f'#endif')
-            src_lines.append('}')
-            src_lines.append('')
-        # Double setter, adder, scaler
-        src_lines.append('/*gpufun*/')
-        src_lines.append(f'void LocalParticle_set_xp_yp(LocalParticle* part, double xp, double yp){{')
-        src_lines.append(f'    double rpp = LocalParticle_get_rpp(part);')
-        src_lines.append(f'#ifdef XTRACK_USE_EXACT_DRIFTS')
-        src_lines.append(f'    rpp *= sqrt(1 + xp*xp + yp*yp);')
-        src_lines.append(f'#endif')
-        for xx in ['x', 'y']:
-            src_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
-            src_lines.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);')
-            src_lines.append(f'#endif')
-        src_lines.append('}')
-        src_lines.append('')
-        src_lines.append('/*gpufun*/')
-        src_lines.append(f'void LocalParticle_add_to_xp_yp(LocalParticle* part, double xp, double yp){{')
-        src_lines.append(f'#ifndef FREEZE_VAR_px')
-        src_lines.append(f'#ifndef FREEZE_VAR_py')
-        src_lines.append(f'    LocalParticle_set_xp_yp(part, LocalParticle_get_xp(part) + xp, '
-                       + f'LocalParticle_get_yp(part) + yp);')
-        src_lines.append(f'#endif')
-        src_lines.append(f'#endif')
-        src_lines.append('}')
-        src_lines.append('')
-        src_lines.append('/*gpufun*/')
-        src_lines.append(f'void LocalParticle_scale_xp_yp(LocalParticle* part, double value_x, double value_y){{')
-        src_lines.append(f'#ifndef FREEZE_VAR_px')
-        src_lines.append(f'#ifndef FREEZE_VAR_py')
-        src_lines.append(f'    LocalParticle_set_xp_yp(part, LocalParticle_get_xp(part) * value_x, '
-                       + f'LocalParticle_get_yp(part) * value_y);')
-        src_lines.append(f'#endif')
-        src_lines.append(f'#endif')
-        src_lines.append('}')
-        src_angles = '\n'.join(src_lines)
+        src = []
+        # xp defined w/wo exact drift
+        for exact in ['', 'exact_']:
+            # xp (py as transverse) and vice versa
+            for xx, yy in [['x', 'y'], ['y', 'x']]:
+                # Getter
+                src.append('/*gpufun*/')
+                src.append(f'double LocalParticle_get_{exact}{xx}p(LocalParticle* part){{')
+                src.append(f'    double const p{xx} = LocalParticle_get_p{xx}(part);')
+                if exact == 'exact_':
+                    src.append(f'    double const p{yy} = LocalParticle_get_p{yy}(part);')
+                    src.append(f'    double const one_plus_delta = 1. + LocalParticle_get_delta(part);')
+                    src.append(f'    double const rpp = 1./sqrt(one_plus_delta*one_plus_delta - px*px - py*py);')
+                else:
+                    src.append(f'    double const rpp = LocalParticle_get_rpp(part);')
+                src.append(f'    // INFO: this is not the angle, but sin(angle)')
+                src.append(f'    return p{xx}*rpp;')
+                src.append('}')
+                src.append('')
+            for xx, yy in [['x', 'y'], ['y', 'x']]:
+                # Setter
+                src.append('/*gpufun*/')
+                src.append(f'void LocalParticle_set_{exact}{xx}p(LocalParticle* part, double {xx}p){{')
+                src.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src.append(f'    double rpp = LocalParticle_get_rpp(part);')
+                if exact == 'exact_':
+                    src.append(f'    // Careful! If {yy}p also changes, use LocalParticle_set_{exact}xp_yp!')
+                    src.append(f'    double const {yy}p = LocalParticle_get_{exact}{yy}p(part);')
+                    src.append(f'    rpp *= sqrt(1 + xp*xp + yp*yp);')
+                src.append(f'    // INFO: {xx}p is not the angle, but sin(angle)')
+                src.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);')
+                src.append(f'#endif')
+                src.append('}')
+                src.append('')
+            for xx, yy in [['x', 'y'], ['y', 'x']]:
+                # Adder
+                src.append('/*gpufun*/')
+                src.append(f'void LocalParticle_add_to_{exact}{xx}p(LocalParticle* part, double {xx}p){{')
+                src.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src.append(f'    LocalParticle_set_{exact}{xx}p(part, '
+                             + f'LocalParticle_get_{exact}{xx}p(part) + {xx}p);')
+                src.append(f'#endif')
+                src.append('}')
+                src.append('')
+                # Scaler
+                src.append('/*gpufun*/')
+                src.append(f'void LocalParticle_scale_{exact}{xx}p(LocalParticle* part, double value){{')
+                src.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src.append(f'    LocalParticle_set_{exact}{xx}p(part, '
+                             + f'LocalParticle_get_{exact}{xx}p(part) * value);')
+                src.append(f'#endif')
+                src.append('}')
+                src.append('')
+            # Double setter, adder, scaler
+            src.append('/*gpufun*/')
+            src.append(f'void LocalParticle_set_{exact}xp_yp(LocalParticle* part, double xp, double yp){{')
+            src.append(f'    double rpp = LocalParticle_get_rpp(part);')
+            if exact == 'exact_':
+                src.append(f'    rpp *= sqrt(1 + xp*xp + yp*yp);')
+            for xx in ['x', 'y']:
+                src.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);')
+                src.append(f'#endif')
+            src.append('}')
+            src.append('')
+            src.append('/*gpufun*/')
+            src.append(f'void LocalParticle_add_to_{exact}xp_yp(LocalParticle* part, double xp, double yp){{')
+            src.append(f'    LocalParticle_set_{exact}xp_yp(part, '
+                         + f'LocalParticle_get_{exact}xp(part) + xp, '
+                         + f'LocalParticle_get_{exact}yp(part) + yp);')
+            src.append('}')
+            src.append('')
+            src.append('/*gpufun*/')
+            src.append(f'void LocalParticle_scale_{exact}xp_yp(LocalParticle* part, double value_x, double value_y){{')
+            src.append(f'    LocalParticle_set_{exact}xp_yp(part, '
+                         + f'LocalParticle_get_{exact}xp(part) * value_x, '
+                         + f'LocalParticle_get_{exact}yp(part) * value_y);')
+            src.append('}')
+        src_angles = '\n'.join(src)
 
 
 
