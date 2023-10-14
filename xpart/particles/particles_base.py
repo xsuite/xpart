@@ -1788,6 +1788,8 @@ class ParticlesBase(xo.HybridClass):
         if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
             mask = _mask_to_bool(mask, self._context)
 
+        import pdb; pdb.set_trace()
+
         old_p0c = self.p0c.copy()
         old_beta0 = self.beta0.copy()
         old_delta = self.delta.copy()
