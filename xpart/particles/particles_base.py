@@ -1585,7 +1585,6 @@ class ParticlesBase(xo.HybridClass):
         if isinstance(self._context, xo.ContextPyopencl):
             # PyOpenCL does not support np.allclose
             whr = _mask_to_where(mask, ctx=self._context)
-            import pdb; pdb.set_trace()
             if not np.isscalar(a) or not len(a.shape) == 0:
                 a = a[whr]
             if not np.isscalar(b) or not len(b.shape) == 0:
