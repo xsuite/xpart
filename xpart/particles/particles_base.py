@@ -1584,7 +1584,11 @@ class ParticlesBase(xo.HybridClass):
         """
         if isinstance(self._context, xo.ContextPyopencl):
             # PyOpenCL does not support np.allclose
-            c = abs(a - b) * mask
+            if not np.isscalar(a) or not len(a.shape) == 0:
+                a = a[mask]
+            if not np.isscalar(b) or not len(b.shape) == 0:
+                b = b[mask]
+            c = abs(a - b)
             # We use the same formula as in numpy:
             return not bool((c > (atol + rtol * abs(b))).any())
         else:
