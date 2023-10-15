@@ -46,9 +46,10 @@ def test_lead_208():
 def test_build_reference_from_pdg_id(test_context):
     particle_ref_proton  = xp.reference_from_pdg_id(pdg_id='proton',
                                                     _context=test_context)
+    particle_ref_proton.move(_context=test_context)
     assert particle_ref_proton.pdg_id == 2212
-    proton_dict = particle_ref_proton.to_dict()
-    proton_dict.pop('pdg_id')
-    particle_ref_lead = xp.reference_from_pdg_id(pdg_id='Pb208')
+    particle_ref_lead.move(_context=xo.context_default)
+    particle_ref_lead = xp.reference_from_pdg_id(pdg_id='Pb208',
+                                                 _context=test_context)
     assert np.allclose(particle_ref_lead.q0, 82.)
     assert np.allclose(particle_ref_lead.mass0, xp.Pb208_MASS_EV)
