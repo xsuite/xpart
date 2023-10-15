@@ -7,6 +7,8 @@ import numpy as np
 import xobjects as xo
 
 from ..general import _pkg_root
+from ..constants import PROTON_MASS_EV
+from ..pdg import get_pdg_id_from_name
 
 from scipy.constants import e as qe
 from scipy.constants import c as clight
@@ -15,8 +17,6 @@ from scipy.constants import epsilon_0
 
 from xobjects import BypassLinked
 
-
-pmass = m_p * clight * clight / qe
 
 LAST_INVALID_STATE = -999999999
 
@@ -59,6 +59,7 @@ class ParticlesBase(xo.HybridClass):
             (xo.Float64, 'chi'),
             (xo.Float64, 'charge_ratio'),
             (xo.Float64, 'weight'),
+            (xo.Int64, 'pdg_id'),
             (xo.Int64, 'particle_id'),
             (xo.Int64, 'at_element'),
             (xo.Int64, 'at_turn'),
@@ -167,7 +168,11 @@ class ParticlesBase(xo.HybridClass):
         state : array_like of int, optional
             It is <= 0 if the particle is lost, > 0 otherwise
             (different values are used to record information on how the particle
-            is lost or generated).
+            is lost or generated)
+        pdg_id : array_like of float, optional
+            PDG id of the particle under consideration (needed when tracking
+            ions to distinguish different particle types). The default is 0
+            (undefined)
         weight : array_like of float, optional
             Particle weight in number of particles (for collective simulations)
         at_element : array_like of int, optional
@@ -301,7 +306,7 @@ class ParticlesBase(xo.HybridClass):
 
         # Init scalar vars
         self.q0 = kwargs.get('q0', 1.0)
-        self.mass0 = kwargs.get('mass0', pmass)
+        self.mass0 = kwargs.get('mass0', PROTON_MASS_EV)
         self.start_tracking_at_element = kwargs.get('start_tracking_at_element',
                                                     -1)
 
@@ -1576,6 +1581,7 @@ class ParticlesBase(xo.HybridClass):
         self.at_turn = kwargs.get('at_turn', 0)
         self.at_element = kwargs.get('at_element', 0)
         self.weight = kwargs.get('weight', 1)
+        self.pdg_id = get_pdg_id_from_name(kwargs.get('pdg_id'))
 
     def _allclose(self, a, b, rtol=1e-05, atol=1e-08, mask=None):
         """Substitute for np.allclose that works with all contexts, and
@@ -1756,9 +1762,11 @@ class ParticlesBase(xo.HybridClass):
             self.chi = 1.0
             self.charge_ratio = 1.0
             return
+
         elif num_args == 1:
             raise ValueError('Two of `chi`, `charge_ratio` and `mass_ratio` '
-                             'must be provided.')
+                                 'must be provided.')
+
         elif num_args == 2:
             if chi is None:
                 _charge_ratio, _mass_ratio = charge_ratio, mass_ratio
@@ -1771,6 +1779,7 @@ class ParticlesBase(xo.HybridClass):
                 _mass_ratio = charge_ratio / chi
             else:
                 raise RuntimeError('This statement is unreachable.')
+
         else:  # num_args == 3
             _chi, _charge_ratio, _mass_ratio = chi, charge_ratio, mass_ratio
 
