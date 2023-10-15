@@ -96,6 +96,7 @@ def get_pdg_id_from_name(name=None):
     if name is None:
         return 0  # undefined
     elif hasattr(name, '__len__') and not isinstance(name, str):
+        import pdb; pdb.set_trace()
         return np.array([get_pdg_id_from_name(nn) for nn in name])
     elif isinstance(name, Number):
         return int(name) # fallback
