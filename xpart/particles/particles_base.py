@@ -1622,7 +1622,7 @@ class ParticlesBase(xo.HybridClass):
 
         # Assign with a mask
         if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
-            mask = _mask_to_bool(mask, self._context)
+            mask = _mask_to_where(mask, self._context)
 
         getattr(self, varname)[mask] = target_val[mask]
 
@@ -1802,9 +1802,9 @@ class ParticlesBase(xo.HybridClass):
         self._update_zeta(mask=mask, zeta=self.zeta * self.beta0 / old_beta0)
 
 
-def _mask_to_bool(mask, ctx):
+def _mask_to_where(mask, ctx):
     if hasattr(mask, 'get'):
         mask = mask.get()
-    mask = np.where(mask)[0]
-    mask = ctx.nparray_to_context_array(mask)
-    return mask
+    whr = np.where(mask)[0]
+    whr = ctx.nparray_to_context_array(whr)
+    return whr
