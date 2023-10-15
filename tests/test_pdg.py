@@ -20,8 +20,8 @@ def test_names():
         assert xp.pdg.get_pdg_id_from_name(
             xp.pdg.get_name_from_pdg_id(pdg_id)) == pdg_id
 
-@for_all_test_contexts
-def test_lead_208(test_context):
+
+def test_lead_208():
     pdg_id = 1000822080
     assert _pdg_id_ion(208, 82) == pdg_id
     assert xp.pdg.get_pdg_id_from_mass_charge(xp.Pb208_MASS_EV, 82) == pdg_id
@@ -42,8 +42,10 @@ def test_lead_208(test_context):
                        rtol=1e-10, atol=0)
     assert xp.pdg.get_properties_from_pdg_id(pdg_id) == (82., 208, 82, 'Pb208')
 
-def test_build_reference_from_pdg_id():
-    particle_ref_proton  = xp.reference_from_pdg_id(pdg_id='proton')
+@for_all_test_contexts
+def test_build_reference_from_pdg_id(test_context):
+    particle_ref_proton  = xp.reference_from_pdg_id(pdg_id='proton',
+                                                    _context=test_context)
     assert particle_ref_proton.pdg_id == 2212
     proton_dict = particle_ref_proton.to_dict()
     proton_dict.pop('pdg_id')
