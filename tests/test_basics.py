@@ -170,6 +170,21 @@ def test_particles_update_ref_vars(test_context, varname, values):
     assert p.gamma0[0] == p_ref.gamma0[0]
     assert p.beta0[0] == p_ref.beta0[0]
 
+@for_all_test_contexts
+def test_particles_update_p0c_and_energy_deviations(test_context):
+
+    part = xp.Particles(_context=test_context,
+                     p0c=[1e12, 3e12, 2e12],
+                     delta=[0,  0.1,    0],
+                     state=[1,  0.,     1.])
+
+    part.update_p0c_and_energy_deviations(p0c=2e12)
+
+    part.move(_context=xo.ContextCpu())
+    part.sort(interleave_lost_particles = True)
+    assert np.allclose(part.p0c, [2e12, 3e12, 2e12], rtol=0, atol=1e-14)
+    assert np.allclose(part.delta, [-0.5, 0.1, 0], rtol=0, atol=1e-14)
+
 
 def test_sort():
     # Sorting available only on CPU for now
