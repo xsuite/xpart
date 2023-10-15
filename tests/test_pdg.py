@@ -9,6 +9,7 @@ import xpart as xp
 from xpart.pdg import _PDG, _elements, _elements_long, _pdg_id_ion, _mass_consistent
 
 from xobjects.test_helpers import for_all_test_contexts
+import xobjects as xo
 
 def test_names():
     names = [val[1] for val in _PDG.values()]
@@ -46,10 +47,10 @@ def test_lead_208():
 def test_build_reference_from_pdg_id(test_context):
     particle_ref_proton  = xp.reference_from_pdg_id(pdg_id='proton',
                                                     _context=test_context)
-    particle_ref_proton.move(_context=test_context)
+    particle_ref_proton.move(_context=xo.context_default)
     assert particle_ref_proton.pdg_id == 2212
-    particle_ref_lead.move(_context=xo.context_default)
     particle_ref_lead = xp.reference_from_pdg_id(pdg_id='Pb208',
                                                  _context=test_context)
+    particle_ref_lead.move(_context=xo.context_default)
     assert np.allclose(particle_ref_lead.q0, 82.)
     assert np.allclose(particle_ref_lead.mass0, xp.Pb208_MASS_EV)
