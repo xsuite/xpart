@@ -1665,7 +1665,10 @@ class ParticlesBase(xo.HybridClass):
         self.at_turn = kwargs.get('at_turn', 0)
         self.at_element = kwargs.get('at_element', 0)
         self.weight = kwargs.get('weight', 1)
-        self.pdg_id = get_pdg_id_from_name(kwargs.get('pdg_id'))
+        pdg_id = get_pdg_id_from_name(kwargs.get('pdg_id'))
+        if not np.isscalar(pdg_id):
+            pdg_id = self._context.nparray_to_context_array(pdg_id)
+        self.pdg_id = pdg_id
 
     def _allclose(self, a, b, rtol=1e-05, atol=1e-08, mask=None):
         """Substitute for np.allclose that works with all contexts, and
