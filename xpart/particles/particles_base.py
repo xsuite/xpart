@@ -1785,8 +1785,8 @@ class ParticlesBase(xo.HybridClass):
 
         # Assign with a mask
         mask = self.state > 0
-        # if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
-        #     mask = _mask_to_bool(mask, self._context)
+        if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
+            mask = _mask_to_where(mask, self._context)
 
         old_p0c = self.p0c.copy()
         old_beta0 = self.beta0.copy()
