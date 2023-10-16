@@ -93,6 +93,10 @@ def get_name_from_pdg_id(pdg_id):
 
 
 def get_pdg_id_from_name(name=None):
+
+    if hasattr(name, 'get'):
+        name = name.get()
+
     if name is None:
         return 0  # undefined
     elif hasattr(name, '__len__') and not isinstance(name, str):

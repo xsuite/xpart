@@ -1590,7 +1590,12 @@ class ParticlesBase(xo.HybridClass):
         """
         if isinstance(self._context, xo.ContextPyopencl):
             # PyOpenCL does not support np.allclose
-            c = abs(a - b) * mask
+            whr = _mask_to_where(mask, ctx=self._context)
+            if not np.isscalar(a) or not len(a.shape) == 0:
+                a = a[whr]
+            if not np.isscalar(b) or not len(b.shape) == 0:
+                b = b[whr]
+            c = abs(a - b)
             # We use the same formula as in numpy:
             return not bool((c > (atol + rtol * abs(b))).any())
         else:
@@ -1628,10 +1633,7 @@ class ParticlesBase(xo.HybridClass):
 
         # Assign with a mask
         if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
-            if hasattr(mask, 'get'):
-                mask = mask.get()
-            mask = np.where(mask)[0]
-            mask = self._context.nparray_to_context_array(mask)
+            mask = _mask_to_where(mask, self._context)
 
         getattr(self, varname)[mask] = target_val[mask]
 
@@ -1791,3 +1793,30 @@ class ParticlesBase(xo.HybridClass):
                                     computed_value=_charge_ratio,
                                     mask=mask)
 
+    def update_p0c_and_energy_deviations(self, p0c):
+
+        assert np.isscalar(p0c), 'p0c must be a scalar'
+
+        # Assign with a mask
+        mask = self.state > 0
+
+        old_p0c = self.p0c.copy()
+        old_beta0 = self.beta0.copy()
+        old_delta = self.delta.copy()
+
+        PC = (old_delta + 1) * old_p0c
+        new_delta = PC / p0c - 1
+
+        new_p0c = p0c + 0 * old_p0c
+
+        self._update_refs(p0c=new_p0c, mask=mask)
+        self._update_energy_deviations(mask=mask, delta=new_delta)
+        self._update_zeta(mask=mask, zeta=self.zeta * self.beta0 / old_beta0)
+
+
+def _mask_to_where(mask, ctx):
+    if hasattr(mask, 'get'):
+        mask = mask.get()
+    whr = np.where(mask)[0]
+    whr = ctx.nparray_to_context_array(whr)
+    return whr
