@@ -1355,15 +1355,15 @@ class ParticlesBase(xo.HybridClass):
 
         # Angles
         src_angles_lines = []
-        # xp defined w/wo exact drift
         for exact in ['', 'exact_']:
+
+            if ('px' not in [nn for _, nn in cls.per_particle_vars]
+                or 'py' not in [nn for _, nn in cls.per_particle_vars]):
+                # The variable in not in the per_particle_vars
+                continue
+
             # xp (py as transverse) and vice versa
             for xx, yy in [['x', 'y'], ['y', 'x']]:
-
-                if not xx in [nn for _, nn in cls.per_particle_vars]:
-                    # The variable in not in the per_particle_vars
-                    continue
-
                 # Getter
                 src_angles_lines.append('/*gpufun*/')
                 src_angles_lines.append(f'double LocalParticle_get_{exact}{xx}p(LocalParticle* part){{')
@@ -1378,6 +1378,7 @@ class ParticlesBase(xo.HybridClass):
                 src_angles_lines.append(f'    return p{xx}*rpp;')
                 src_angles_lines.append('}')
                 src_angles_lines.append('')
+
             for xx, yy in [['x', 'y'], ['y', 'x']]:
                 # Setter
                 src_angles_lines.append('/*gpufun*/')
@@ -1393,6 +1394,7 @@ class ParticlesBase(xo.HybridClass):
                 src_angles_lines.append(f'#endif')
                 src_angles_lines.append('}')
                 src_angles_lines.append('')
+
             for xx, yy in [['x', 'y'], ['y', 'x']]:
                 # Adder
                 src_angles_lines.append('/*gpufun*/')
