@@ -8,6 +8,7 @@ from .particles import Particles, ParticlesBase, pmass
 
 from .build_particles import build_particles
 from .matched_gaussian import generate_matched_gaussian_bunch
+from .multi_bunch_beam import FillingScheme
 
 from .transverse_generators import generate_2D_polar_grid
 from .transverse_generators import generate_2D_uniform_circular_sector
