@@ -126,3 +126,62 @@ def generate_matched_gaussian_bunch(num_particles,
                       weight=total_intensity_particles/num_particles,
                       **kwargs)
     return part
+
+
+def generate_matched_gaussian_beam(filling_scheme,
+                                   num_particles,
+                                   nemitt_x, nemitt_y, sigma_z,
+                                   total_intensity_particles=None,
+                                   particle_on_co=None,
+                                   R_matrix=None,
+                                   circumference=None,
+                                   momentum_compaction_factor=None,
+                                   rf_harmonic=None,
+                                   rf_voltage=None,
+                                   rf_phase=None,
+                                   p_increment=0.,
+                                   tracker=None,
+                                   line=None,
+                                   particle_ref=None,
+                                   particles_class=None,
+                                   engine=None,
+                                   _context=None, _buffer=None, _offset=None,
+                                   **kwargs, # They are passed to build_particles
+                                   ):
+
+    bunches_for_this_processor = filling_scheme.get_bunches()
+
+    n_levels = int(np.ceil(np.log(len(bunches_for_this_processor)) / np.log(2))) + 1
+    bunches_tree = []
+    for i in range(n_levels):
+        bunches_tree.append([])
+
+    # the bunches are generated and summed using a binary tree approach which scales better than a simple sum in the
+    # case in which there are many bunches in one processor
+
+    macro_bunch = generate_matched_gaussian_bunch(num_particles=num_particles*len(filling_scheme.get_bunches()),
+                                                  n_emitt_x=nemitt_x, n_emitt_y=nemitt_y, sigma_z=sigma_z,
+                                                  total_intensity_particles=total_intensity_particles,
+                                                  particle_on_co=particle_on_co,
+                                                  R_matrix=R_matrix,
+                                                  circumference=circumference,
+                                                  momentum_compaction_factor=momentum_compaction_factor,
+                                                  rf_harmonic=rf_harmonic,
+                                                  rf_voltage=rf_voltage,
+                                                  rf_phase=rf_phase,
+                                                  p_increment=p_increment,
+                                                  tracker=tracker,
+                                                  line=line,
+                                                  particle_ref=particle_ref,
+                                                  particles_class=particles_class,
+                                                  engine=engine,
+                                                  _context=_context, _buffer=_buffer, _offset=_offset,
+                                                  **kwargs,  # They are passed to build_particles
+                                                  )
+
+    bunch_spacing = filling_scheme.bunch_spacing
+    bunch_id_bucket_id_map = filling_scheme.bunch_id_bucket_id_map
+    for count, b_id in enumerate(filling_scheme.get_bunches()):
+        macro_bunch.zeta[count*num_particles: (count + 1)*num_particles] += bunch_spacing*bunch_id_bucket_id_map[b_id]
+
+        return macro_bunch
