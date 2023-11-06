@@ -18,7 +18,7 @@ class FillingScheme:
         :param circumference: the machine circumference in meters
         :param communicator: (optional) an MPI communicator used to distribute the filling scheme
         """
-        self.bucket_length = circumference / (2*np.amin(harmonic_list))
+        self.bucket_length = circumference / (np.amin(harmonic_list))
         self.bunch_spacing = bunch_spacing_in_buckets*self.bucket_length
         self.filling_scheme_array = filling_scheme_array
         self._communicator = communicator
