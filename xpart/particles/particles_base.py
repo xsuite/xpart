@@ -1633,8 +1633,8 @@ class ParticlesBase(xo.HybridClass):
             else num_lost++;
         }
         
-        part->_num_active_particles = 1;//num_active;
-        part->_num_lost_particles = 1;//num_lost;
+        part->_num_active_particles = num_active;
+        part->_num_lost_particles = num_lost;
     }
     
     #else // not CPU_SERIAL_IMPLEM and not CPU_OMP_IMPLEM
