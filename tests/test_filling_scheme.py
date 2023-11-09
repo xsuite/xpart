@@ -1,7 +1,16 @@
-import xpart as xp
-import numpy as np
-import xtrack as xt
+# copyright ############################### #
+# This file is part of the Xpart Package.   #
+# Copyright (c) CERN, 2021.                 #
+# ######################################### #
+
 import json
+
+import numpy as np
+
+import xpart as xp
+import xtrack as xt
+
+test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
 
 
 class DummyCommunicator:
@@ -17,7 +26,9 @@ class DummyCommunicator:
 
 
 def test_filling_scheme():
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = test_data_folder.joinpath(
+        'lhc_no_bb/line_and_particle.json')
+
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
 
@@ -30,8 +41,10 @@ def test_filling_scheme():
     n_procs = 3
     communicator = DummyCommunicator(n_procs, rank=0)
     h_list = [35640]
-    filling_scheme = xp.FillingScheme(filling_scheme_array=filling_scheme_array, communicator=communicator,
-                                      circumference=circumference, harmonic_list=h_list)
+    filling_scheme = xp.FillingScheme(filling_scheme_array=filling_scheme_array,
+                                      communicator=communicator,
+                                      circumference=circumference,
+                                      harmonic_list=h_list)
 
     assert len(filling_scheme.bunches_per_rank[0]) == 34
     assert len(filling_scheme.bunches_per_rank[1]) == 33
