@@ -160,7 +160,7 @@ def generate_matched_gaussian_beam(filling_scheme,
     # case in which there are many bunches in one processor
 
     macro_bunch = generate_matched_gaussian_bunch(num_particles=num_particles*len(filling_scheme.get_bunches()),
-                                                  n_emitt_x=nemitt_x, n_emitt_y=nemitt_y, sigma_z=sigma_z,
+                                                  nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
                                                   total_intensity_particles=total_intensity_particles,
                                                   particle_on_co=particle_on_co,
                                                   R_matrix=R_matrix,
@@ -184,4 +184,4 @@ def generate_matched_gaussian_beam(filling_scheme,
     for count, b_id in enumerate(filling_scheme.get_bunches()):
         macro_bunch.zeta[count*num_particles: (count + 1)*num_particles] += bunch_spacing*bunch_id_bucket_id_map[b_id]
 
-        return macro_bunch
+    return macro_bunch
