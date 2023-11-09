@@ -7,10 +7,9 @@ class FillingScheme:
     distributed among the processors and the class holds the information of which bunches belong to which processor
     (in the variable `bunches_per_rank`)
     """
-    def __init__(self, bunch_spacing_in_buckets, filling_scheme_array, harmonic_list, circumference, communicator=None):
+    def __init__(self, filling_scheme_array, harmonic_list, circumference, communicator=None):
         """
         The initializer of the `FillingScheme` class
-        :param bunch_spacing_in_buckets: the bunch spacing in number of buckets
         :param filling_scheme_array: an array holding for each bunch slot a 0 if the slot is empty and a 1 if the slot
         is full
         :param harmonic_list: the list of the RF harmonics in the machine (the lowest is used to determine the RF
@@ -19,6 +18,7 @@ class FillingScheme:
         :param communicator: (optional) an MPI communicator used to distribute the filling scheme
         """
         self.bucket_length = circumference / (np.amin(harmonic_list))
+        bunch_spacing_in_buckets = np.amin(harmonic_list)/len(filling_scheme_array)
         self.bunch_spacing = bunch_spacing_in_buckets*self.bucket_length
         self.filling_scheme_array = filling_scheme_array
         self._communicator = communicator
