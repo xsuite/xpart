@@ -21,6 +21,9 @@ def test_filling_scheme():
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
 
+    line = xt.Line.from_dict(input_data['line'])
+    circumference = line.get_length()
+
     filling_scheme_array = np.zeros(3564)
     n_bunches = 100
     filling_scheme_array[0:n_bunches] = 1
@@ -28,7 +31,11 @@ def test_filling_scheme():
     communicator = DummyCommunicator(n_procs, rank=0)
     h_list = [35640]
     filling_scheme = xp.FillingScheme(filling_scheme_array=filling_scheme_array, communicator=communicator,
-                                      circumference=input_data['circumference'], harmonic_list=h_list)
+                                      circumference=circumference, harmonic_list=h_list)
+
+    assert len(filling_scheme.bunches_per_rank[0]) == 34
+    assert len(filling_scheme.bunches_per_rank[1]) == 33
+    assert len(filling_scheme.bunches_per_rank[2]) == 33
 
     assert (filling_scheme.bunches_per_rank[0] == np.linspace(0, 33, 34)).all()
     assert (filling_scheme.bunches_per_rank[1] == np.linspace(34, 66, 33)).all()
