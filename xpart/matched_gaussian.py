@@ -30,7 +30,7 @@ def generate_matched_gaussian_bunch(num_particles,
                                     particles_class=None,
                                     engine=None,
                                     _context=None, _buffer=None, _offset=None,
-                                    **kwargs,  # Ppassed to build_particles
+                                    **kwargs,  # Passed to build_particles
                                     ):
     '''
     Generate a matched Gaussian bunch.
