@@ -170,6 +170,21 @@ def test_particles_update_ref_vars(test_context, varname, values):
     assert p.gamma0[0] == p_ref.gamma0[0]
     assert p.beta0[0] == p_ref.beta0[0]
 
+@for_all_test_contexts
+def test_particles_update_p0c_and_energy_deviations(test_context):
+
+    part = xp.Particles(_context=test_context,
+                     p0c=[1e12, 3e12, 2e12],
+                     delta=[0,  0.1,    0],
+                     state=[1,  0.,     1.])
+
+    part.update_p0c_and_energy_deviations(p0c=2e12)
+
+    part.move(_context=xo.ContextCpu())
+    part.sort(interleave_lost_particles = True)
+    assert np.allclose(part.p0c, [2e12, 3e12, 2e12], rtol=0, atol=1e-14)
+    assert np.allclose(part.delta, [-0.5, 0.1, 0], rtol=0, atol=1e-14)
+
 
 def test_sort():
     # Sorting available only on CPU for now
@@ -542,3 +557,123 @@ def test_LocalParticle_update_p0c(test_context):
     assert np.all(particles.zeta == zeta_before*particles.beta0/beta0_before)
     assert np.all(particles.px == px_before*p0c_before/particles.p0c)
     assert np.all(particles.py == py_before*p0c_before/particles.p0c)
+
+
+
+@for_all_test_contexts
+def test_LocalParticle_angles(test_context):
+    class ScaleAng(xt.BeamElement):
+        _xofields={
+            'scale_x':   xo.Float64,
+            'scale_y':   xo.Float64,
+            'scale_x2':  xo.Float64,
+            'scale_y2':  xo.Float64,
+            }
+        _extra_c_sources = ['''
+            /*gpufun*/
+            void ScaleAng_track_local_particle(
+                    ScaleAngData el, LocalParticle* part0){
+                double const scale_x = ScaleAngData_get_scale_x(el);
+                double const scale_y = ScaleAngData_get_scale_y(el);
+                double const scale_x2 = ScaleAngData_get_scale_x2(el);
+                double const scale_y2 = ScaleAngData_get_scale_y2(el);
+                //start_per_particle_block (part0->part)
+                    LocalParticle_scale_xp(part, scale_x);
+                    LocalParticle_scale_yp(part, scale_y);
+                    LocalParticle_scale_xp_yp(part, scale_x2, scale_y2);
+                //end_per_particle_block
+            }
+            ''']
+
+    class KickAng(xt.BeamElement):
+        _xofields={
+            'kick_x':  xo.Float64,
+            'kick_y':  xo.Float64,
+            'kick_x2': xo.Float64,
+            'kick_y2': xo.Float64,
+            }
+        _extra_c_sources = ['''
+            /*gpufun*/
+            void KickAng_track_local_particle(
+                    KickAngData el, LocalParticle* part0){
+                double const kick_x = KickAngData_get_kick_x(el);
+                double const kick_y = KickAngData_get_kick_y(el);
+                double const kick_x2 = KickAngData_get_kick_x2(el);
+                double const kick_y2 = KickAngData_get_kick_y2(el);
+                //start_per_particle_block (part0->part)
+                    LocalParticle_add_to_xp(part, kick_x);
+                    LocalParticle_add_to_yp(part, kick_y);
+                    LocalParticle_add_to_xp_yp(part, kick_x2, kick_y2);
+                //end_per_particle_block
+            }
+            ''']
+
+    telem1 = KickAng(_context=test_context, kick_x=-5.0e-3, kick_y=2.0e-3, kick_x2=12.0e-3, kick_y2=-6.0e-3)
+    telem2 = ScaleAng(_context=test_context, scale_x=2.5, scale_y=1.3, scale_x2=1.2, scale_y2=0.7)
+    line = xt.Line(elements=[xt.Drift(length=1.2), telem1, xt.Drift(length=0.3),
+                             telem2, xt.Drift(length=2.8)])
+    line.build_tracker(_context=test_context)
+    particles = xp.Particles(_context=test_context, p0c=1.4e9, delta=[0, 1e-3],
+                             px=[1.0e-3, -1.0e-3], py=[2.0e-3, -1.2e-3], zeta=0.1)
+    line.track(particles)
+    particles.move(_context=xo.ContextCpu())
+    assert np.allclose(particles.px, [24.0e-3, 18.021e-3], atol=1e-14, rtol=1e-14)
+    assert np.allclose(particles.py, [-1.82e-3, -4.73564e-3], atol=1e-14, rtol=1e-14)
+
+    class ScaleAngExact(xt.BeamElement):
+        _xofields={
+            'scale_x':   xo.Float64,
+            'scale_y':   xo.Float64,
+            'scale_x2':  xo.Float64,
+            'scale_y2':  xo.Float64,
+            }
+        _extra_c_sources = ['''
+            /*gpufun*/
+            void ScaleAngExact_track_local_particle(
+                    ScaleAngExactData el, LocalParticle* part0){
+                double const scale_x = ScaleAngExactData_get_scale_x(el);
+                double const scale_y = ScaleAngExactData_get_scale_y(el);
+                double const scale_x2 = ScaleAngExactData_get_scale_x2(el);
+                double const scale_y2 = ScaleAngExactData_get_scale_y2(el);
+                //start_per_particle_block (part0->part)
+                    LocalParticle_scale_exact_xp(part, scale_x);
+                    LocalParticle_scale_exact_yp(part, scale_y);
+                    LocalParticle_scale_exact_xp_yp(part, scale_x2, scale_y2);
+                //end_per_particle_block
+            }
+            ''']
+
+    class KickAngExact(xt.BeamElement):
+        _xofields={
+            'kick_x':  xo.Float64,
+            'kick_y':  xo.Float64,
+            'kick_x2': xo.Float64,
+            'kick_y2': xo.Float64,
+            }
+        _extra_c_sources = ['''
+            /*gpufun*/
+            void KickAngExact_track_local_particle(
+                    KickAngExactData el, LocalParticle* part0){
+                double const kick_x = KickAngExactData_get_kick_x(el);
+                double const kick_y = KickAngExactData_get_kick_y(el);
+                double const kick_x2 = KickAngExactData_get_kick_x2(el);
+                double const kick_y2 = KickAngExactData_get_kick_y2(el);
+                //start_per_particle_block (part0->part)
+                    LocalParticle_add_to_exact_xp(part, kick_x);
+                    LocalParticle_add_to_exact_yp(part, kick_y);
+                    LocalParticle_add_to_exact_xp_yp(part, kick_x2, kick_y2);
+                //end_per_particle_block
+            }
+            ''']
+
+    telem1 = KickAngExact(_context=test_context, kick_x=-5.0e-3, kick_y=2.0e-3, kick_x2=12.0e-3, kick_y2=-6.0e-3)
+    telem2 = ScaleAngExact(_context=test_context, scale_x=2.5, scale_y=1.3, scale_x2=1.2, scale_y2=0.7)
+    line = xt.Line(elements=[xt.Drift(length=1.2), telem1, xt.Drift(length=0.3),
+                             telem2, xt.Drift(length=2.8)])
+    line.build_tracker(_context=test_context)
+    particles = xp.Particles(_context=test_context, p0c=1.4e9, delta=[0, 1e-3],
+                             px=[1.0e-3, -1.0e-3], py=[2.0e-3, -1.2e-3], zeta=0.1)
+    line.track(particles)
+    particles.move(_context=xo.ContextCpu())
+    assert np.allclose(particles.px, [23.99302e-3, 18.01805e-3], atol=1e-14)
+    assert np.allclose(particles.py, [-1.81976e-3, -4.73529e-3], atol=1e-14)

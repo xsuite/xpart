@@ -7,6 +7,8 @@ import numpy as np
 import xobjects as xo
 
 from ..general import _pkg_root
+from ..constants import PROTON_MASS_EV
+from ..pdg import get_pdg_id_from_name
 
 from scipy.constants import e as qe
 from scipy.constants import c as clight
@@ -15,8 +17,6 @@ from scipy.constants import epsilon_0
 
 from xobjects import BypassLinked
 
-
-pmass = m_p * clight * clight / qe
 
 LAST_INVALID_STATE = -999999999
 
@@ -59,6 +59,7 @@ class ParticlesBase(xo.HybridClass):
             (xo.Float64, 'chi'),
             (xo.Float64, 'charge_ratio'),
             (xo.Float64, 'weight'),
+            (xo.Int64, 'pdg_id'),
             (xo.Int64, 'particle_id'),
             (xo.Int64, 'at_element'),
             (xo.Int64, 'at_turn'),
@@ -167,7 +168,11 @@ class ParticlesBase(xo.HybridClass):
         state : array_like of int, optional
             It is <= 0 if the particle is lost, > 0 otherwise
             (different values are used to record information on how the particle
-            is lost or generated).
+            is lost or generated)
+        pdg_id : array_like of float, optional
+            PDG id of the particle under consideration (needed when tracking
+            ions to distinguish different particle types). The default is 0
+            (undefined)
         weight : array_like of float, optional
             Particle weight in number of particles (for collective simulations)
         at_element : array_like of int, optional
@@ -301,7 +306,7 @@ class ParticlesBase(xo.HybridClass):
 
         # Init scalar vars
         self.q0 = kwargs.get('q0', 1.0)
-        self.mass0 = kwargs.get('mass0', pmass)
+        self.mass0 = kwargs.get('mass0', PROTON_MASS_EV)
         self.start_tracking_at_element = kwargs.get('start_tracking_at_element',
                                                     -1)
 
@@ -1348,6 +1353,94 @@ class ParticlesBase(xo.HybridClass):
 
         src_getters = '\n'.join(src_lines)
 
+        # Angles
+        src_angles_lines = []
+        for exact in ['', 'exact_']:
+
+            if ('px' not in [nn for _, nn in cls.per_particle_vars]
+                or 'py' not in [nn for _, nn in cls.per_particle_vars]):
+                # The variable in not in the per_particle_vars
+                continue
+
+            # xp (py as transverse) and vice versa
+            for xx, yy in [['x', 'y'], ['y', 'x']]:
+                # Getter
+                src_angles_lines.append('/*gpufun*/')
+                src_angles_lines.append(f'double LocalParticle_get_{exact}{xx}p(LocalParticle* part){{')
+                src_angles_lines.append(f'    double const p{xx} = LocalParticle_get_p{xx}(part);')
+                if exact == 'exact_':
+                    src_angles_lines.append(f'    double const p{yy} = LocalParticle_get_p{yy}(part);')
+                    src_angles_lines.append(f'    double const one_plus_delta = 1. + LocalParticle_get_delta(part);')
+                    src_angles_lines.append(f'    double const rpp = 1./sqrt(one_plus_delta*one_plus_delta - px*px - py*py);')
+                else:
+                    src_angles_lines.append(f'    double const rpp = LocalParticle_get_rpp(part);')
+                src_angles_lines.append(f'    // INFO: this is not the angle, but sin(angle)')
+                src_angles_lines.append(f'    return p{xx}*rpp;')
+                src_angles_lines.append('}')
+                src_angles_lines.append('')
+
+            for xx, yy in [['x', 'y'], ['y', 'x']]:
+                # Setter
+                src_angles_lines.append('/*gpufun*/')
+                src_angles_lines.append(f'void LocalParticle_set_{exact}{xx}p(LocalParticle* part, double {xx}p){{')
+                src_angles_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src_angles_lines.append(f'    double rpp = LocalParticle_get_rpp(part);')
+                if exact == 'exact_':
+                    src_angles_lines.append(f'    // Careful! If {yy}p also changes, use LocalParticle_set_{exact}xp_yp!')
+                    src_angles_lines.append(f'    double const {yy}p = LocalParticle_get_{exact}{yy}p(part);')
+                    src_angles_lines.append(f'    rpp *= sqrt(1 + xp*xp + yp*yp);')
+                src_angles_lines.append(f'    // INFO: {xx}p is not the angle, but sin(angle)')
+                src_angles_lines.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);')
+                src_angles_lines.append(f'#endif')
+                src_angles_lines.append('}')
+                src_angles_lines.append('')
+
+            for xx, yy in [['x', 'y'], ['y', 'x']]:
+                # Adder
+                src_angles_lines.append('/*gpufun*/')
+                src_angles_lines.append(f'void LocalParticle_add_to_{exact}{xx}p(LocalParticle* part, double {xx}p){{')
+                src_angles_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src_angles_lines.append(f'    LocalParticle_set_{exact}{xx}p(part, '
+                             + f'LocalParticle_get_{exact}{xx}p(part) + {xx}p);')
+                src_angles_lines.append(f'#endif')
+                src_angles_lines.append('}')
+                src_angles_lines.append('')
+                # Scaler
+                src_angles_lines.append('/*gpufun*/')
+                src_angles_lines.append(f'void LocalParticle_scale_{exact}{xx}p(LocalParticle* part, double value){{')
+                src_angles_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src_angles_lines.append(f'    LocalParticle_set_{exact}{xx}p(part, '
+                             + f'LocalParticle_get_{exact}{xx}p(part) * value);')
+                src_angles_lines.append(f'#endif')
+                src_angles_lines.append('}')
+                src_angles_lines.append('')
+            # Double setter, adder, scaler
+            src_angles_lines.append('/*gpufun*/')
+            src_angles_lines.append(f'void LocalParticle_set_{exact}xp_yp(LocalParticle* part, double xp, double yp){{')
+            src_angles_lines.append(f'    double rpp = LocalParticle_get_rpp(part);')
+            if exact == 'exact_':
+                src_angles_lines.append(f'    rpp *= sqrt(1 + xp*xp + yp*yp);')
+            for xx in ['x', 'y']:
+                src_angles_lines.append(f'#ifndef FREEZE_VAR_p{xx}')
+                src_angles_lines.append(f'    LocalParticle_set_p{xx}(part, {xx}p/rpp);')
+                src_angles_lines.append(f'#endif')
+            src_angles_lines.append('}')
+            src_angles_lines.append('')
+            src_angles_lines.append('/*gpufun*/')
+            src_angles_lines.append(f'void LocalParticle_add_to_{exact}xp_yp(LocalParticle* part, double xp, double yp){{')
+            src_angles_lines.append(f'    LocalParticle_set_{exact}xp_yp(part, '
+                         + f'LocalParticle_get_{exact}xp(part) + xp, '
+                         + f'LocalParticle_get_{exact}yp(part) + yp);')
+            src_angles_lines.append('}')
+            src_angles_lines.append('')
+            src_angles_lines.append('/*gpufun*/')
+            src_angles_lines.append(f'void LocalParticle_scale_{exact}xp_yp(LocalParticle* part, double value_x, double value_y){{')
+            src_angles_lines.append(f'    LocalParticle_set_{exact}xp_yp(part, '
+                         + f'LocalParticle_get_{exact}xp(part) * value_x, '
+                         + f'LocalParticle_get_{exact}yp(part) * value_y);')
+            src_angles_lines.append('}')
+        src_angles = '\n'.join(src_angles_lines)
+
         # Particle exchangers
         src_exchange = '''
     /*gpufun*/
@@ -1540,8 +1633,8 @@ class ParticlesBase(xo.HybridClass):
             else num_lost++;
         }
         
-        part->_num_active_particles = 1;//num_active;
-        part->_num_lost_particles = 1;//num_lost;
+        part->_num_active_particles = num_active;
+        part->_num_lost_particles = num_lost;
     }
     
     #else // not CPU_SERIAL_IMPLEM and not CPU_OMP_IMPLEM
@@ -1563,7 +1656,7 @@ class ParticlesBase(xo.HybridClass):
         source = '\n\n'.join([src_typedef, src_adders, src_getters,
                               src_setters, src_scalers, src_exchange,
                               src_particles_to_local, src_local_to_particles,
-                              custom_source])
+                              src_angles, custom_source])
 
         return source
 
@@ -1576,6 +1669,10 @@ class ParticlesBase(xo.HybridClass):
         self.at_turn = kwargs.get('at_turn', 0)
         self.at_element = kwargs.get('at_element', 0)
         self.weight = kwargs.get('weight', 1)
+        pdg_id = get_pdg_id_from_name(kwargs.get('pdg_id'))
+        if not np.isscalar(pdg_id):
+            pdg_id = self._context.nparray_to_context_array(pdg_id)
+        self.pdg_id = pdg_id
 
     def _allclose(self, a, b, rtol=1e-05, atol=1e-08, mask=None):
         """Substitute for np.allclose that works with all contexts, and
@@ -1584,14 +1681,19 @@ class ParticlesBase(xo.HybridClass):
         """
         if isinstance(self._context, xo.ContextPyopencl):
             # PyOpenCL does not support np.allclose
-            c = abs(a - b) * mask
+            whr = _mask_to_where(mask, ctx=self._context)
+            if not np.isscalar(a) or not len(a.shape) == 0:
+                a = a[whr]
+            if not np.isscalar(b) or not len(b.shape) == 0:
+                b = b[whr]
+            c = abs(a - b)
             # We use the same formula as in numpy:
             return not bool((c > (atol + rtol * abs(b))).any())
         else:
             if mask is not None:
                 a = a[mask]
                 b = b[mask]
-            return np.allclose(a, b, rtol, atol)
+            return np.allclose(a, b, rtol, atol, equal_nan=True)
 
     def _assert_values_consistent(self, given_value, computed_value, mask=None):
         """Check if the given value is consistent with the computed value."""
@@ -1622,10 +1724,7 @@ class ParticlesBase(xo.HybridClass):
 
         # Assign with a mask
         if isinstance(self._context, xo.ContextPyopencl):  # PyOpenCL array
-            if hasattr(mask, 'get'):
-                mask = mask.get()
-            mask = np.where(mask)[0]
-            mask = self._context.nparray_to_context_array(mask)
+            mask = _mask_to_where(mask, self._context)
 
         getattr(self, varname)[mask] = target_val[mask]
 
@@ -1754,9 +1853,11 @@ class ParticlesBase(xo.HybridClass):
             self.chi = 1.0
             self.charge_ratio = 1.0
             return
+
         elif num_args == 1:
             raise ValueError('Two of `chi`, `charge_ratio` and `mass_ratio` '
-                             'must be provided.')
+                                 'must be provided.')
+
         elif num_args == 2:
             if chi is None:
                 _charge_ratio, _mass_ratio = charge_ratio, mass_ratio
@@ -1769,6 +1870,7 @@ class ParticlesBase(xo.HybridClass):
                 _mass_ratio = charge_ratio / chi
             else:
                 raise RuntimeError('This statement is unreachable.')
+
         else:  # num_args == 3
             _chi, _charge_ratio, _mass_ratio = chi, charge_ratio, mass_ratio
 
@@ -1782,3 +1884,30 @@ class ParticlesBase(xo.HybridClass):
                                     computed_value=_charge_ratio,
                                     mask=mask)
 
+    def update_p0c_and_energy_deviations(self, p0c):
+
+        assert np.isscalar(p0c), 'p0c must be a scalar'
+
+        # Assign with a mask
+        mask = self.state > 0
+
+        old_p0c = self.p0c.copy()
+        old_beta0 = self.beta0.copy()
+        old_delta = self.delta.copy()
+
+        PC = (old_delta + 1) * old_p0c
+        new_delta = PC / p0c - 1
+
+        new_p0c = p0c + 0 * old_p0c
+
+        self._update_refs(p0c=new_p0c, mask=mask)
+        self._update_energy_deviations(mask=mask, delta=new_delta)
+        self._update_zeta(mask=mask, zeta=self.zeta * self.beta0 / old_beta0)
+
+
+def _mask_to_where(mask, ctx):
+    if hasattr(mask, 'get'):
+        mask = mask.get()
+    whr = np.where(mask)[0]
+    whr = ctx.nparray_to_context_array(whr)
+    return whr

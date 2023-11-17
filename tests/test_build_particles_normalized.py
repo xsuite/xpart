@@ -84,6 +84,32 @@ def test_build_particles_normalized(test_context):
 
 
 @for_all_test_contexts
+def test_build_particles_normalized_ions(test_context):
+    for ctx_ref in [test_context, None]:
+        filename = xt._pkg_root.parent / 'test_data' / 'sps_ions' / 'line_and_particle.json'
+        with open(filename, 'r') as fid:
+            input_data = json.load(fid)
+        line = xt.Line.from_dict(input_data)
+        p0 = line.particle_ref
+        line.build_tracker(_context=test_context)
+
+        # Built a set of three particles with different x coordinates
+        particles = xp.build_particles(_context=test_context,
+                                       line=line, particle_ref=p0,
+                                       zeta=0, delta=1e-5,
+                                       x_norm=[1, 0, -1],  # in sigmas
+                                       px_norm=[0, 1, 0],  # in sigmas
+                                       nemitt_x=3e-6, nemitt_y=3e-6)
+
+        dct = particles.to_dict() # transfers it to cpu
+        assert np.allclose(dct['x'], [6.5404e-3, 1.21e-5, -6.5163e-3],
+                           rtol=0, atol=1e-7)
+        assert np.isclose(dct['ptau'][1], 9.906e-6, rtol=0, atol=1e-9)
+        assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-5, rtol=0, atol=1e-10)
+        assert np.allclose(dct['p0c'], 1.4024063e+12, rtol=0, atol=1e3)
+
+
+@for_all_test_contexts
 def test_build_particles_normalized_closed_orbit(test_context):
     for ctx_ref in [test_context, None]:
         # Build a reference particle

@@ -161,6 +161,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         'p0c': particle_ref.p0c[0],
         'gamma0': particle_ref.gamma0[0],
         'beta0': particle_ref.beta0[0],
+        'pdg_id': particle_ref.pdg_id[0]
     }
     part_dict = ref_dict.copy()
 
@@ -221,9 +222,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             particle_on_co = tw_state.particle_on_co
         elif W_matrix is None and R_matrix is not None:
             import xtrack.linear_normal_form as lnf
-            WW, _, _ = lnf.compute_linear_normal_form(
-                                R_matrix,
-                                **kwargs)
+            WW, _, _, _ = lnf.compute_linear_normal_form(R_matrix, **kwargs)
         else:
             WW = W_matrix
 
@@ -401,7 +400,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     part_dict['zeta'] = XX[4, :]
     part_dict['ptau'] = XX[5, :] * particle_ref._xobject.beta0[0]
 
-    part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
+    part_dict['weight'] = np.ones(num_particles, dtype=np.float64)
 
     if _context is None and _buffer is None and line is not None:
         _context = line._buffer.context
