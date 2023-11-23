@@ -871,6 +871,8 @@ class ParticlesBase(xo.HybridClass):
 
         with self._bypass_linked_vars():
             for tt, nn in self.per_particle_vars:
+                if nn.startswith('_rng'):
+                    continue
                 vv = getattr(self, nn)
                 vv_copy = getattr(part, nn)[mask_copy]
                 vv[i_start_copy:i_start_copy + n_copy] = vv_copy
