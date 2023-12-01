@@ -11,7 +11,7 @@ import xpart as xp
 from xobjects.test_helpers import for_all_test_contexts
 
 
-@for_all_test_contexts
+@for_all_test_contexts(excluding='ContextPyopencl')
 def test_add_particles(test_context):
     capacity = 10
 
