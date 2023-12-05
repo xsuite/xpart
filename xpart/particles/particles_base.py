@@ -877,8 +877,9 @@ class ParticlesBase(xo.HybridClass):
                 vv_copy = getattr(part, nn)[mask_copy]
                 vv[i_start_copy:i_start_copy + n_copy] = vv_copy
 
-        self.particle_id[i_start_copy:i_start_copy + n_copy] = np.arange(
-            max_id + 1, max_id + 1 + n_copy, dtype=np.int64)
+        new_ids = self._context.nplike_lib.arange(
+            int(max_id) + 1, int(max_id) + 1 + int(n_copy), dtype=np.int64)
+        self.particle_id[i_start_copy:i_start_copy + n_copy] = new_ids
 
         self.reorganize()
 

@@ -28,8 +28,8 @@ def test_add_particles(test_context):
     custom_seeds = np.linspace(10, 20, capacity).astype(int)
     p2._init_random_number_generator(seeds=custom_seeds)
 
-
-    p_add = xp.Particles(x=[4, 5], p0c=7e12, mass0=xp.ELECTRON_MASS_EV)
+    p_add = xp.Particles(
+        x=[4, 5], p0c=7e12, mass0=xp.ELECTRON_MASS_EV, _context=test_context)
     # To test this doesn't override the base seeds
     p_add._init_random_number_generator(seeds=[60, 70])
 
