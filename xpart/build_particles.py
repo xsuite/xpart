@@ -43,7 +43,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       particle_ref=None,
                       num_particles=None,
                       x=None, px=None, y=None, py=None,
-                      zeta=None, delta=None, pzeta=None,
+                      zeta=None, delta=None, pzeta=None, ptau=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
                       zeta_norm=None, pzeta_norm=None,
                       tracker=None,
@@ -120,6 +120,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     zeta = (zeta.get() if hasattr(zeta, "get") else zeta)
     delta = (delta.get() if hasattr(delta, "get") else delta)
     pzeta = (pzeta.get() if hasattr(pzeta, "get") else pzeta)
+    ptau = (ptau.get() if hasattr(ptau, "get") else ptau)
     x_norm = (x_norm.get() if hasattr(x_norm, "get") else x_norm)
     px_norm = (px_norm.get() if hasattr(px_norm, "get") else px_norm)
     y_norm = (y_norm.get() if hasattr(y_norm, "get") else y_norm)
@@ -131,9 +132,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         logger.warning('Ignoring collective elements in particles generation.')
         line = line._get_non_collective_line()
 
-    # Compute ptau from delta
+    # Compute pzeta from delta
     if delta is not None:
         assert pzeta is None
+        assert ptau is None
         if not np.isscalar(delta):
             delta = np.array(delta)
         beta0 = particle_ref._xobject.beta0[0]
@@ -141,6 +143,14 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         ptau_beta0 = (delta_beta0 * delta_beta0
                             + 2. * delta_beta0 * beta0 + 1.)**0.5 - 1.
         pzeta = ptau_beta0 / beta0 / beta0
+
+    # Compute pzeta from ptau
+    if ptau is not None:
+        assert pzeta is None
+        assert delta is None
+        if not np.isscalar(ptau):
+            ptau = np.array(ptau)
+        pzeta = ptau / particle_ref._xobject.beta0[0]
 
     if (x_norm is not None or px_norm is not None
             or y_norm is not None or py_norm is not None
