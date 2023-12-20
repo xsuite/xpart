@@ -124,8 +124,8 @@ def test_build_particles_normalized_closed_orbit(test_context):
         line = xt.Line.from_dict(input_data['line'])
         line.build_tracker(_context=test_context)
 
-        particle_co_guess = xp.build_particles(particle_ref=p0)
-        particle_on_co = line.find_closed_orbit(particle_co_guess=particle_co_guess)
+        co_guess = xp.build_particles(particle_ref=p0)
+        particle_on_co = line.find_closed_orbit(co_guess=co_guess)
 
         # Built a set of three particles with different x coordinates
         particles = xp.build_particles(_context=test_context,
