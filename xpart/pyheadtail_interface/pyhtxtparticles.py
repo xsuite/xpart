@@ -23,6 +23,7 @@ class PyHtXtParticles(XtParticles, PyHtParticles):
     def from_pyheadtail(cls, particles):
         new = cls(_capacity=particles.macroparticlenumber)
 
+        new.state = 1
         new.particlenumber_per_mp = particles.particlenumber_per_mp
         new.charge = particles.charge
         new.mass = particles.mass
