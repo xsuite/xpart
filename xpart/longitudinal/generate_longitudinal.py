@@ -74,7 +74,7 @@ def _characterize_line(line, particle_ref,
     dct['momentum_compaction_factor'] = tw['momentum_compaction_factor']
     dct['slip_factor'] = tw['slip_factor']
     dct['qs'] = tw['qs']
-    dct['bets0'] = tw['betz0']
+    dct['bets0'] = tw['bets0']
     dct['found_linear_longitudinal'] = found_linear_longitudinal
     return dct
 
