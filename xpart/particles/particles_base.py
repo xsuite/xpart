@@ -576,10 +576,15 @@ class ParticlesBase(xo.HybridClass):
 
         return xt.Table(out_dct, index='particle_id', col_names=col_names)
 
-    def get_table(self, *args, **kwargs):
+    def get_table(self):
 
         """
-        Alias for `to_table`.
+        Get a Table object with the Particles coordinates.
+
+        Returns
+        -------
+        table : Table
+            The Table object containing the data from Particles object.
 
         """
 
