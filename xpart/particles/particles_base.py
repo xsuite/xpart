@@ -546,6 +546,45 @@ class ParticlesBase(xo.HybridClass):
         import pandas as pd
         return pd.DataFrame(dct)
 
+    def to_table(self):
+
+        """
+        Get a Table object with the Particles coordinates.
+
+        Returns
+        -------
+        table : Table
+            The Table object containing the data from Particles object.
+
+        """
+
+        import xtrack as xt
+        out_dct = self.to_dict(compact=True)
+
+        for kk in list(out_dct.keys()):
+            if not hasattr(out_dct[kk], '__len__'):
+                out_dct.pop(kk)
+            elif len(out_dct[kk]) != len(out_dct['particle_id']):
+                out_dct.pop(kk)
+
+        # Prettier ordering
+        col_names = ['s', 'x', 'px', 'y', 'py', 'zeta', 'delta', 'particle_id']
+        for nn in col_names.copy():
+            if nn not in out_dct.keys():
+                col_names.remove(nn)
+        col_names += [kk for kk in out_dct.keys() if kk not in col_names]
+
+        return xt.Table(out_dct, index='particle_id', col_names=col_names)
+
+    def get_table(self, *args, **kwargs):
+
+        """
+        Alias for `to_table`.
+
+        """
+
+        return self.to_table(*args, **kwargs)
+
 
     @classmethod
     def merge(cls, lst, _context=None, _buffer=None, _offset=None):
