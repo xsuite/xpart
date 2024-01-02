@@ -588,7 +588,7 @@ class ParticlesBase(xo.HybridClass):
 
         """
 
-        return self.to_table(*args, **kwargs)
+        return self.to_table()
 
 
     @classmethod
