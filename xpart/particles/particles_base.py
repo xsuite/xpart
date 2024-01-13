@@ -1226,6 +1226,13 @@ class ParticlesBase(xo.HybridClass):
             container=self)
 
     @property
+    def kinetic_energy0(self):
+        kene0 = self.energy0 - self.mass0
+        return self._buffer.context.linked_array_type.from_array(
+            kene0, mode='readonly',
+            container=self)
+
+    @property
     def energy(self):
         energy = self.energy0 + self.ptau * self.p0c  # eV
         return self._buffer.context.linked_array_type.from_array(
