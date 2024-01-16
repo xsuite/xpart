@@ -285,6 +285,17 @@ class ParticlesBase(xo.HybridClass):
         for field in ('state', 'particle_id', 'parent_particle_id'):
             kwargs.pop(field, None)
 
+        # Init scalar vars
+        self.q0 = kwargs.get('q0', 1.0)
+        self.mass0 = kwargs.get('mass0', PROTON_MASS_EV)
+        self.start_tracking_at_element = kwargs.get(
+                            'start_tracking_at_element', -1)
+
+        # Init refs
+        if 'kinetic_energy0' in kwargs.keys():
+            assert kwargs.get('energy0') is None
+            kwargs['energy0'] = kwargs.pop('kinetic_energy0') + self.mass0
+
         # Ensure that all per particle inputs are numpy arrays of the same
         # length, and move them to the target context
         for xotype, field in per_part_input_vars:
@@ -304,16 +315,12 @@ class ParticlesBase(xo.HybridClass):
                 kwargs[field] = kwargs[field].astype(xotype._dtype)
             kwargs[field] = np_to_ctx(kwargs[field])
 
-        # Init scalar vars
-        self.q0 = kwargs.get('q0', 1.0)
-        self.mass0 = kwargs.get('mass0', PROTON_MASS_EV)
-        self.start_tracking_at_element = kwargs.get('start_tracking_at_element',
-                                                    -1)
+
 
         # Init independent per particle vars
         self.init_independent_per_part_vars(kwargs)
 
-        # Init refs
+
         self._update_refs(
             p0c=kwargs.get('p0c'),
             energy0=kwargs.get('energy0'),
