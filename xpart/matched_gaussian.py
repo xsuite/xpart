@@ -159,28 +159,28 @@ def split_scheme(filling_scheme, communicator=None):
     return bunches_this_rank[0], len(bunches_this_rank)
 
 
-def generate_matched_gaussian_beam(filling_scheme,
-                                   num_particles,
-                                   nemitt_x, nemitt_y, sigma_z,
-                                   total_intensity_particles=None,
-                                   particle_on_co=None,
-                                   R_matrix=None,
-                                   circumference=None,
-                                   momentum_compaction_factor=None,
-                                   rf_harmonic=None,
-                                   rf_voltage=None,
-                                   rf_phase=None,
-                                   p_increment=0.,
-                                   tracker=None,
-                                   line=None,
-                                   particle_ref=None,
-                                   particles_class=None,
-                                   engine=None,
-                                   _context=None, _buffer=None, _offset=None,
-                                   n_bunches=None, first_bunch=None,
-                                   bunch_spacing_buckets=1,
-                                   **kwargs,  # Passed to build_particles
-                                   ):
+def generate_matched_gaussian_multibunch_beam(filling_scheme,
+                                              num_particles,
+                                              nemitt_x, nemitt_y, sigma_z,
+                                              total_intensity_particles=None,
+                                              particle_on_co=None,
+                                              R_matrix=None,
+                                              circumference=None,
+                                              momentum_compaction_factor=None,
+                                              rf_harmonic=None,
+                                              rf_voltage=None,
+                                              rf_phase=None,
+                                              p_increment=0.,
+                                              tracker=None,
+                                              line=None,
+                                              particle_ref=None,
+                                              particles_class=None,
+                                              engine=None,
+                                              _context=None, _buffer=None, _offset=None,
+                                              n_bunches=None, first_bunch=None,
+                                              bunch_spacing_buckets=1,
+                                              **kwargs,  # Passed to build_particles
+                                              ):
 
     assert ((line is not None and particle_ref is not None) or
             (rf_harmonic is not None and rf_voltage is not None))

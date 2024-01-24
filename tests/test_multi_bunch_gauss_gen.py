@@ -66,7 +66,7 @@ def test_multi_bunch_gaussian_generation(test_context):
     first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
                                              communicator=communicator)
 
-    part = xp.generate_matched_gaussian_beam(
+    part = xp.generate_matched_gaussian_multibunch_beam(
         _context=test_context,
         filling_scheme=filling_scheme,  # engine='linear',
         num_particles=n_part_per_bunch,
@@ -119,7 +119,7 @@ def test_multi_bunch_gaussian_generation(test_context):
     first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
                                              communicator=communicator)
 
-    part = xp.generate_matched_gaussian_beam(
+    part = xp.generate_matched_gaussian_multibunch_beam(
         filling_scheme=filling_scheme,  # engine='linear',
         num_particles=n_part_per_bunch,
         total_intensity_particles=bunch_intensity,

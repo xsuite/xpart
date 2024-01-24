@@ -47,7 +47,7 @@ communicator = DummyCommunicator(n_procs, rank)
 first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
                                          communicator=communicator)
 
-particles = xp.generate_matched_gaussian_beam(
+particles = xp.generate_matched_gaussian_multibunch_beam(
          filling_scheme=filling_scheme,
          num_particles=n_part_per_bunch,
          total_intensity_particles=bunch_intensity,
@@ -71,7 +71,7 @@ communicator = DummyCommunicator(n_procs, rank)
 first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
                                          communicator=communicator)
 
-particles = xp.generate_matched_gaussian_beam(
+particles = xp.generate_matched_gaussian_multibunch_beam(
     filling_scheme=filling_scheme,
     num_particles=n_part_per_bunch,
     total_intensity_particles=bunch_intensity,
