@@ -53,7 +53,7 @@ particles = xp.generate_matched_gaussian_multibunch_beam(
          total_intensity_particles=bunch_intensity,
          nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
          line=line, bunch_spacing_buckets=10,
-         first_bunch=first_bunch, n_bunches=n_bunches,
+         i_bunch_0=first_bunch, num_bunches=n_bunches,
          particle_ref=line.particle_ref
 )
 
@@ -77,7 +77,7 @@ particles = xp.generate_matched_gaussian_multibunch_beam(
     total_intensity_particles=bunch_intensity,
     nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
     line=line, bunch_spacing_buckets=10,
-    first_bunch=first_bunch, n_bunches=n_bunches,
+    i_bunch_0=first_bunch, num_bunches=n_bunches,
     particle_ref=line.particle_ref
 )
 

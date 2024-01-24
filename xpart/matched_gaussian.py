@@ -177,7 +177,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               particles_class=None,
                                               engine=None,
                                               _context=None, _buffer=None, _offset=None,
-                                              n_bunches=None, first_bunch=None,
+                                              num_bunches=None, i_bunch_0=None,
                                               bunch_spacing_buckets=1,
                                               **kwargs,  # Passed to build_particles
                                               ):
@@ -195,15 +195,15 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
 
     assert len(filling_scheme) == main_harmonic_number/bunch_spacing_buckets
 
-    if n_bunches is None or first_bunch is None:
-        n_bunches = len(filling_scheme.nonzero()[0])
-        first_bunch = 0
+    if num_bunches is None or i_bunch_0 is None:
+        num_bunches = len(filling_scheme.nonzero()[0])
+        i_bunch_0 = 0
 
     if circumference is None:
         circumference = line.get_length()
 
     macro_bunch = generate_matched_gaussian_bunch(
-        num_particles=num_particles * n_bunches,
+        num_particles=num_particles * num_bunches,
         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
         total_intensity_particles=total_intensity_particles,
         particle_on_co=particle_on_co,
@@ -227,7 +227,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
     bunch_spacing = bunch_spacing_buckets * bucket_length
     filled_buckets = filling_scheme.nonzero()[0]
     count = 0
-    for bunch_n in range(first_bunch, first_bunch+n_bunches):
+    for bunch_n in range(i_bunch_0, i_bunch_0 + num_bunches):
         bucket_n = filled_buckets[bunch_n]
         macro_bunch.zeta[count * num_particles:
                          (count+1) * num_particles] += (bunch_spacing *
