@@ -48,7 +48,7 @@ first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
                                          communicator=communicator)
 
 particles = xp.generate_matched_gaussian_beam(
-         filling_scheme=filling_scheme,  # engine='linear',
+         filling_scheme=filling_scheme,
          num_particles=n_part_per_bunch,
          total_intensity_particles=bunch_intensity,
          nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
@@ -72,7 +72,7 @@ first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
                                          communicator=communicator)
 
 particles = xp.generate_matched_gaussian_beam(
-    filling_scheme=filling_scheme,  # engine='linear',
+    filling_scheme=filling_scheme,
     num_particles=n_part_per_bunch,
     total_intensity_particles=bunch_intensity,
     nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
