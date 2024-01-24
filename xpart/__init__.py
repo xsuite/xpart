@@ -8,7 +8,7 @@ from .particles import Particles, ParticlesBase, pmass
 
 from .build_particles import build_particles
 from .matched_gaussian import (generate_matched_gaussian_bunch,
-                               generate_matched_gaussian_beam,
+                               generate_matched_gaussian_multibunch_beam,
                                split_scheme)
 
 from .transverse_generators import generate_2D_polar_grid
