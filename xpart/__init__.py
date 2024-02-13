@@ -28,10 +28,15 @@ from ._version import __version__
 def enable_pyheadtail_interface():
     import xpart.pyheadtail_interface.pyhtxtparticles as pp
     import xpart as xp
+    import xtrack as xt
     xp.Particles = pp.PyHtXtParticles
+    xt.Particles = pp.PyHtXtParticles
+
 
 def disable_pyheadtail_interface():
     import xpart as xp
+    import xtrack as xt
     xp.Particles = xp.particles.Particles
+    xt.Particles = xp.particles.Particles
 
 

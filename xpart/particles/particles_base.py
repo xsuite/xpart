@@ -285,6 +285,17 @@ class ParticlesBase(xo.HybridClass):
         for field in ('state', 'particle_id', 'parent_particle_id'):
             kwargs.pop(field, None)
 
+        # Init scalar vars
+        self.q0 = kwargs.get('q0', 1.0)
+        self.mass0 = kwargs.get('mass0', PROTON_MASS_EV)
+        self.start_tracking_at_element = kwargs.get(
+                            'start_tracking_at_element', -1)
+
+        # Init refs
+        if 'kinetic_energy0' in kwargs.keys():
+            assert kwargs.get('energy0') is None
+            kwargs['energy0'] = kwargs.pop('kinetic_energy0') + self.mass0
+
         # Ensure that all per particle inputs are numpy arrays of the same
         # length, and move them to the target context
         for xotype, field in per_part_input_vars:
@@ -304,16 +315,12 @@ class ParticlesBase(xo.HybridClass):
                 kwargs[field] = kwargs[field].astype(xotype._dtype)
             kwargs[field] = np_to_ctx(kwargs[field])
 
-        # Init scalar vars
-        self.q0 = kwargs.get('q0', 1.0)
-        self.mass0 = kwargs.get('mass0', PROTON_MASS_EV)
-        self.start_tracking_at_element = kwargs.get('start_tracking_at_element',
-                                                    -1)
+
 
         # Init independent per particle vars
         self.init_independent_per_part_vars(kwargs)
 
-        # Init refs
+
         self._update_refs(
             p0c=kwargs.get('p0c'),
             energy0=kwargs.get('energy0'),
@@ -545,6 +552,50 @@ class ParticlesBase(xo.HybridClass):
             compact=compact)
         import pandas as pd
         return pd.DataFrame(dct)
+
+    def to_table(self):
+
+        """
+        Get a Table object with the Particles coordinates.
+
+        Returns
+        -------
+        table : Table
+            The Table object containing the data from Particles object.
+
+        """
+
+        import xtrack as xt
+        out_dct = self.to_dict(compact=True)
+
+        for kk in list(out_dct.keys()):
+            if not hasattr(out_dct[kk], '__len__'):
+                out_dct.pop(kk)
+            elif len(out_dct[kk]) != len(out_dct['particle_id']):
+                out_dct.pop(kk)
+
+        # Prettier ordering
+        col_names = ['s', 'x', 'px', 'y', 'py', 'zeta', 'delta', 'particle_id']
+        for nn in col_names.copy():
+            if nn not in out_dct.keys():
+                col_names.remove(nn)
+        col_names += [kk for kk in out_dct.keys() if kk not in col_names]
+
+        return xt.Table(out_dct, index='particle_id', col_names=col_names)
+
+    def get_table(self):
+
+        """
+        Get a Table object with the Particles coordinates.
+
+        Returns
+        -------
+        table : Table
+            The Table object containing the data from Particles object.
+
+        """
+
+        return self.to_table()
 
 
     @classmethod
@@ -1179,6 +1230,13 @@ class ParticlesBase(xo.HybridClass):
         energy0 = (self.p0c * self.p0c + self.mass0 * self.mass0) ** 0.5
         return self._buffer.context.linked_array_type.from_array(
             energy0, mode='readonly',
+            container=self)
+
+    @property
+    def kinetic_energy0(self):
+        kene0 = self.energy0 - self.mass0
+        return self._buffer.context.linked_array_type.from_array(
+            kene0, mode='readonly',
             container=self)
 
     @property
