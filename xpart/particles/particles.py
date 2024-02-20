@@ -46,6 +46,7 @@ class Particles(ParticlesBase):
 
     _kernels = {
         'Particles_initialize_rand_gen': xo.Kernel(
+            c_name='Particles_initialize_rand_gen',
             args=[
                 xo.Arg(xo.ThisClass, name='particles'),
                 xo.Arg(xo.UInt32, pointer=True, name='seeds'),
