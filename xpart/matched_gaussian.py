@@ -26,7 +26,6 @@ def generate_matched_gaussian_bunch(num_particles,
                                     tracker=None,
                                     line=None,
                                     particle_ref=None,
-                                    particles_class=None,
                                     engine=None,
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs, # They are passed to build_particles
@@ -114,7 +113,6 @@ def generate_matched_gaussian_bunch(num_particles,
 
     part = build_particles(_context=_context, _buffer=_buffer, _offset=_offset,
                       R_matrix=R_matrix,
-                      particles_class=particles_class,
                       particle_on_co=particle_on_co,
                       particle_ref=(
                           particle_ref if particle_on_co is  None else None),

@@ -57,7 +57,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       nemitt_x=None, nemitt_y=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
-                      particles_class=None,
                       **kwargs, # They are passed to the twiss
                     ):
 
@@ -83,9 +82,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
 
     assert 'at_s' not in kwargs, "at_s is not a valid argument for this function"
-
-    if particles_class is not None:
-        raise NotImplementedError
 
     # Deprecation warning for scale_with_transverse_norm_emitt
     if scale_with_transverse_norm_emitt is not None:

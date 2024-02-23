@@ -4,7 +4,7 @@
 # ######################################### #
 
 from .general import _pkg_root, _print
-from .particles import Particles, ParticlesBase, reference_from_pdg_id
+from .particles import Particles, reference_from_pdg_id
 
 from .constants import PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV
 pmass = PROTON_MASS_EV  # backwards compatibility
