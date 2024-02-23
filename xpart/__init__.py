@@ -1,13 +1,11 @@
 # copyright ############################### #
 # This file is part of the Xpart Package.   #
-# Copyright (c) CERN, 2021.                 #
+# Copyright (c) CERN, 2024.                 #
 # ######################################### #
 
-from .general import _pkg_root, _print
-from .particles import Particles, reference_from_pdg_id
-
-from .constants import PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV
+from xtrack.particles import Particles, PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV, reference_from_pdg_id, enable_pyheadtail_interface, disable_pyheadtail_interface
 pmass = PROTON_MASS_EV  # backwards compatibility
+
 from .pdg import get_pdg_id_from_name, get_name_from_pdg_id
 
 from .build_particles import build_particles
@@ -24,19 +22,3 @@ from .longitudinal import generate_longitudinal_coordinates
 from .monitors import PhaseMonitor
 
 from ._version import __version__
-
-def enable_pyheadtail_interface():
-    import xpart.pyheadtail_interface.pyhtxtparticles as pp
-    import xpart as xp
-    import xtrack as xt
-    xp.Particles = pp.PyHtXtParticles
-    xt.Particles = pp.PyHtXtParticles
-
-
-def disable_pyheadtail_interface():
-    import xpart as xp
-    import xtrack as xt
-    xp.Particles = xp.particles.Particles
-    xt.Particles = xp.particles.Particles
-
-

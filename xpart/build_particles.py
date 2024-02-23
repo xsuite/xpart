@@ -10,8 +10,7 @@ import numpy as np
 import xobjects as xo
 from .general import _print
 
-
-import xpart as xp # To get the right Particles class depending on pyheatail interface state
+import xtrack as xt
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +78,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             "please call Line.build_tracker() first.")
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
-    Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
+    Particles = xt.Particles  # To get the right Particles class depending on pyheatail interface state
 
     assert 'at_s' not in kwargs, "at_s is not a valid argument for this function"
 
@@ -182,7 +181,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             assert particle_on_co._xobject.at_element == 0
 
     if match_at_s is not None:
-        import xtrack as xt
         assert at_element is not None, (
             'If `match_at_s` is provided, `at_element` needs to be provided and'
             'needs to correspond to the corresponding element in the sequence'
@@ -192,7 +190,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     line.get_s_elements())<=match_at_s)[0][-1]
         assert at_element == expected_at_element or (
                 at_element < expected_at_element and
-                      all([ xt._is_aperture(line.element_dict[nn])
+                      all([xt._is_aperture(line.element_dict[nn])
                            or xt._behaves_like_drift(line.element_dict[nn])
                 for nn in line.element_names[at_element:expected_at_element]])), (
             "`match_at_s` can only be placed in the drifts downstream of the "
