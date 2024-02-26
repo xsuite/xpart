@@ -37,7 +37,8 @@ setup(
     install_requires=[
         'numpy>=1.0',
         'scipy',
-        'xobjects'
+        'xobjects',
+        'xtrack',
         ],
     author='G. Iadarola et al.',
     license='Apache 2.0',
