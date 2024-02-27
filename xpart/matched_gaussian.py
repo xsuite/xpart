@@ -170,30 +170,42 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               rf_harmonic=None,
                                               rf_voltage=None,
                                               rf_phase=None,
+                                              bucket_length=None,
                                               p_increment=0.,
                                               tracker=None,
                                               line=None,
                                               particle_ref=None,
                                               particles_class=None,
                                               engine=None,
-                                              _context=None, _buffer=None, _offset=None,
+                                              _context=None, _buffer=None,
+                                              _offset=None,
                                               num_bunches=None, i_bunch_0=None,
                                               bunch_spacing_buckets=1,
                                               **kwargs,  # Passed to build_particles
                                               ):
-
     assert ((line is not None and particle_ref is not None) or
-            (rf_harmonic is not None and rf_voltage is not None))
+            (rf_harmonic is not None and rf_voltage is not None) or
+            bucket_length is not None)
 
-    if rf_harmonic is not None and rf_voltage is not None:
-        main_harmonic_number = rf_harmonic[np.argmax(rf_voltage)]
+    if circumference is None:
+        circumference = line.get_length()
+    assert circumference > 0.0
+
+    if bucket_length is not None:
+        assert (rf_harmonic is not None and rf_voltage is not None), (
+            'Cannot provide bucket length together with RF voltage+harmonic')
     else:
-        dct_line = _characterize_line(line, particle_ref)
-        rf_harmonic_ = dct_line['h_list']
-        rf_voltage_ = dct_line['voltage_list']
-        main_harmonic_number = int(rf_harmonic_[np.argmax(rf_voltage_)])
-
-    assert len(filling_scheme) == main_harmonic_number/bunch_spacing_buckets
+        if rf_harmonic is not None and rf_voltage is not None:
+            main_harmonic_number = rf_harmonic[np.argmax(rf_voltage)]
+        else:
+            dct_line = _characterize_line(line, particle_ref)
+            assert not dct_line['found_linear_longitudinal'], (
+                'Cannot infer bucket length from line featuring a linear RF')
+            rf_harmonic_ = dct_line['h_list']
+            rf_voltage_ = dct_line['voltage_list']
+            main_harmonic_number = int(rf_harmonic_[np.argmax(rf_voltage_)])
+        bucket_length = circumference / main_harmonic_number
+    assert len(filling_scheme) == circumference / (bunch_spacing_buckets * bucket_length)
 
     if num_bunches is None or i_bunch_0 is None:
         num_bunches = len(filling_scheme.nonzero()[0])
