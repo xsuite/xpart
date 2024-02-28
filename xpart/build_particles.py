@@ -163,6 +163,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     ref_dict = {
         'q0': particle_ref.q0,
         'mass0': particle_ref.mass0,
+        't_sim': particle_ref.t_sim,
         'p0c': particle_ref.p0c[0],
         'gamma0': particle_ref.gamma0[0],
         'beta0': particle_ref.beta0[0],
