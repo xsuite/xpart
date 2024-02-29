@@ -170,49 +170,48 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               rf_harmonic=None,
                                               rf_voltage=None,
                                               rf_phase=None,
-                                              bucket_length=None,
+                                              bucket_length = None,
                                               p_increment=0.,
                                               tracker=None,
                                               line=None,
                                               particle_ref=None,
                                               particles_class=None,
                                               engine=None,
-                                              _context=None, _buffer=None,
-                                              _offset=None,
+                                              _context=None, _buffer=None, _offset=None,
                                               num_bunches=None, i_bunch_0=None,
                                               bunch_spacing_buckets=1,
                                               **kwargs,  # Passed to build_particles
                                               ):
+
     assert ((line is not None and particle_ref is not None) or
             (rf_harmonic is not None and rf_voltage is not None) or
             bucket_length is not None)
-
+            
     if circumference is None:
         circumference = line.get_length()
     assert circumference > 0.0
-
+            
     if bucket_length is not None:
-        assert (rf_harmonic is not None and rf_voltage is not None), (
-            'Cannot provide bucket length together with RF voltage+harmonic')
+        assert (rf_harmonic is None and rf_voltage is None),(
+                'Cannot provide bucket length together with RF voltage+harmonic')
     else:
         if rf_harmonic is not None and rf_voltage is not None:
             main_harmonic_number = rf_harmonic[np.argmax(rf_voltage)]
         else:
             dct_line = _characterize_line(line, particle_ref)
-            assert not dct_line['found_linear_longitudinal'], (
-                'Cannot infer bucket length from line featuring a linear RF')
+            assert not dct_line['found_linear_longitudinal'],(
+                    'Cannot infer bucket length from line featuring a linear RF')
             rf_harmonic_ = dct_line['h_list']
             rf_voltage_ = dct_line['voltage_list']
-            main_harmonic_number = int(rf_harmonic_[np.argmax(rf_voltage_)])
-        bucket_length = circumference / main_harmonic_number
-    assert len(filling_scheme) == circumference / (bunch_spacing_buckets * bucket_length)
+            main_harmonic_number = int(dct_line['h_list'][np.argmax(dct_line['voltage_list'])])
+        bucket_length = circumference/main_harmonic_number
+
+    bunch_spacing = bunch_spacing_buckets * bucket_length
+    assert len(filling_scheme) == np.floor(circumference/bunch_spacing+0.5)
 
     if num_bunches is None or i_bunch_0 is None:
         num_bunches = len(filling_scheme.nonzero()[0])
         i_bunch_0 = 0
-
-    if circumference is None:
-        circumference = line.get_length()
 
     macro_bunch = generate_matched_gaussian_bunch(
         num_particles=num_particles * num_bunches,
@@ -235,8 +234,6 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         **kwargs,  # They are passed to build_particles
     )
 
-    bucket_length = circumference/main_harmonic_number
-    bunch_spacing = bunch_spacing_buckets * bucket_length
     filled_buckets = filling_scheme.nonzero()[0]
     count = 0
     for bunch_n in range(i_bunch_0, i_bunch_0 + num_bunches):
