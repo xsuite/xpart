@@ -14,10 +14,8 @@ import xtrack as xt
 from xobjects.test_helpers import for_all_test_contexts
 test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
 
-#@for_all_test_contexts
-#def test_multi_bunch_gaussian_generation(test_context):
-if __name__ == '__main__':
-    test_context = xo.ContextCpu()
+@for_all_test_contexts
+def test_multi_bunch_gaussian_generation(test_context):
     bunch_intensity = 1e11
     sigma_z = 22.5e-2 / 5
     n_part_per_bunch = int(1e5)
