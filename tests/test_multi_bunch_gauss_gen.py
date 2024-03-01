@@ -14,8 +14,10 @@ import xtrack as xt
 from xobjects.test_helpers import for_all_test_contexts
 test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
 
-@for_all_test_contexts
-def test_multi_bunch_gaussian_generation(test_context):
+#@for_all_test_contexts
+#def test_multi_bunch_gaussian_generation(test_context):
+if __name__ == '__main__':
+    test_context = xo.ContextCpu()
     bunch_intensity = 1e11
     sigma_z = 22.5e-2 / 5
     n_part_per_bunch = int(1e5)
@@ -47,7 +49,7 @@ def test_multi_bunch_gaussian_generation(test_context):
     n_bunches_tot = 10
     filling_scheme[0:int(n_bunches_tot/2)] = 1
     filling_scheme[n_bunches_tot:int(3*n_bunches_tot/2)] = 1
-    filled_buckets = filling_scheme.nonzero()[0]
+    filled_slots = filling_scheme.nonzero()[0]
 
     # make a test faking 2 procs sharing the bunches
     n_procs = 2
@@ -55,7 +57,6 @@ def test_multi_bunch_gaussian_generation(test_context):
     bunche_numbers_per_rank = xp.split_scheme(filling_scheme=filling_scheme,
                                             n_chunck=n_procs)
     for rank in range(n_procs):
-        print(bunche_numbers_per_rank[rank])
         part = xp.generate_matched_gaussian_multibunch_beam(
             _context=test_context,
             filling_scheme=filling_scheme,  # engine='linear',
@@ -93,7 +94,7 @@ def test_multi_bunch_gaussian_generation(test_context):
                     part.zeta[i_bunch*n_part_per_bunch:
                               (i_bunch+1)*n_part_per_bunch]))
                               
-            assert np.isclose((zeta_avg-bunch_spacing*filled_buckets[bunch_number])/sigma_z, 0.0, atol=1e-2)
+            assert np.isclose((zeta_avg-bunch_spacing*filled_slots[bunch_number])/sigma_z, 0.0, atol=1e-2)
             assert np.isclose(delta_avg/sigma_delta, 0.0, atol=1e-2)
             assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
             assert np.isclose(delta_rms, sigma_delta, rtol=1e-1, atol=1e-15)

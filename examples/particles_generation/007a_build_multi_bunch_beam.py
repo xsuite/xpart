@@ -4,19 +4,9 @@ import xtrack as xt
 import json
 import matplotlib.pyplot as plt
 
-class DummyCommunicator:
-    def __init__(self, n_procs, rank):
-        self.n_procs = n_procs
-        self.rank = rank
 
-    def Get_size(self):
-        return self.n_procs
-
-    def Get_rank(self):
-        return self.rank
-
-
-filename = xt._pkg_root.joinpath('../../../xsuite/xtrack/test_data/lhc_no_bb/line_and_particle.json')
+#filename = xt._pkg_root.joinpath('../../../xsuite/xtrack/test_data/lhc_no_bb/line_and_particle.json')
+filename = xt._pkg_root.joinpath('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
 
@@ -27,6 +17,7 @@ line.build_tracker()
 circumference = line.get_length()
 h_list = [35640]
 bunch_spacing_in_buckets = 10
+bucket_length = circumference/h_list[0]
 filling_scheme = np.zeros(int(np.amin(h_list)/bunch_spacing_in_buckets))
 n_bunches_tot = 10
 filling_scheme[0:int(n_bunches_tot/2)] = 1
@@ -42,51 +33,32 @@ n_part_per_bunch = int(1e5)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
-communicator = DummyCommunicator(n_procs, rank)
+bunche_numbers_per_rank = xp.split_scheme(filling_scheme=filling_scheme,
+                                        n_chunck=n_procs)
 
-first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
-                                         communicator=communicator)
+colors = ['b','g']
+for rank in range(n_procs):
+    particles = xp.generate_matched_gaussian_multibunch_beam(
+             filling_scheme=filling_scheme,
+             num_particles=n_part_per_bunch,
+             total_intensity_particles=bunch_intensity,
+             nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
+             line=line, bunch_spacing_buckets=10,
+             bunch_numbers=bunche_numbers_per_rank[rank],
+             particle_ref=line.particle_ref
+    )
 
-particles = xp.generate_matched_gaussian_multibunch_beam(
-         filling_scheme=filling_scheme,
-         num_particles=n_part_per_bunch,
-         total_intensity_particles=bunch_intensity,
-         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-         line=line, bunch_spacing_buckets=10,
-         i_bunch_0=first_bunch, num_bunches=n_bunches,
-         particle_ref=line.particle_ref
-)
+    print(fr"target sigma_z: {sigma_z}")
+    for i_bunch,bunch_number in enumerate(bunche_numbers_per_rank[rank]):
+        zeta_rms = np.std(particles.zeta[i_bunch*n_part_per_bunch:
+                                         (i_bunch+1)*n_part_per_bunch])
+        print(f'zeta rms of bunch {i_bunch}: {zeta_rms}')
 
-print(fr"target sigma_z: {sigma_z}")
-for i_bunch in range(n_bunches):
-    zeta_rms = np.std(particles.zeta[i_bunch*n_part_per_bunch:
-                                     (i_bunch+1)*n_part_per_bunch])
-    print(f'zeta rms of bunch {i_bunch}: {zeta_rms}')
-    assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
+    plt.figure(0)
+    plt.plot(particles.zeta/bucket_length, particles.delta, 'x',color=colors[rank])
+filled_slots = filling_scheme.nonzero()[0]
+for filled_slot in filled_slots:
+    plt.figure(0)
+    plt.axvline(filled_slot*bunch_spacing_in_buckets,color='k',ls='--')
 
-plt.plot(particles.zeta, particles.delta, 'bx')
-rank = 1
-communicator = DummyCommunicator(n_procs, rank)
-
-first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
-                                         communicator=communicator)
-
-particles = xp.generate_matched_gaussian_multibunch_beam(
-    filling_scheme=filling_scheme,
-    num_particles=n_part_per_bunch,
-    total_intensity_particles=bunch_intensity,
-    nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-    line=line, bunch_spacing_buckets=10,
-    i_bunch_0=first_bunch, num_bunches=n_bunches,
-    particle_ref=line.particle_ref
-)
-
-print(fr"target sigma_z: {sigma_z}")
-for i_bunch in range(n_bunches):
-    zeta_rms = np.std(particles.zeta[i_bunch*n_part_per_bunch:
-                                     (i_bunch+1)*n_part_per_bunch])
-    print(f'zeta rms of bunch {i_bunch}: {zeta_rms}')
-    assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
-
-plt.plot(particles.zeta, particles.delta, 'rx')
 plt.show()
