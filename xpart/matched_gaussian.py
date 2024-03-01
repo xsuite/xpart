@@ -128,26 +128,26 @@ def generate_matched_gaussian_bunch(num_particles,
     return part
 
 
-def split_scheme(filling_scheme, n_chunck=1):
+def split_scheme(filling_scheme, n_chunk=1):
     """
     Distribute the filling scheme between the processes, i.e. assign to each
     processor its bunches
     """
     total_n_bunches = len(filling_scheme.nonzero()[0])
-    if n_chunck > 1:
+    if n_chunk > 1:
 
         # create the array containing the id of the bunches on each rank
         # (copied from PyHEADTAIL.mpi.mpi_data)
         n_bunches = total_n_bunches
-        n_bunches_on_rank = [n_bunches//n_chunck+1 if i < n_bunches % n_chunck
-                             else n_bunches // n_chunck + 0
-                             for i in range(n_chunck)]
+        n_bunches_on_rank = [n_bunches//n_chunk+1 if i < n_bunches % n_chunk
+                             else n_bunches // n_chunk + 0
+                             for i in range(n_chunk)]
         n_tasks_cumsum = np.insert(np.cumsum(n_bunches_on_rank), 0, 0)
         total_bunch_ids = np.unique(
             np.cumsum(filling_scheme == 1)) - 1
         bunches_per_rank = [total_bunch_ids[n_tasks_cumsum[i]:
                                             n_tasks_cumsum[i + 1]]
-                            for i in range(n_chunck)]
+                            for i in range(n_chunk)]
     else:
         bunches_per_rank = [np.linspace(0,
                                         total_n_bunches - 1,

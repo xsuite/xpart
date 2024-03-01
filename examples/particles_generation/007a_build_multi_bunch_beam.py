@@ -31,7 +31,7 @@ nemitt_y = 2.5e-6
 
 n_procs = 2
 bunche_numbers_per_rank = xp.split_scheme(filling_scheme=filling_scheme,
-                                        n_chunck=n_procs)
+                                        n_chunk=n_procs)
 
 colors = ['b','g']
 for rank in range(n_procs):

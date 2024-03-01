@@ -53,7 +53,7 @@ def test_multi_bunch_gaussian_generation(test_context):
     n_procs = 2
 
     bunche_numbers_per_rank = xp.split_scheme(filling_scheme=filling_scheme,
-                                            n_chunck=n_procs)
+                                            n_chunk=n_procs)
     for rank in range(n_procs):
         part = xp.generate_matched_gaussian_multibunch_beam(
             _context=test_context,
