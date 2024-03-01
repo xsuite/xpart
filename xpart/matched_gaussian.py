@@ -199,8 +199,8 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
             main_harmonic_number = rf_harmonic[np.argmax(rf_voltage)]
         else:
             dct_line = _characterize_line(line, particle_ref)
-            assert not dct_line['found_linear_longitudinal'],(
-                    'Cannot infer bucket length from line featuring a linear RF')
+            assert len(dct_line['voltage_list']) > 0
+            assert not np.any(np.isnan(dct_line['h_list']))
             rf_harmonic_ = dct_line['h_list']
             rf_voltage_ = dct_line['voltage_list']
             main_harmonic_number = int(dct_line['h_list'][np.argmax(dct_line['voltage_list'])])
