@@ -14,19 +14,6 @@ import xtrack as xt
 from xobjects.test_helpers import for_all_test_contexts
 test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
 
-
-class DummyCommunicator:
-    def __init__(self, n_procs, rank):
-        self.n_procs = n_procs
-        self.rank = rank
-
-    def Get_size(self):
-        return self.n_procs
-
-    def Get_rank(self):
-        return self.rank
-
-
 @for_all_test_contexts
 def test_multi_bunch_gaussian_generation(test_context):
     bunch_intensity = 1e11
@@ -48,119 +35,83 @@ def test_multi_bunch_gaussian_generation(test_context):
     line.build_tracker(_context=test_context)
 
     part_on_co = line.find_closed_orbit()
-
+    tw = line.twiss()
+    sigma_delta = sigma_z / tw['betz0']
     circumference = line.get_length()
     h_list = [35640]
     bunch_spacing_in_buckets = 10
+    bucket_length = circumference/h_list[0]
+    bunch_spacing = bunch_spacing_in_buckets * bucket_length
     filling_scheme = np.zeros(int(np.amin(h_list)/bunch_spacing_in_buckets))
     # build a dummy filling scheme
     n_bunches_tot = 10
     filling_scheme[0:int(n_bunches_tot/2)] = 1
     filling_scheme[n_bunches_tot:int(3*n_bunches_tot/2)] = 1
+    filled_buckets = filling_scheme.nonzero()[0]
 
-    # build a dummy communicator made of two ranks and use rank 0
+    # make a test faking 2 procs sharing the bunches
     n_procs = 2
-    rank = 0
-    communicator = DummyCommunicator(n_procs, rank)
 
-    first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
-                                             communicator=communicator)
+    bunche_numbers_per_rank = xp.split_scheme(filling_scheme=filling_scheme,
+                                            n_chunck=n_procs)
+    for rank in range(n_procs):
+        print(bunche_numbers_per_rank[rank])
+        part = xp.generate_matched_gaussian_multibunch_beam(
+            _context=test_context,
+            filling_scheme=filling_scheme,  # engine='linear',
+            num_particles=n_part_per_bunch,
+            total_intensity_particles=bunch_intensity,
+            nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
+            line=line, bunch_spacing_buckets=bunch_spacing_in_buckets,
+            bunch_numbers=bunche_numbers_per_rank[rank],
+            particle_ref=line.particle_ref
+        )
 
-    part = xp.generate_matched_gaussian_multibunch_beam(
-        _context=test_context,
-        filling_scheme=filling_scheme,  # engine='linear',
-        num_particles=n_part_per_bunch,
-        total_intensity_particles=bunch_intensity,
-        nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-        line=line, bunch_spacing_buckets=10,
-        i_bunch_0=first_bunch, num_bunches=n_bunches,
-        particle_ref=line.particle_ref
-    )
-
-    tw = line.twiss()
-
-    # CHECKS
-    for i_bunch in range(n_bunches):
-        y_rms = np.std(
-            test_context.nparray_from_context_array(
-                part.y[i_bunch*n_part_per_bunch:
-                       (i_bunch+1)*n_part_per_bunch]))
-        x_rms = np.std(
-            test_context.nparray_from_context_array(
-                part.x[i_bunch*n_part_per_bunch:
-                       (i_bunch+1)*n_part_per_bunch]))
-        delta_rms = np.std(
-            test_context.nparray_from_context_array(
-                part.delta[i_bunch*n_part_per_bunch:
-                           (i_bunch+1)*n_part_per_bunch]))
-        zeta_rms = np.std(
+        for i_bunch,bunch_number in enumerate(bunche_numbers_per_rank[rank]):
+            zeta_avg = np.average(
             test_context.nparray_from_context_array(
                 part.zeta[i_bunch*n_part_per_bunch:
-                          (i_bunch+1)*n_part_per_bunch]))
-
-        part_on_co.move(_context=xo.ContextCpu())
-
-        gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
-        gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
-        assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
-        assert np.isclose(
-            x_rms,
-            np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
-            rtol=1e-2, atol=1e-15)
-        assert np.isclose(
-            y_rms,
-            np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
-            rtol=1e-2, atol=1e-15)
-
-    # build a dummy communicator made of two ranks and use rank 1
-    rank = 1
-    communicator = DummyCommunicator(n_procs, rank)
-
-    first_bunch, n_bunches = xp.split_scheme(filling_scheme=filling_scheme,
-                                             communicator=communicator)
-
-    part = xp.generate_matched_gaussian_multibunch_beam(
-        filling_scheme=filling_scheme,  # engine='linear',
-        num_particles=n_part_per_bunch,
-        total_intensity_particles=bunch_intensity,
-        nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-        line=line, bunch_spacing_buckets=10,
-        i_bunch_0=first_bunch, num_bunches=n_bunches,
-        particle_ref=line.particle_ref
-    )
-
-    # CHECKS
-    for i_bunch in range(n_bunches):
-        y_rms = np.std(
-            test_context.nparray_from_context_array(
-                part.y[i_bunch*n_part_per_bunch:
                        (i_bunch+1)*n_part_per_bunch]))
-        x_rms = np.std(
-            test_context.nparray_from_context_array(
-                part.x[i_bunch*n_part_per_bunch:
-                       (i_bunch+1)*n_part_per_bunch]))
-        delta_rms = np.std(
+            delta_avg = np.average(
             test_context.nparray_from_context_array(
                 part.delta[i_bunch*n_part_per_bunch:
+                       (i_bunch+1)*n_part_per_bunch]))
+            y_rms = np.std(
+                test_context.nparray_from_context_array(
+                    part.y[i_bunch*n_part_per_bunch:
                            (i_bunch+1)*n_part_per_bunch]))
-        zeta_rms = np.std(
-            test_context.nparray_from_context_array(
-                part.zeta[i_bunch*n_part_per_bunch:
-                          (i_bunch+1)*n_part_per_bunch]))
+            x_rms = np.std(
+                test_context.nparray_from_context_array(
+                    part.x[i_bunch*n_part_per_bunch:
+                           (i_bunch+1)*n_part_per_bunch]))
+            delta_rms = np.std(
+                test_context.nparray_from_context_array(
+                    part.delta[i_bunch*n_part_per_bunch:
+                               (i_bunch+1)*n_part_per_bunch]))
+            zeta_rms = np.std(
+                test_context.nparray_from_context_array(
+                    part.zeta[i_bunch*n_part_per_bunch:
+                              (i_bunch+1)*n_part_per_bunch]))
+                              
+            assert np.isclose((zeta_avg-bunch_spacing*filled_buckets[bunch_number])/sigma_z, 0.0, atol=1e-2)
+            assert np.isclose(delta_avg/sigma_delta, 0.0, atol=1e-2)
+            assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
+            assert np.isclose(delta_rms, sigma_delta, rtol=1e-1, atol=1e-15)
 
-        part_on_co.move(_context=xo.ContextCpu())
+            part_on_co.move(_context=xo.ContextCpu())
 
-        gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
-        gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
-        assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
-        assert np.isclose(
-            x_rms,
-            np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
-            rtol=1e-2, atol=1e-15
-        )
-        assert np.isclose(
-            y_rms,
-            np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
-            rtol=1e-2, atol=1e-15
-        )
+            gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
+            gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
+            assert np.isclose(
+                x_rms,
+                np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
+                rtol=1e-2, atol=1e-15
+            )
+            assert np.isclose(
+                y_rms,
+                np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
+                rtol=1e-2, atol=1e-15
+            )
+
+
 

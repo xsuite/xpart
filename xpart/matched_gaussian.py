@@ -128,35 +128,32 @@ def generate_matched_gaussian_bunch(num_particles,
     return part
 
 
-def split_scheme(filling_scheme, communicator=None):
+def split_scheme(filling_scheme, n_chunck=1):
     """
     Distribute the filling scheme between the processes, i.e. assign to each
     processor its bunches
     """
     total_n_bunches = len(filling_scheme.nonzero()[0])
-    if communicator is not None:
-        n_procs = communicator.Get_size()
+    if n_chunck > 1:
 
         # create the array containing the id of the bunches on each rank
         # (copied from PyHEADTAIL.mpi.mpi_data)
         n_bunches = total_n_bunches
-        n_bunches_on_rank = [n_bunches//n_procs+1 if i < n_bunches % n_procs
-                             else n_bunches // n_procs + 0
-                             for i in range(n_procs)]
+        n_bunches_on_rank = [n_bunches//n_chunck+1 if i < n_bunches % n_chunck
+                             else n_bunches // n_chunck + 0
+                             for i in range(n_chunck)]
         n_tasks_cumsum = np.insert(np.cumsum(n_bunches_on_rank), 0, 0)
         total_bunch_ids = np.unique(
             np.cumsum(filling_scheme == 1)) - 1
         bunches_per_rank = [total_bunch_ids[n_tasks_cumsum[i]:
                                             n_tasks_cumsum[i + 1]]
-                            for i in range(n_procs)]
+                            for i in range(n_chunck)]
     else:
         bunches_per_rank = [np.linspace(0,
                                         total_n_bunches - 1,
                                         total_n_bunches)]
 
-    bunches_this_rank = bunches_per_rank[communicator.Get_rank()]
-
-    return bunches_this_rank[0], len(bunches_this_rank)
+    return bunches_per_rank
 
 
 def generate_matched_gaussian_multibunch_beam(filling_scheme,
@@ -178,7 +175,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               particles_class=None,
                                               engine=None,
                                               _context=None, _buffer=None, _offset=None,
-                                              num_bunches=None, i_bunch_0=None,
+                                              bunch_numbers=None,
                                               bunch_spacing_buckets=1,
                                               **kwargs,  # Passed to build_particles
                                               ):
@@ -203,16 +200,14 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
             main_harmonic_number = int(np.floor(
                         dct_line['h_list'][np.argmax(dct_line['voltage_list'])]+0.5))
         bucket_length = circumference/main_harmonic_number
-
     bunch_spacing = bunch_spacing_buckets * bucket_length
     assert len(filling_scheme) == np.floor(circumference/bunch_spacing+0.5)
 
-    if num_bunches is None or i_bunch_0 is None:
-        num_bunches = len(filling_scheme.nonzero()[0])
-        i_bunch_0 = 0
+    if bunch_numbers is None:
+        bunch_numbers = range(len(filling_scheme.nonzero()[0]))
 
     macro_bunch = generate_matched_gaussian_bunch(
-        num_particles=num_particles * num_bunches,
+        num_particles=num_particles * len(bunch_numbers),
         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
         total_intensity_particles=total_intensity_particles,
         particle_on_co=particle_on_co,
@@ -234,8 +229,8 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
 
     filled_buckets = filling_scheme.nonzero()[0]
     count = 0
-    for bunch_n in range(i_bunch_0, i_bunch_0 + num_bunches):
-        bucket_n = filled_buckets[bunch_n]
+    for bunch_number in bunch_numbers:
+        bucket_n = filled_buckets[bunch_number]
         macro_bunch.zeta[count * num_particles:
                          (count+1) * num_particles] += (bunch_spacing *
                                                         bucket_n)
