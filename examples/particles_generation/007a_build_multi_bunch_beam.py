@@ -5,8 +5,7 @@ import json
 import matplotlib.pyplot as plt
 
 
-#filename = xt._pkg_root.joinpath('../../../xsuite/xtrack/test_data/lhc_no_bb/line_and_particle.json')
-filename = xt._pkg_root.joinpath('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
+filename = xt._pkg_root.joinpath('../../../xsuite/xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
 
@@ -24,15 +23,13 @@ filling_scheme[0:int(n_bunches_tot/2)] = 1
 
 filling_scheme[n_bunches_tot:int(3*n_bunches_tot/2)] = 1
 
-n_procs = 2
-rank = 0
-
 bunch_intensity = 1e11
 sigma_z = 22.5e-2/5
 n_part_per_bunch = int(1e5)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
+n_procs = 2
 bunche_numbers_per_rank = xp.split_scheme(filling_scheme=filling_scheme,
                                         n_chunck=n_procs)
 
