@@ -62,6 +62,10 @@ def _characterize_line(line, particle_ref,
         raise ValueError('No longitudinal focusing found in the line. '
                          'Cannot generate matched longitudinal coordinates.')
                          
+    if found_linear_longitudinal and found_nonlinear_longitudinal:
+        raise ValueError('Generation of matched longitudinal coordinates in line featuring '
+                         'both linear and non-linear elements is not implemented')
+                         
     if found_nonlinear_longitudinal:
         assert len(freq_list) > 0
 
@@ -78,7 +82,7 @@ def _characterize_line(line, particle_ref,
     dct['slip_factor'] = tw['slip_factor']
     dct['qs'] = tw['qs']
     dct['bets0'] = tw['betz0']
-    dct['found_nonlinear_longitudinal'] = found_nonlinear_longitudinal
+    dct['found_only_linear_longitudinal'] = found_linear_longitudinal
     return dct
 
 def generate_longitudinal_coordinates(
@@ -186,10 +190,10 @@ def generate_longitudinal_coordinates(
     assert sigma_z is not None
 
     if engine is None:
-        if line is not None and dct['found_nonlinear_longitudinal']:
-            engine = 'pyheadtail'
-        else:
+        if line is not None and dct['found_only_linear_longitudinal']:
             engine = 'linear'
+        else:
+            engine = 'pyheadtail'
 
     if engine == "linear":
         if distribution != 'gaussian':

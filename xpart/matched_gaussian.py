@@ -200,10 +200,8 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         else:
             dct_line = _characterize_line(line, particle_ref)
             assert len(dct_line['voltage_list']) > 0
-            assert not np.any(np.isnan(dct_line['h_list']))
-            rf_harmonic_ = dct_line['h_list']
-            rf_voltage_ = dct_line['voltage_list']
-            main_harmonic_number = int(dct_line['h_list'][np.argmax(dct_line['voltage_list'])])
+            main_harmonic_number = int(np.floor(
+                        dct_line['h_list'][np.argmax(dct_line['voltage_list'])]+0.5))
         bucket_length = circumference/main_harmonic_number
 
     bunch_spacing = bunch_spacing_buckets * bucket_length
