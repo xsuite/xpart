@@ -36,7 +36,7 @@ def test_multi_bunch_gaussian_generation(test_context):
 
     part_on_co = line.find_closed_orbit()
     tw = line.twiss()
-    sigma_delta = sigma_z / tw['betz0']
+    sigma_delta = sigma_z / tw['bets0']
     circumference = line.get_length()
     h_list = [35640]
     bunch_spacing_in_buckets = 10
