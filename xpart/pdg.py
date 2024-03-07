@@ -6,7 +6,7 @@
 import numpy as np
 from numbers import Number
 
-from .constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV
+from xtrack.particles.constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV
 
 
 # Monte Carlo numbering scheme as defined by the Particle Data Group
