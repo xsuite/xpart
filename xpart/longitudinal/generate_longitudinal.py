@@ -33,6 +33,7 @@ def _characterize_line(line, particle_ref,
     lag_list_deg = []
     voltage_list = []
     h_list = []
+    found_nonlinear_longitudinal = False
     found_linear_longitudinal = False
     for ee in line.elements:
         if ee.__class__.__name__ == 'Cavity':
@@ -42,6 +43,7 @@ def _characterize_line(line, particle_ref,
                 lag_list_deg.append(eecp.lag)
                 voltage_list.append(eecp.voltage)
                 h_list.append(eecp.frequency*T_rev)
+                found_nonlinear_longitudinal = True
         elif ee.__class__.__name__ == 'LineSegmentMap':
             eecp = ee.copy(_context=xo.ContextCpu())
             assert eecp.longitudinal_mode in [
@@ -51,16 +53,24 @@ def _characterize_line(line, particle_ref,
                 lag_list_deg += list(eecp.lag_rf)
                 voltage_list += list(eecp.voltage_rf)
                 h_list += [ff*T_rev for ff in eecp.frequency_rf]
-            elif eecp.longitudinal_mode == 'linear_fixed_qs':
+            if eecp.longitudinal_mode  == 'nonlinear':
+                found_nonlinear_longitudinal = True
+            elif eecp.longitudinal_mode in ['linear_fixed_qs' , 'linear_fixed_rf']:
                 found_linear_longitudinal = True
 
-    if found_linear_longitudinal:
-        assert len(freq_list) == 0, (
-            "Cannot mix linear and nonlinear longitudinal kicks")
-
-    if not found_linear_longitudinal and len(freq_list) == 0:
+    found_only_linear_longitudinal = False
+    if not found_linear_longitudinal and not found_nonlinear_longitudinal:
         raise ValueError('No longitudinal focusing found in the line. '
                          'Cannot generate matched longitudinal coordinates.')
+
+    elif found_linear_longitudinal and found_nonlinear_longitudinal:
+        raise ValueError('Generation of matched longitudinal coordinates in line featuring '
+                         'both linear and non-linear elements is not implemented')
+    else:
+        found_only_linear_longitudinal = found_linear_longitudinal
+
+    if found_nonlinear_longitudinal:
+        assert len(freq_list) > 0
 
     tw = line.twiss(
         particle_ref=particle_ref, **kwargs)
@@ -75,7 +85,7 @@ def _characterize_line(line, particle_ref,
     dct['slip_factor'] = tw['slip_factor']
     dct['qs'] = tw['qs']
     dct['bets0'] = tw['bets0']
-    dct['found_linear_longitudinal'] = found_linear_longitudinal
+    dct['found_only_linear_longitudinal'] = found_only_linear_longitudinal
     return dct
 
 def generate_longitudinal_coordinates(
@@ -183,7 +193,7 @@ def generate_longitudinal_coordinates(
     assert sigma_z is not None
 
     if engine is None:
-        if line is not None and dct['found_linear_longitudinal']:
+        if line is not None and dct['found_only_linear_longitudinal']:
             engine = 'linear'
         else:
             engine = 'pyheadtail'
