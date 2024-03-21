@@ -14,7 +14,7 @@ import xobjects as xo
 from .rfbucket_matching import RFBucketMatcher
 from .rfbucket_matching import ThermalDistribution
 from .rf_bucket import RFBucket
-from ..particles import Particles
+from xtrack.particles import Particles
 from .single_rf_harmonic_matcher import SingleRFHarmonicMatcher
 from ..general import _print
 
@@ -33,6 +33,8 @@ def _characterize_line(line, particle_ref,
     lag_list_deg = []
     voltage_list = []
     h_list = []
+    found_nonlinear_longitudinal = False
+    found_linear_longitudinal = False
     for ee in line.elements:
         if ee.__class__.__name__ == 'Cavity':
             eecp = ee.copy(_context=xo.ContextCpu())
@@ -41,6 +43,34 @@ def _characterize_line(line, particle_ref,
                 lag_list_deg.append(eecp.lag)
                 voltage_list.append(eecp.voltage)
                 h_list.append(eecp.frequency*T_rev)
+                found_nonlinear_longitudinal = True
+        elif ee.__class__.__name__ == 'LineSegmentMap':
+            eecp = ee.copy(_context=xo.ContextCpu())
+            assert eecp.longitudinal_mode in [
+                'nonlinear', 'linear_fixed_qs', 'linear_fixed_rf', None]
+            if eecp.longitudinal_mode in ['nonlinear' , 'linear_fixed_rf']:
+                freq_list += list(eecp.frequency_rf)
+                lag_list_deg += list(eecp.lag_rf)
+                voltage_list += list(eecp.voltage_rf)
+                h_list += [ff*T_rev for ff in eecp.frequency_rf]
+            if eecp.longitudinal_mode  == 'nonlinear':
+                found_nonlinear_longitudinal = True
+            elif eecp.longitudinal_mode in ['linear_fixed_qs' , 'linear_fixed_rf']:
+                found_linear_longitudinal = True
+
+    found_only_linear_longitudinal = False
+    if not found_linear_longitudinal and not found_nonlinear_longitudinal:
+        raise ValueError('No longitudinal focusing found in the line. '
+                         'Cannot generate matched longitudinal coordinates.')
+
+    elif found_linear_longitudinal and found_nonlinear_longitudinal:
+        raise ValueError('Generation of matched longitudinal coordinates in line featuring '
+                         'both linear and non-linear elements is not implemented')
+    else:
+        found_only_linear_longitudinal = found_linear_longitudinal
+
+    if found_nonlinear_longitudinal:
+        assert len(freq_list) > 0
 
     tw = line.twiss(
         particle_ref=particle_ref, **kwargs)
@@ -53,6 +83,9 @@ def _characterize_line(line, particle_ref,
     dct['h_list'] = h_list
     dct['momentum_compaction_factor'] = tw['momentum_compaction_factor']
     dct['slip_factor'] = tw['slip_factor']
+    dct['qs'] = tw['qs']
+    dct['bets0'] = tw['bets0']
+    dct['found_only_linear_longitudinal'] = found_only_linear_longitudinal
     return dct
 
 def generate_longitudinal_coordinates(
@@ -60,7 +93,7 @@ def generate_longitudinal_coordinates(
                                     num_particles=None,
                                     distribution='gaussian',
                                     sigma_z=None,
-                                    engine="pyheadtail",
+                                    engine=None,
                                     return_matcher=False,
                                     particle_ref=None,
                                     mass0=None, q0=None, gamma0=None,
@@ -157,10 +190,22 @@ def generate_longitudinal_coordinates(
         assert line is not None
         rf_phase=(np.array(dct['lag_list_deg']) - 180)/180*np.pi
 
-
     assert sigma_z is not None
 
-    if engine == "pyheadtail":
+    if engine is None:
+        if line is not None and dct['found_only_linear_longitudinal']:
+            engine = 'linear'
+        else:
+            engine = 'pyheadtail'
+
+    if engine == "linear":
+        if distribution != 'gaussian':
+            raise NotImplementedError
+        assert line is not None, ('Not yet implemented if line is not provided')
+        sigma_dp = sigma_z / np.abs(dct['bets0'])
+        z_particles = sigma_z * np.random.normal(size=num_particles)
+        delta_particles = sigma_dp * np.random.normal(size=num_particles)
+    elif engine == "pyheadtail":
         if distribution != 'gaussian':
             raise NotImplementedError
 
@@ -174,7 +219,7 @@ def generate_longitudinal_coordinates(
                             phi_offset_list=np.atleast_1d(rf_phase),
                             p_increment=p_increment)
 
-        if sigma_z < 0.1 * circumference/np.max(np.atleast_1d(rf_harmonic)):
+        if sigma_z < 0.03 * circumference/np.max(np.atleast_1d(rf_harmonic)):
             logger.info('short bunch, use linear matching')
             eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
             beta_z = np.abs(eta) * circumference / 2.0 / np.pi / rfbucket.Q_s

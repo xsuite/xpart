@@ -10,8 +10,7 @@ import numpy as np
 import xobjects as xo
 from .general import _print
 
-
-import xpart as xp # To get the right Particles class depending on pyheatail interface state
+import xtrack as xt
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       particle_ref=None,
                       num_particles=None,
                       x=None, px=None, y=None, py=None,
-                      zeta=None, delta=None, pzeta=None,
+                      zeta=None, delta=None, pzeta=None, ptau=None,
                       x_norm=None, px_norm=None, y_norm=None, py_norm=None,
                       zeta_norm=None, pzeta_norm=None,
                       tracker=None,
@@ -57,7 +56,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       nemitt_x=None, nemitt_y=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
-                      particles_class=None,
                       **kwargs, # They are passed to the twiss
                     ):
 
@@ -80,12 +78,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             "please call Line.build_tracker() first.")
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
-    Particles = xp.Particles # To get the right Particles class depending on pyheatail interface state
+    Particles = xt.Particles  # To get the right Particles class depending on pyheatail interface state
 
     assert 'at_s' not in kwargs, "at_s is not a valid argument for this function"
-
-    if particles_class is not None:
-        raise NotImplementedError
 
     # Deprecation warning for scale_with_transverse_norm_emitt
     if scale_with_transverse_norm_emitt is not None:
@@ -120,6 +115,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     zeta = (zeta.get() if hasattr(zeta, "get") else zeta)
     delta = (delta.get() if hasattr(delta, "get") else delta)
     pzeta = (pzeta.get() if hasattr(pzeta, "get") else pzeta)
+    ptau = (ptau.get() if hasattr(ptau, "get") else ptau)
     x_norm = (x_norm.get() if hasattr(x_norm, "get") else x_norm)
     px_norm = (px_norm.get() if hasattr(px_norm, "get") else px_norm)
     y_norm = (y_norm.get() if hasattr(y_norm, "get") else y_norm)
@@ -131,9 +127,10 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         logger.warning('Ignoring collective elements in particles generation.')
         line = line._get_non_collective_line()
 
-    # Compute ptau from delta
+    # Compute pzeta from delta
     if delta is not None:
         assert pzeta is None
+        assert ptau is None
         if not np.isscalar(delta):
             delta = np.array(delta)
         beta0 = particle_ref._xobject.beta0[0]
@@ -141,6 +138,14 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         ptau_beta0 = (delta_beta0 * delta_beta0
                             + 2. * delta_beta0 * beta0 + 1.)**0.5 - 1.
         pzeta = ptau_beta0 / beta0 / beta0
+
+    # Compute pzeta from ptau
+    if ptau is not None:
+        assert pzeta is None
+        assert delta is None
+        if not np.isscalar(ptau):
+            ptau = np.array(ptau)
+        pzeta = ptau / particle_ref._xobject.beta0[0]
 
     if (x_norm is not None or px_norm is not None
             or y_norm is not None or py_norm is not None
@@ -158,9 +163,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     ref_dict = {
         'q0': particle_ref.q0,
         'mass0': particle_ref.mass0,
+        't_sim': particle_ref.t_sim,
         'p0c': particle_ref.p0c[0],
         'gamma0': particle_ref.gamma0[0],
         'beta0': particle_ref.beta0[0],
+        'pdg_id': particle_ref.pdg_id[0]
     }
     part_dict = ref_dict.copy()
 
@@ -175,7 +182,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             assert particle_on_co._xobject.at_element == 0
 
     if match_at_s is not None:
-        import xtrack as xt
         assert at_element is not None, (
             'If `match_at_s` is provided, `at_element` needs to be provided and'
             'needs to correspond to the corresponding element in the sequence'
@@ -185,7 +191,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     line.get_s_elements())<=match_at_s)[0][-1]
         assert at_element == expected_at_element or (
                 at_element < expected_at_element and
-                      all([ xt._is_aperture(line.element_dict[nn])
+                      all([xt._is_aperture(line.element_dict[nn])
                            or xt._behaves_like_drift(line.element_dict[nn])
                 for nn in line.element_names[at_element:expected_at_element]])), (
             "`match_at_s` can only be placed in the drifts downstream of the "
@@ -213,13 +219,15 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             tw_state = tw.get_twiss_init(at_element=
                 (at_element_line_rmat if at_element_line_rmat is not None else 0))
 
+            # This is not initialized by get_twiss_init
+            tw_state.particle_on_co.at_element = line_rmat.element_names.index(
+                                                        tw_state.element_name)
+
             WW = tw_state.W_matrix
             particle_on_co = tw_state.particle_on_co
         elif W_matrix is None and R_matrix is not None:
             import xtrack.linear_normal_form as lnf
-            WW, _, _ = lnf.compute_linear_normal_form(
-                                R_matrix,
-                                **kwargs)
+            WW, _, _, _ = lnf.compute_linear_normal_form(R_matrix, **kwargs)
         else:
             WW = W_matrix
 
@@ -397,7 +405,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     part_dict['zeta'] = XX[4, :]
     part_dict['ptau'] = XX[5, :] * particle_ref._xobject.beta0[0]
 
-    part_dict['weight'] = np.zeros(num_particles, dtype=np.int64)
+    part_dict['weight'] = np.ones(num_particles, dtype=np.float64)
 
     if _context is None and _buffer is None and line is not None:
         _context = line._buffer.context
