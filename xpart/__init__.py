@@ -18,6 +18,7 @@ from .transverse_generators import generate_2D_uniform_circular_sector
 from .transverse_generators import generate_2D_pencil
 from .transverse_generators import generate_2D_pencil_with_absolute_cut
 from .transverse_generators import generate_2D_gaussian
+from .transverse_generators import hypersphere_2D, hypersphere_4D, hypersphere_6D
 
 from .longitudinal import generate_longitudinal_coordinates
 from .longitudinal.generate_longitudinal import _characterize_line
