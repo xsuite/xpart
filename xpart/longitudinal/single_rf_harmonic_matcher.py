@@ -77,7 +77,6 @@ class SingleRFHarmonicMatcher:
             factor_binomial = tau_max / RMS_binomial
             _print(f"RMS factor for binimial is {factor_binomial:.3f}")
             tau_max = factor_binomial*rms_bunch_length 
-            #tau_max = np.sqrt(5)*rms_bunch_length
             func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max), -tau_lim, tau_lim))[0]
             corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
             tau_max = corrected_tau_max
