@@ -20,7 +20,6 @@ from .transverse_generators import generate_2D_pencil_with_absolute_cut
 from .transverse_generators import generate_2D_gaussian
 
 from .longitudinal import generate_longitudinal_coordinates
-from .longitudinal import parabolic_longitudinal_distribution
 from .longitudinal.generate_longitudinal import _characterize_line
 
 from .monitors import PhaseMonitor

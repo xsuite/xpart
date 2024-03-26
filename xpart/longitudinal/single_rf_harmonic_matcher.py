@@ -6,6 +6,7 @@
 import numpy as np
 from scipy.constants import c
 import scipy.special
+import scipy.integrate as integrate
 
 from ..general import _print
 
@@ -21,7 +22,7 @@ class SingleRFHarmonicMatcher:
                  beta0=None,
                  rms_bunch_length=None, distribution="parabolic",
                  transformation_particles=400000, n_points_in_distribution=300,
-                 verbose=0):
+                 verbose=0, m=4.7):
 
         self.verbose = verbose
         self.transformation_particles = transformation_particles
@@ -66,6 +67,23 @@ class SingleRFHarmonicMatcher:
             _print(f"SingleRFHarmonicMatcher: Gaussian parameter is equal to {corrected_rms:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
 
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_rms)
+        elif distribution == "binomial":
+            # Binomial distribution adds tail to parabolic, see (Joho, 1980) at https://indico.psi.ch/event/3484/attachments/5948/7502/TM-11-14.pdf
+            # behaviour is Gaussian for m --> inf
+            tau_max = 1.0 # starting value, will be adjusted. Used as benchmarking value with RMS factor for parabola
+            lambda_dist = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5) # zeroth moment of binomial
+            binomial_2nd = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5)*tau**2
+            RMS_binomial = np.sqrt(integrate.quad(binomial_2nd, -1, 1, args=(tau_max))[0] / integrate.quad(lambda_dist, -1, 1, args=(tau_max))[0])
+            factor_binomial = tau_max / RMS_binomial
+            _print(f"RMS factor for binimial is {factor_binomial:.3f}")
+            tau_max = factor_binomial*rms_bunch_length 
+            #tau_max = np.sqrt(5)*rms_bunch_length
+            func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max), -tau_lim, tau_lim))[0]
+            corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
+            tau_max = corrected_tau_max
+            self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
+            self.tau_distr_y[abs(self.tau_distr_x) > tau_max] = 0
+            _print(f"SingleRFHarmonicMatcher: Binomial x_lim parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         else:
             raise NotImplementedError
 

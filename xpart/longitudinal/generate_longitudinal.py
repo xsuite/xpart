@@ -104,6 +104,7 @@ def generate_longitudinal_coordinates(
                                     rf_phase=None,
                                     p_increment=0.,
                                     tracker=None,
+                                    m=None,
                                     **kwargs # passed to twiss
                                     ):
 
@@ -119,7 +120,7 @@ def generate_longitudinal_coordinates(
         Number of particles to be generated.
     distribution: str
         Distribution of the particles. Possible values are `gaussian` and
-        `parabolic`.
+        `parabolic` and 'binomial'.
     sigma_z: float
         RMS bunch length in meters.
     engine: str
@@ -127,6 +128,8 @@ def generate_longitudinal_coordinates(
         and `single-rf-harmonic`.
     return_matcher: bool
         If True, the matcher object is returned.
+    m : float
+        binomial parameter if distribution is 'binomial'
 
     Returns
     -------
@@ -236,7 +239,7 @@ def generate_longitudinal_coordinates(
             z_particles, delta_particles, _, _ = matcher.generate(
                                                     macroparticlenumber=num_particles)
     elif engine == "single-rf-harmonic":
-        if distribution not in ["parabolic", "gaussian"]:
+        if distribution not in ["parabolic", "gaussian", "binomial"]:
             raise NotImplementedError
         eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
 
@@ -260,7 +263,7 @@ def generate_longitudinal_coordinates(
                                           slip_factor=eta,
                                           beta0=particle_ref._xobject.beta0[0],
                                           rms_bunch_length=sigma_tau,
-                                          distribution=distribution)
+                                          distribution=distribution, m=m)
 
         tau, ptau = matcher.sample_tau_ptau(n_particles=num_particles)
 
