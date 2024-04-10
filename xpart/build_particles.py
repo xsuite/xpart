@@ -191,7 +191,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     line.get_s_elements())<=match_at_s)[0][-1]
         assert at_element == expected_at_element or (
                 at_element < expected_at_element and
-                      all([xt._is_aperture(line.element_dict[nn])
+                      all([xt._is_aperture(line.element_dict[nn], line)
                            or xt._behaves_like_drift(line.element_dict[nn])
                 for nn in line.element_names[at_element:expected_at_element]])), (
             "`match_at_s` can only be placed in the drifts downstream of the "
