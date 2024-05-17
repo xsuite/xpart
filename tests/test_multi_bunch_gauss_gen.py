@@ -92,12 +92,12 @@ def test_multi_bunch_gaussian_generation(test_context):
                     part.zeta[i_bunch*n_part_per_bunch:
                               (i_bunch+1)*n_part_per_bunch]))
                               
-            assert np.isclose((zeta_avg-bunch_spacing*filled_slots[bunch_number])/sigma_z, 0.0, atol=1e-2)
+            assert np.isclose((zeta_avg+bunch_spacing*filled_slots[bunch_number])/sigma_z, 0.0, atol=1e-2)
             assert np.isclose(delta_avg/sigma_delta, 0.0, atol=1e-2)
             assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
             assert np.isclose(delta_rms, sigma_delta, rtol=1e-1, atol=1e-15)
 
-            part_on_co.move(_context=xo.ContextCpu())
+            part_on_co.move(_context=xo.ContextCpu(omp_num_threads=0))
 
             gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
             gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
