@@ -227,7 +227,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
     for bunch_number in bunch_numbers:
         bucket_n = filled_buckets[bunch_number]
         macro_bunch.zeta[count * num_particles:
-                         (count+1) * num_particles] += (bunch_spacing *
+                         (count+1) * num_particles] -= (bunch_spacing *
                                                         bucket_n)
         count += 1
 
