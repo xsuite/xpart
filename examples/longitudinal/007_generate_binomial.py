@@ -44,12 +44,12 @@ py_norm = np.random.normal(size=num_particles)
 
 # Generate parabolic coordinates
 zeta, delta = generate_binomial_longitudinal_coordinates(num_particles=num_particles,
-                                                     	  nemitt_x=nemitt_x, 
-                                                     	  nemitt_y=nemitt_y, 
-                                                     	  sigma_z=sigma_z,
-                                                     	  particle_ref=p0,
-                                                     	  total_intensity_particles=total_intensity_particles,
-                                                     	  line=line)
+                                                     	 nemitt_x=nemitt_x, 
+                                                     	 nemitt_y=nemitt_y, 
+                                                     	 sigma_z=sigma_z,
+                                                     	 particle_ref=p0,
+                                                     	 total_intensity_particles=total_intensity_particles,
+                                                     	 line=line)
 				
 # Build particle object
 particles = build_particles(_context=None, particle_ref=p0,
