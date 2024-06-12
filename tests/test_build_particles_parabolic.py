@@ -27,7 +27,7 @@ def test_build_particles_parabolic(test_context):
         num_part = 1000000
 
         # Load machine model (from pymask)
-        filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+        filename = xt._pkg_root.joinpath('../test_data/lhc_no_bb/line_and_particle.json')
         with open(filename, 'r') as fid:
             input_data = json.load(fid)
         line = xt.Line.from_dict(input_data['line'])
