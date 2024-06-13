@@ -10,7 +10,7 @@ Simple example on how to generate a binomial particle distribution
 import json
 import xpart as xp
 import xtrack as xt
-import xobjects as xo¨
+import xobjects as xo
 
 from xpart import build_particles
 from xpart.longitudinal import generate_binomial_longitudinal_coordinates
@@ -18,12 +18,19 @@ from xpart.longitudinal import generate_binomial_longitudinal_coordinates
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Decide context
+test_on_gpu = False
+if test_on_gpu:
+    context = xo.ContextCupy()
+else:
+    context = xo.ContextCpu(omp_num_threads='auto')
+
 # Load the reference particle
-filename = xt._pkg_root.joinpath('../test_data/lhc_no_bb/line_and_particle.json')
+filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 with open(filename, 'r') as fid:
     input_data = json.load(fid)
 line = xt.Line.from_dict(input_data['line'])
-line.build_tracker()
+line.build_tracker(_context=context)
 
 # Specify the beam parameters
 total_intensity_particles = 1e10
@@ -48,11 +55,10 @@ zeta, delta = generate_binomial_longitudinal_coordinates(num_particles=num_parti
                                                      	 nemitt_y=nemitt_y, 
                                                      	 sigma_z=sigma_z,
                                                      	 particle_ref=p0,
-                                                     	 total_intensity_particles=total_intensity_particles,
                                                      	 line=line)
 				
 # Build particle object
-particles = build_particles(_context=None, particle_ref=p0,
+particles = build_particles(_context=context, particle_ref=p0,
 			zeta=zeta, delta=delta, 
 			x_norm=x_norm, px_norm=px_norm,
 			y_norm=y_norm, py_norm=py_norm,
