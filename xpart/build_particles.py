@@ -56,6 +56,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                       nemitt_x=None, nemitt_y=None,
                       scale_with_transverse_norm_emitt=None,
                       weight=None,
+                      s_tol=1e-6,
                       **kwargs, # They are passed to the twiss
                     ):
 
@@ -186,24 +187,30 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             'If `match_at_s` is provided, `at_element` needs to be provided and'
             'needs to correspond to the corresponding element in the sequence'
         )
-        # Match at a position where there is no marker and backtrack to the previous marker
-        expected_at_element = np.where(np.array(
-                    line.get_s_elements())<=match_at_s)[0][-1]
-        assert at_element == expected_at_element or (
-                at_element < expected_at_element and
-                      all([xt._is_aperture(line.element_dict[nn])
-                           or xt._behaves_like_drift(line.element_dict[nn])
-                for nn in line.element_names[at_element:expected_at_element]])), (
-            "`match_at_s` can only be placed in the drifts downstream of the "
-            "specified `at_element`. No active element can be present in between."
-            )
-        (tracker_rmat, _
-            ) = xt.twiss._build_auxiliary_tracker_with_extra_markers(
-                tracker=line.tracker, at_s=[match_at_s],
-                marker_prefix='xpart_rmat_')
-        at_element_line_rmat = tracker_rmat.line.element_names.index(
-                                                                 'xpart_rmat_0')
-        line_rmat = tracker_rmat.line
+        s_elements = line.get_s_elements()
+        s_at_element = s_elements[at_element]
+        if np.abs(match_at_s - s_at_element) < s_tol:
+            at_element_line_rmat = at_element
+            line_rmat = line
+            match_at_s = None
+        else:
+            # Match at a position where there is no marker and backtrack to the previous marker
+            expected_at_element = np.where(np.array(s_elements)<=match_at_s)[0][-1]
+            assert at_element == expected_at_element or (
+                    at_element < expected_at_element and
+                        all([xt._is_aperture(line.element_dict[nn], line)
+                            or xt._behaves_like_drift(line.element_dict[nn], line)
+                    for nn in line.element_names[at_element:expected_at_element]])), (
+                "`match_at_s` can only be placed in the drifts downstream of the "
+                "specified `at_element`. No active element can be present in between."
+                )
+            (tracker_rmat, _
+                ) = xt.twiss._build_auxiliary_tracker_with_extra_markers(
+                    tracker=line.tracker, at_s=[match_at_s],
+                    marker_prefix='xpart_rmat_')
+            at_element_line_rmat = tracker_rmat.line.element_names.index(
+                                                                    'xpart_rmat_0')
+            line_rmat = tracker_rmat.line
     else:
         line_rmat = line
         at_element_line_rmat = at_element
