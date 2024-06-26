@@ -10,7 +10,13 @@
 '''
 
 import numpy as np
-from scipy.integrate import quad, dblquad, cumtrapz, romb
+from scipy.integrate import dblquad, romb
+
+try:
+    from scipy.integrate import cumulative_trapezoid
+    cumtrapz = cumulative_trapezoid
+except ImportError:
+    from scipy.integrate import cumtrapz  # removed in scipy>=1.14.0
 
 
 def quad2d(f, ylimits, xmin, xmax):
