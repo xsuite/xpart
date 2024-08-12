@@ -207,7 +207,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
     macro_bunch = generate_matched_gaussian_bunch(
         num_particles=num_particles * len(bunch_numbers),
         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-        total_intensity_particles=total_intensity_particles,
+        total_intensity_particles=total_intensity_particles * len(bunch_numbers),
         particle_on_co=particle_on_co,
         R_matrix=R_matrix,
         circumference=circumference,
