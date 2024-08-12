@@ -199,7 +199,16 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                         dct_line['h_list'][np.argmax(dct_line['voltage_list'])]+0.5))
         bucket_length = circumference/main_harmonic_number
     bunch_spacing = bunch_spacing_buckets * bucket_length
+    assert filling_scheme is not None
     assert len(filling_scheme) == np.floor(circumference/bunch_spacing+0.5)
+
+    if prepare_line_and_particles_for_mpi_wake_sim and bunch_numbers is None:
+        if communicator is None:
+            from mpi4py import MPI
+            communicator = MPI.COMM_WORLD
+        bunch_numbers_rank = xp.split_scheme(filling_scheme=filling_scheme,
+                                             n_chunk=int(communicator.Get_size()))
+        bunch_numbers = bunch_numbers_rank[communicator.Get_rank()]
 
     if bunch_numbers is None:
         bunch_numbers = range(len(filling_scheme.nonzero()[0]))
@@ -234,9 +243,6 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         count += 1
 
     if prepare_line_and_particles_for_mpi_wake_sim:
-        if communicator is None:
-            from mpi4py import MPI
-            communicator = MPI.COMM_WORLD
         import xwakes as xw
         xw.config_pipeline_for_wakes(
             particles=macro_bunch,
