@@ -173,17 +173,19 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               _context=None, _buffer=None, _offset=None,
                                               bunch_numbers=None,
                                               bunch_spacing_buckets=1,
+                                              prepare_line_and_particles_for_mpi_wake_sim=False,
+                                              communicator=None,
                                               **kwargs,  # Passed to build_particles
                                               ):
 
     assert ((line is not None and particle_ref is not None) or
             (rf_harmonic is not None and rf_voltage is not None) or
             bucket_length is not None)
-            
+
     if circumference is None:
         circumference = line.get_length()
     assert circumference > 0.0
-            
+
     if bucket_length is not None:
         assert (rf_harmonic is None and rf_voltage is None),(
                 'Cannot provide bucket length together with RF voltage+harmonic')
@@ -230,5 +232,15 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                          (count+1) * num_particles] -= (bunch_spacing *
                                                         bucket_n)
         count += 1
+
+    if prepare_line_and_particles_for_mpi_wake_sim:
+        if communicator is None:
+            from mpi4py import MPI
+            communicator = MPI.COMM_WORLD
+        import xwakes as xw
+        xw.config_pipeline_for_wakes(
+            particles=macro_bunch,
+            line=line,
+            communicator=communicator)
 
     return macro_bunch
