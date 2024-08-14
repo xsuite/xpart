@@ -150,6 +150,8 @@ def split_scheme(filling_scheme, n_chunk=1):
                                         total_n_bunches - 1,
                                         total_n_bunches)]
 
+    bunches_per_rank = list(map(np.int64, bunches_per_rank))
+
     return bunches_per_rank
 
 
@@ -200,13 +202,23 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         bucket_length = circumference/main_harmonic_number
     bunch_spacing = bunch_spacing_buckets * bucket_length
     assert filling_scheme is not None
-    assert len(filling_scheme) == np.floor(circumference/bunch_spacing+0.5)
+    assert len(filling_scheme) <= np.floor(circumference/bunch_spacing+0.5)
+
+    if len(filling_scheme) < np.floor(circumference/bunch_spacing+0.5):
+        filling_scheme = np.concatenate(
+            (filling_scheme,
+            np.zeros(int(np.floor(circumference/bunch_spacing+0.5) - len(filling_scheme)),
+                    dtype=np.int64)))
 
     if prepare_line_and_particles_for_mpi_wake_sim and bunch_numbers is None:
         if communicator is None:
             from mpi4py import MPI
             communicator = MPI.COMM_WORLD
-        bunch_numbers_rank = xp.split_scheme(filling_scheme=filling_scheme,
+
+        if communicator.Get_size() <= 1:
+            raise ValueError('when `prepare_line_and_particles_for_mpi_wake_sim` is True, '
+                             'MPI communicator must have more than one rank')
+        bunch_numbers_rank = split_scheme(filling_scheme=filling_scheme,
                                              n_chunk=int(communicator.Get_size()))
         bunch_numbers = bunch_numbers_rank[communicator.Get_rank()]
 
