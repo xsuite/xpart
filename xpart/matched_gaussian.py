@@ -156,9 +156,9 @@ def split_scheme(filling_scheme, n_chunk=1):
 
 
 def generate_matched_gaussian_multibunch_beam(filling_scheme,
-                                              num_particles,
+                                              bunch_num_particles,
                                               nemitt_x, nemitt_y, sigma_z,
-                                              total_intensity_particles=None,
+                                              bunch_intensity_particles=None,
                                               particle_on_co=None,
                                               R_matrix=None,
                                               circumference=None,
@@ -226,9 +226,9 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         bunch_numbers = range(len(filling_scheme.nonzero()[0]))
 
     macro_bunch = generate_matched_gaussian_bunch(
-        num_particles=num_particles * len(bunch_numbers),
+        num_particles=bunch_num_particles * len(bunch_numbers),
         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-        total_intensity_particles=total_intensity_particles * len(bunch_numbers),
+        total_intensity_particles=bunch_intensity_particles * len(bunch_numbers),
         particle_on_co=particle_on_co,
         R_matrix=R_matrix,
         circumference=circumference,
@@ -249,8 +249,8 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
     count = 0
     for bunch_number in bunch_numbers:
         bucket_n = filled_buckets[bunch_number]
-        macro_bunch.zeta[count * num_particles:
-                         (count+1) * num_particles] -= (bunch_spacing *
+        macro_bunch.zeta[count * bunch_num_particles:
+                         (count+1) * bunch_num_particles] -= (bunch_spacing *
                                                         bucket_n)
         count += 1
 
