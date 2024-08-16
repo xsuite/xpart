@@ -173,7 +173,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               particle_ref=None,
                                               engine=None,
                                               _context=None, _buffer=None, _offset=None,
-                                              bunch_numbers=None,
+                                              bunch_selection=None,
                                               bunch_spacing_buckets=1,
                                               prepare_line_and_particles_for_mpi_wake_sim=False,
                                               communicator=None,
@@ -210,7 +210,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
             np.zeros(int(np.floor(circumference/bunch_spacing+0.5) - len(filling_scheme)),
                     dtype=np.int64)))
 
-    if prepare_line_and_particles_for_mpi_wake_sim and bunch_numbers is None:
+    if prepare_line_and_particles_for_mpi_wake_sim and bunch_selection is None:
         if communicator is None:
             from mpi4py import MPI
             communicator = MPI.COMM_WORLD
@@ -218,17 +218,17 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         if communicator.Get_size() <= 1:
             raise ValueError('when `prepare_line_and_particles_for_mpi_wake_sim` is True, '
                              'MPI communicator must have more than one rank')
-        bunch_numbers_rank = split_scheme(filling_scheme=filling_scheme,
+        bunch_selection_rank = split_scheme(filling_scheme=filling_scheme,
                                              n_chunk=int(communicator.Get_size()))
-        bunch_numbers = bunch_numbers_rank[communicator.Get_rank()]
+        bunch_selection = bunch_selection_rank[communicator.Get_rank()]
 
-    if bunch_numbers is None:
-        bunch_numbers = range(len(filling_scheme.nonzero()[0]))
+    if bunch_selection is None:
+        bunch_selection = range(len(filling_scheme.nonzero()[0]))
 
     macro_bunch = generate_matched_gaussian_bunch(
-        num_particles=bunch_num_particles * len(bunch_numbers),
+        num_particles=bunch_num_particles * len(bunch_selection),
         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-        total_intensity_particles=bunch_intensity_particles * len(bunch_numbers),
+        total_intensity_particles=bunch_intensity_particles * len(bunch_selection),
         particle_on_co=particle_on_co,
         R_matrix=R_matrix,
         circumference=circumference,
@@ -247,7 +247,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
 
     filled_buckets = filling_scheme.nonzero()[0]
     count = 0
-    for bunch_number in bunch_numbers:
+    for bunch_number in bunch_selection:
         bucket_n = filled_buckets[bunch_number]
         macro_bunch.zeta[count * bunch_num_particles:
                          (count+1) * bunch_num_particles] -= (bunch_spacing *
