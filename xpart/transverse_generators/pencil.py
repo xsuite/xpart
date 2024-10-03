@@ -157,11 +157,11 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
             **kwargs)
 
     if side=='+':
-        assert tw[plane][0] < absolute_cut, 'The cut is on the wrong side'
+        assert twiss[plane][0] < absolute_cut, 'The cut is on the wrong side'
     else:
-        assert tw[plane][0] > absolute_cut, 'The cut is on the wrong side'
+        assert twiss[plane][0] > absolute_cut, 'The cut is on the wrong side'
 
-    # Generate a particle exactly on the jaw with no amplitude in other eigemvectors
+    # Generate a particle exactly on the jaw with no amplitude in other eigenvectors
     p_on_cut_at_element = line.build_particles(
         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
         x={'x': absolute_cut, 'y': None}[plane],
