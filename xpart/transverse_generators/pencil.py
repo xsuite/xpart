@@ -89,7 +89,7 @@ def generate_2D_pencil(num_particles, pos_cut_sigmas, dr_sigmas,
 def generate_2D_pencil_with_absolute_cut(num_particles,
     plane, absolute_cut, dr_sigmas, side='+', tracker=None, line=None,
     nemitt_x=None, nemitt_y=None,
-    at_element=None, match_at_s=None, tw=None, **kwargs):
+    at_element=None, match_at_s=None, twiss=None, **kwargs):
 
     '''
     Generate a 2D pencil beam distribution with an absolute cut.
@@ -151,8 +151,8 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     else:
         drift_to_at_s = None
 
-    if tw is None:
-        tw = line.twiss(at_s=match_at_s,
+    if twiss is None:
+        twiss = line.twiss(at_s=match_at_s,
             at_elements=([at_element] if match_at_s is None else None),
             **kwargs)
 
@@ -178,7 +178,7 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         p_on_cut_at_s = p_on_cut_at_element
 
     # Get cut in (accurate) sigmas
-    p_on_cut_norm = tw.get_normalized_coordinates(p_on_cut_at_s,
+    p_on_cut_norm = twiss.get_normalized_coordinates(p_on_cut_at_s,
                                         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                                         _force_at_element=0 # the twiss has only this element
                                         )
