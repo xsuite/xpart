@@ -49,24 +49,37 @@ def test_multi_bunch_gaussian_generation(test_context):
     filling_scheme[n_bunches_tot:int(3*n_bunches_tot/2)] = 1
     filled_slots = filling_scheme.nonzero()[0]
 
-    # make a test faking 2 procs sharing the bunches
-    n_procs = 2
+    # make a test faking 3 procs sharing the bunches
+    n_procs = 3
 
-    bunche_numbers_per_rank = xp.split_scheme(filling_scheme=filling_scheme,
+    bunch_selection_per_rank = xp.matched_gaussian.split_scheme(filling_scheme=filling_scheme,
                                             n_chunk=n_procs)
+
+
+    expected_bunch_selection_per_rank = {
+        0: np.array([0, 1, 2, 3]),
+        1: np.array([4, 5, 6]),
+        2: np.array([7, 8, 9])
+    }
+
     for rank in range(n_procs):
+        xo.assert_allclose(bunch_selection_per_rank[rank],
+                           expected_bunch_selection_per_rank[rank],
+                           atol=0, rtol=1e-15)
         part = xp.generate_matched_gaussian_multibunch_beam(
             _context=test_context,
-            filling_scheme=filling_scheme,  # engine='linear',
-            num_particles=n_part_per_bunch,
-            total_intensity_particles=bunch_intensity,
+            filling_scheme=filling_scheme,
+            bunch_num_particles=n_part_per_bunch,
+            bunch_intensity_particles=bunch_intensity,
             nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
             line=line, bunch_spacing_buckets=bunch_spacing_in_buckets,
-            bunch_numbers=bunche_numbers_per_rank[rank],
+            bunch_selection=bunch_selection_per_rank[rank],
             particle_ref=line.particle_ref
         )
 
-        for i_bunch,bunch_number in enumerate(bunche_numbers_per_rank[rank]):
+        assert len(part.x) == n_part_per_bunch*len(bunch_selection_per_rank[rank])
+
+        for i_bunch,bunch_number in enumerate(bunch_selection_per_rank[rank]):
             zeta_avg = np.average(
             test_context.nparray_from_context_array(
                 part.zeta[i_bunch*n_part_per_bunch:
@@ -91,7 +104,7 @@ def test_multi_bunch_gaussian_generation(test_context):
                 test_context.nparray_from_context_array(
                     part.zeta[i_bunch*n_part_per_bunch:
                               (i_bunch+1)*n_part_per_bunch]))
-                              
+
             assert np.isclose((zeta_avg+bunch_spacing*filled_slots[bunch_number])/sigma_z, 0.0, atol=1e-2)
             assert np.isclose(delta_avg/sigma_delta, 0.0, atol=1e-2)
             assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
@@ -112,5 +125,11 @@ def test_multi_bunch_gaussian_generation(test_context):
                 rtol=1e-2, atol=1e-15
             )
 
-
+            assert np.isclose(
+                np.sum(test_context.nparray_from_context_array(
+                part.weight[i_bunch*n_part_per_bunch:
+                       (i_bunch+1)*n_part_per_bunch])),
+                bunch_intensity,
+                rtol=1e-2, atol=1e-15
+            )
 

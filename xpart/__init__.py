@@ -11,7 +11,7 @@ from .pdg import get_pdg_id_from_name, get_name_from_pdg_id
 from .build_particles import build_particles
 from .matched_gaussian import (generate_matched_gaussian_bunch,
                                generate_matched_gaussian_multibunch_beam,
-                               split_scheme)
+                               )
 
 from .transverse_generators import generate_2D_polar_grid
 from .transverse_generators import generate_2D_uniform_circular_sector
