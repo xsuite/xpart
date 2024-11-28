@@ -180,6 +180,9 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               **kwargs,  # Passed to build_particles
                                               ):
 
+    if particle_ref is None and line is not None:
+        particle_ref = line.particle_ref
+
     assert ((line is not None and particle_ref is not None) or
             (rf_harmonic is not None and rf_voltage is not None) or
             bucket_length is not None)

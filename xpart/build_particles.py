@@ -177,7 +177,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         assert line is not None
         assert mode == 'normalized_transverse'
         if isinstance(at_element, str):
-            at_element = line.element_names.index(at_element)
+            at_element = line._element_names_unique.index(at_element)
         assert R_matrix is None # Not clear if it is at the element or at start machine
         if particle_on_co is not None:
             assert particle_on_co._xobject.at_element == 0
@@ -200,7 +200,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     at_element < expected_at_element and
                         all([xt._is_aperture(line.element_dict[nn], line)
                             or xt._behaves_like_drift(line.element_dict[nn], line)
-                    for nn in line.element_names[at_element:expected_at_element]])), (
+                    for nn in line._element_names_unique[at_element:expected_at_element]])), (
                 "`match_at_s` can only be placed in the drifts downstream of the "
                 "specified `at_element`. No active element can be present in between."
                 )
@@ -208,7 +208,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                 ) = xt.twiss._build_auxiliary_tracker_with_extra_markers(
                     tracker=line.tracker, at_s=[match_at_s],
                     marker_prefix='xpart_rmat_')
-            at_element_line_rmat = tracker_rmat.line.element_names.index(
+            at_element_line_rmat = tracker_rmat.line._element_names_unique.index(
                                                                     'xpart_rmat_0')
             line_rmat = tracker_rmat.line
     else:
@@ -227,7 +227,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                 (at_element_line_rmat if at_element_line_rmat is not None else 0))
 
             # This is not initialized by get_twiss_init
-            tw_state.particle_on_co.at_element = line_rmat.element_names.index(
+            tw_state.particle_on_co.at_element = line_rmat._element_names_unique.index(
                                                         tw_state.element_name)
 
             WW = tw_state.W_matrix
