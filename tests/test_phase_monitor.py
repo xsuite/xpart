@@ -7,6 +7,7 @@ import json
 
 import numpy as np
 
+import xobjects as xo
 import xpart as xp
 import xtrack as xt
 
@@ -38,8 +39,8 @@ def test_phase_monitor(test_context):
         line.track(particles)
 
     tw = line.twiss()
-    assert np.allclose(phase_monitor.qx[:], np.mod(tw['qx'], 1),
+    xo.assert_allclose(phase_monitor.qx[:], np.mod(tw['qx'], 1),
                        rtol=0, atol=1e-3)
-    assert np.allclose(phase_monitor.qy[:], np.mod(tw['qy'], 1),
+    xo.assert_allclose(phase_monitor.qy[:], np.mod(tw['qy'], 1),
                        rtol=0, atol=1e-3)
 

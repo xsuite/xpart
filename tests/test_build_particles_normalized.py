@@ -38,7 +38,7 @@ def test_build_particles_normalized(test_context):
                                        nemitt_x=3e-6, nemitt_y=3e-6)
 
         dct = particles.to_dict() # transfers it to cpu
-        assert np.allclose(dct['x'], [-0.0003883 , -0.0006076 , -0.00082689],
+        xo.assert_allclose(dct['x'], [-0.0003883 , -0.0006076 , -0.00082689],
                            rtol=0, atol=1e-7)
         assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
@@ -56,7 +56,7 @@ def test_build_particles_normalized(test_context):
                                        px_norm=[0, 1, 0],  # in sigmas
                                        nemitt_x=3e-6, nemitt_y=3e-6)
         dct = particles.to_dict() # transfers it to cpu
-        assert np.allclose(dct['x'], [-0.0003883, -0.0006076, -0.00082689],
+        xo.assert_allclose(dct['x'], [-0.0003883, -0.0006076, -0.00082689],
                            rtol=0, atol=1e-7)
         assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
@@ -76,7 +76,7 @@ def test_build_particles_normalized(test_context):
                                        nemitt_x=3e-6, nemitt_y=3e-6)
 
         dct = particles.to_dict() # transfers it to cpu
-        assert np.allclose(dct['x'], [-0.00038813 , -0.00060738 , -0.00082664],
+        xo.assert_allclose(dct['x'], [-0.00038813 , -0.00060738 , -0.00082664],
                            rtol=0, atol=1e-7)
         assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
@@ -102,11 +102,11 @@ def test_build_particles_normalized_ions(test_context):
                                        nemitt_x=3e-6, nemitt_y=3e-6)
 
         dct = particles.to_dict() # transfers it to cpu
-        assert np.allclose(dct['x'], [6.5404e-3, 1.21e-5, -6.5163e-3],
+        xo.assert_allclose(dct['x'], [6.5404e-3, 1.21e-5, -6.5163e-3],
                            rtol=0, atol=1e-7)
         assert np.isclose(dct['ptau'][1], 9.906e-6, rtol=0, atol=1e-9)
         assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-5, rtol=0, atol=1e-10)
-        assert np.allclose(dct['p0c'], 1.4024063e+12, rtol=0, atol=1e3)
+        xo.assert_allclose(dct['p0c'], 1.4024063e+12, rtol=0, atol=1e3)
 
 
 @for_all_test_contexts
@@ -140,7 +140,7 @@ def test_build_particles_normalized_closed_orbit(test_context):
         dct_co = particle_on_co.to_dict()
 
         for nn in 'x px y py zeta delta ptau rvv rpp gamma0 beta0 p0c'.split():
-            assert np.allclose(dct[nn], dct_co[nn], atol=1e-15, rtol=0)
+            xo.assert_allclose(dct[nn], dct_co[nn], atol=1e-15, rtol=0)
 
 
 @for_all_test_contexts
@@ -195,7 +195,7 @@ def test_build_particles_normalized_match_at_s(test_context):
         particles.move(_context=xo.context_default)
         assert (np.unique(particles.at_element[particles.state>0])[0]
                          == line.element_names.index('match_at_s'))
-        assert np.allclose(particles.x, 0.02, atol=1e-20)
+        xo.assert_allclose(particles.x, 0.02, atol=1e-20)
 
 
 @for_all_test_contexts
@@ -221,14 +221,14 @@ def test_build_perticles_dispersion(test_context):
                                     particles, nemitt_x=3e-6, nemitt_y=3e-6)
     particles.move(_context=xo.ContextCpu())
 
-    assert np.allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
-    assert np.allclose((particles.x-tw.x[0])/particles.delta, tw.dx[0],
+    xo.assert_allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
+    xo.assert_allclose((particles.x-tw.x[0])/particles.delta, tw.dx[0],
                        atol=5e-3, rtol=0)
 
-    assert np.allclose(norm_coords['x_norm'], 0, 1e-12)
-    assert np.allclose(norm_coords['px_norm'], 0, 1e-12)
-    assert np.allclose(norm_coords['y_norm'], 0, 1e-12)
-    assert np.allclose(norm_coords['py_norm'], 0, 1e-12)
+    xo.assert_allclose(norm_coords['x_norm'], 0, 1e-12)
+    xo.assert_allclose(norm_coords['px_norm'], 0, 1e-12)
+    xo.assert_allclose(norm_coords['y_norm'], 0, 1e-12)
+    xo.assert_allclose(norm_coords['py_norm'], 0, 1e-12)
 
     particles = line.build_particles(nemitt_x=3e-6, nemitt_y=3e-6,
                     x=[1e-3, -1e-3], x_norm=[0.3, 0.4], px_norm=[0.5, 0.6],
@@ -239,9 +239,9 @@ def test_build_perticles_dispersion(test_context):
                                     particles, nemitt_x=3e-6, nemitt_y=3e-6)
     particles.move(_context=xo.ContextCpu())
 
-    assert np.allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
+    xo.assert_allclose(particles.x, [1e-3, -1e-3], atol=1e-10, rtol=0)
 
-    assert np.allclose(norm_coords['x_norm'], [0.3, 0.4], 1e-12)
-    assert np.allclose(norm_coords['px_norm'], [0.5, 0.6], 1e-12)
-    assert np.allclose(norm_coords['y_norm'], [0.7, 0.8], 1e-12)
-    assert np.allclose(norm_coords['py_norm'], [0.9, 1.0], 1e-12)
+    xo.assert_allclose(norm_coords['x_norm'], [0.3, 0.4], 1e-12)
+    xo.assert_allclose(norm_coords['px_norm'], [0.5, 0.6], 1e-12)
+    xo.assert_allclose(norm_coords['y_norm'], [0.7, 0.8], 1e-12)
+    xo.assert_allclose(norm_coords['py_norm'], [0.9, 1.0], 1e-12)
