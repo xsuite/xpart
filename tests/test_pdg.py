@@ -39,7 +39,7 @@ def test_lead_208():
     assert _mass_consistent(pdg_id, xp.Pb208_MASS_EV)
     assert xp.pdg.get_element_name_from_Z(82) == 'Pb'
     assert xp.pdg.get_element_full_name_from_Z(82) == 'Lead'
-    assert np.allclose(xp.pdg.get_mass_from_pdg_id(pdg_id), xp.Pb208_MASS_EV,
+    xo.assert_allclose(xp.pdg.get_mass_from_pdg_id(pdg_id), xp.Pb208_MASS_EV,
                        rtol=1e-10, atol=0)
     assert xp.pdg.get_properties_from_pdg_id(pdg_id) == (82., 208, 82, 'Pb208')
 
@@ -52,5 +52,5 @@ def test_build_reference_from_pdg_id(test_context):
     particle_ref_lead = xp.reference_from_pdg_id(pdg_id='Pb208',
                                                  _context=test_context)
     particle_ref_lead.move(_context=xo.context_default)
-    assert np.allclose(particle_ref_lead.q0, 82.)
-    assert np.allclose(particle_ref_lead.mass0, xp.Pb208_MASS_EV)
+    xo.assert_allclose(particle_ref_lead.q0, 82.)
+    xo.assert_allclose(particle_ref_lead.mass0, xp.Pb208_MASS_EV)

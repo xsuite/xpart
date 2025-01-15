@@ -14,20 +14,20 @@ from xobjects.test_helpers import for_all_test_contexts
 
 def _check_consistency_energy_variables(particles):
     # Check consistency between beta0 and gamma0
-    assert np.allclose(particles.gamma0, 1/np.sqrt(1 - particles.beta0**2),
+    xo.assert_allclose(particles.gamma0, 1/np.sqrt(1 - particles.beta0**2),
                        rtol=1e-14, atol=1e-14)
 
     # Assert consistency of p0c
-    assert np.allclose(particles.p0c,
+    xo.assert_allclose(particles.p0c,
                        particles.mass0 * particles.beta0 * particles.gamma0,
                        rtol=1e-14, atol=1e-14)
 
     # Check energy0 property (consistency of p0c and gamma0)
-    assert np.allclose(particles.energy0, particles.mass0 * particles.gamma0,
+    xo.assert_allclose(particles.energy0, particles.mass0 * particles.gamma0,
                        atol=1e-14, rtol=1e-14)
 
     # Check consistency of rpp and delta
-    assert np.allclose(particles.rpp, 1./(particles.delta + 1),
+    xo.assert_allclose(particles.rpp, 1./(particles.delta + 1),
                        rtol=1e-14, atol=1e-14)
 
     beta = particles.beta0 * particles.rvv
@@ -35,22 +35,22 @@ def _check_consistency_energy_variables(particles):
     pc = particles.mass0 * gamma * beta
 
     # Check consistency of delta with rvv
-    assert np.allclose(particles.delta, (pc-particles.p0c)/(particles.p0c),
+    xo.assert_allclose(particles.delta, (pc-particles.p0c)/(particles.p0c),
                        rtol=1e-14, atol=1e-14)
 
     # Check consistency of ptau with rvv
     energy = particles.mass0 * gamma
-    assert np.allclose(particles.ptau, (energy - particles.energy0)/particles.p0c,
+    xo.assert_allclose(particles.ptau, (energy - particles.energy0)/particles.p0c,
                        rtol=1e-14, atol=1e-14)
 
     # Check consistency of pzeta
     energy = particles.mass0 * gamma
-    assert np.allclose(particles.pzeta, (energy - particles.energy0)/(particles.beta0 * particles.p0c),
+    xo.assert_allclose(particles.pzeta, (energy - particles.energy0)/(particles.beta0 * particles.p0c),
                        rtol=1e-14, atol=1e-14)
 
 
     # Check energy property
-    assert np.allclose(particles.energy, energy, rtol=1e-14, atol=1e-14)
+    xo.assert_allclose(particles.energy, energy, rtol=1e-14, atol=1e-14)
 
 
 @for_all_test_contexts
@@ -182,8 +182,8 @@ def test_particles_update_p0c_and_energy_deviations(test_context):
 
     part.move(_context=xo.ContextCpu())
     part.sort(interleave_lost_particles = True)
-    assert np.allclose(part.p0c, [2e12, 3e12, 2e12], rtol=0, atol=1e-14)
-    assert np.allclose(part.delta, [-0.5, 0.1, 0], rtol=0, atol=1e-14)
+    xo.assert_allclose(part.p0c, [2e12, 3e12, 2e12], rtol=0, atol=1e-14)
+    xo.assert_allclose(part.delta, [-0.5, 0.1, 0], rtol=0, atol=1e-14)
 
 
 def test_sort():
@@ -286,7 +286,7 @@ def test_python_add_to_energy(test_context):
 
     expected_energy = energy_before + 3e6
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.energy, expected_energy,
+    xo.assert_allclose(particles.energy, expected_energy,
                        atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
@@ -308,7 +308,7 @@ def test_python_delta_setter(test_context):
     particles.delta = -2e-3
 
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
+    xo.assert_allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
 
@@ -352,7 +352,7 @@ def test_LocalParticle_add_to_energy(test_context):
     telem.track(particles)
 
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.energy, energy_before + 1e6,
+    xo.assert_allclose(particles.energy, energy_before + 1e6,
                        atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
@@ -378,7 +378,7 @@ def test_LocalParticle_add_to_energy(test_context):
     telem.track(particles)
 
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.energy, energy_before + 1e6,
+    xo.assert_allclose(particles.energy, energy_before + 1e6,
                        atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
@@ -386,9 +386,9 @@ def test_LocalParticle_add_to_energy(test_context):
     rpp_after = particles.copy(_context=xo.ContextCpu()).rpp
     assert np.all(particles.gamma0 == gamma0_before)
     assert np.all(particles.zeta == zeta_before)
-    assert np.allclose(particles.px, px_before*rpp_before/rpp_after,
+    xo.assert_allclose(particles.px, px_before*rpp_before/rpp_after,
                        atol=1e-14, rtol=1e-14)
-    assert np.allclose(particles.py, py_before*rpp_before/rpp_after,
+    xo.assert_allclose(particles.py, py_before*rpp_before/rpp_after,
                        atol=1e-14, rtol=1e-14)
 
 
@@ -423,7 +423,7 @@ def test_LocalParticle_update_delta(test_context):
     telem.track(particles)
 
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
+    xo.assert_allclose(particles.delta, -2e-3, atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
 
@@ -464,7 +464,7 @@ def test_LocalParticle_update_ptau(test_context):
     telem.track(particles)
 
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.ptau, -2e-3, atol=1e-14, rtol=1e-14)
+    xo.assert_allclose(particles.ptau, -2e-3, atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
 
@@ -506,7 +506,7 @@ def test_LocalParticle_update_pzeta(test_context):
     telem.track(particles)
 
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose((particles.ptau - ptau_before)/particles.beta0,
+    xo.assert_allclose((particles.ptau - ptau_before)/particles.beta0,
                        -2e-3, atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
@@ -538,6 +538,7 @@ def test_LocalParticle_update_p0c(test_context):
 
     particles = xp.Particles(_context=test_context, p0c=1.4e9, delta=[0, 1e-3],
                              px=[1e-6, -1e-6], py=[2e-6, 0], zeta=0.1)
+
     _check_consistency_energy_variables(
                                 particles.copy(_context=xo.ContextCpu()))
     px_before = particles.copy(_context=xo.ContextCpu()).px
@@ -549,14 +550,14 @@ def test_LocalParticle_update_p0c(test_context):
     telem.track(particles)
 
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.p0c, 1.5e9, atol=1e-14, rtol=1e-14)
-    assert np.allclose(particles.energy, energy_before, atol=1e-14, rtol=1e-14)
+    xo.assert_allclose(particles.p0c, 1.5e9, atol=1e-14, rtol=1e-14)
+    xo.assert_allclose(particles.energy, energy_before, atol=1e-14, rtol=1e-14)
 
     _check_consistency_energy_variables(particles)
 
-    assert np.all(particles.zeta == zeta_before*particles.beta0/beta0_before)
-    assert np.all(particles.px == px_before*p0c_before/particles.p0c)
-    assert np.all(particles.py == py_before*p0c_before/particles.p0c)
+    xo.assert_allclose(particles.zeta, zeta_before*particles.beta0/beta0_before, atol=1e-14)
+    xo.assert_allclose(particles.px, px_before*p0c_before/particles.p0c, atol=1e-14)
+    xo.assert_allclose(particles.py, py_before*p0c_before/particles.p0c, atol=1e-14)
 
 
 
@@ -617,8 +618,8 @@ def test_LocalParticle_angles(test_context):
                              px=[1.0e-3, -1.0e-3], py=[2.0e-3, -1.2e-3], zeta=0.1)
     line.track(particles)
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.px, [24.0e-3, 18.021e-3], atol=1e-14, rtol=1e-14)
-    assert np.allclose(particles.py, [-1.82e-3, -4.73564e-3], atol=1e-14, rtol=1e-14)
+    xo.assert_allclose(particles.px, [24.0e-3, 18.021e-3], atol=1e-14, rtol=1e-14)
+    xo.assert_allclose(particles.py, [-1.82e-3, -4.73564e-3], atol=1e-14, rtol=1e-14)
 
     class ScaleAngExact(xt.BeamElement):
         _xofields={
@@ -675,5 +676,5 @@ def test_LocalParticle_angles(test_context):
                              px=[1.0e-3, -1.0e-3], py=[2.0e-3, -1.2e-3], zeta=0.1)
     line.track(particles)
     particles.move(_context=xo.ContextCpu())
-    assert np.allclose(particles.px, [23.99302e-3, 18.01805e-3], atol=1e-14)
-    assert np.allclose(particles.py, [-1.81976e-3, -4.73529e-3], atol=1e-14)
+    xo.assert_allclose(particles.px, [23.99302e-3, 18.01805e-3], atol=1e-14)
+    xo.assert_allclose(particles.py, [-1.81976e-3, -4.73529e-3], atol=1e-14, rtol=5e-7)
