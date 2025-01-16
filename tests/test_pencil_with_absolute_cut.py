@@ -10,12 +10,11 @@ import numpy as np
 import xpart as xp
 import xtrack as xt
 import xobjects as xo
-from xobjects.test_helpers import for_all_test_contexts
-from xpart.test_helpers import flaky_assertions, retry
+from xobjects.test_helpers import for_all_test_contexts, fix_random_seed
 
 
 @for_all_test_contexts
-@retry()
+@fix_random_seed(7363444)
 def test_pencil_with_absolute_cut(test_context):
 
     num_particles = 10000
@@ -97,26 +96,24 @@ def test_pencil_with_absolute_cut(test_context):
         sigma_v = np.sqrt(betv*nemitt_v
             /particles._xobject.beta0[0]/particles._xobject.gamma0[0])
 
-        with flaky_assertions():
-            assert(np.isclose(np.min(np.abs(v)), abs(absolute_cut), atol=1e-7))
-            assert(np.isclose(np.max(np.abs(v)), abs(absolute_cut) + sigma_v*pencil_dr_sigmas,
-                rtol=1e-3, atol=0))
+        assert(np.isclose(np.min(np.abs(v)), abs(absolute_cut), atol=1e-7))
+        assert(np.isclose(np.max(np.abs(v)), abs(absolute_cut) + sigma_v*pencil_dr_sigmas,
+            rtol=1e-3, atol=0))
 
-            i_tip = np.argmax(np.abs(v))
-            assert np.isclose(pv[i_tip]/v[i_tip], -alfv/betv, atol=5e-4)
+        i_tip = np.argmax(np.abs(v))
+        assert np.isclose(pv[i_tip]/v[i_tip], -alfv/betv, atol=5e-4)
 
-            if side == '+':
-                assert np.all(v >= 0)
-            else:
-                assert np.all(v <= 0)
+        if side == '+':
+            assert np.all(v >= 0)
+        else:
+            assert np.all(v <= 0)
 
-            other_plane = {'x': 'y', 'y': 'x'}[plane]
-            w_norm = getattr(norm_coords, other_plane+'_norm')
-            pw_norm = getattr(norm_coords, 'p'+other_plane+'_norm')
+        other_plane = {'x': 'y', 'y': 'x'}[plane]
+        w_norm = getattr(norm_coords, other_plane+'_norm')
+        pw_norm = getattr(norm_coords, 'p'+other_plane+'_norm')
 
-            xo.assert_allclose(w_in_sigmas, w_norm, 1e-12)
-            xo.assert_allclose(pw_in_sigmas, pw_norm, 1e-12)
+        xo.assert_allclose(w_in_sigmas, w_norm, 1e-12)
+        xo.assert_allclose(pw_in_sigmas, pw_norm, 1e-12)
 
-            assert(np.allclose(zeta, particles.zeta, atol=1e-12))
-            assert(np.allclose(delta, particles.delta, atol=1e-12))
-
+        xo.assert_allclose(zeta, particles.zeta, atol=1e-12)
+        xo.assert_allclose(delta, particles.delta, atol=1e-12)

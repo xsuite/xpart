@@ -11,10 +11,12 @@ import xobjects as xo
 import xpart as xp
 import xtrack as xt
 
-from xobjects.test_helpers import for_all_test_contexts
+from xobjects.test_helpers import for_all_test_contexts, fix_random_seed
+
 test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
 
 @for_all_test_contexts
+@fix_random_seed(6453645)
 def test_multi_bunch_gaussian_generation(test_context):
     bunch_intensity = 1e11
     sigma_z = 22.5e-2 / 5
