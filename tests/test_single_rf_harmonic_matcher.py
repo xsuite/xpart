@@ -11,12 +11,12 @@ import xtrack as xt
 import xobjects as xo
 
 import xpart as xp
-from xpart.test_helpers import flaky_assertions, retry
-from xobjects.test_helpers import for_all_test_contexts
+from xobjects.test_helpers import fix_random_seed
+
 
 @pytest.mark.parametrize('scenario', ['psb_injection', 'sps_ions', 'lhc_protons'])
 @pytest.mark.parametrize('distribution', ['gaussian', 'parabolic'])
-@retry(n_times=3)
+@fix_random_seed(46398498)
 def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
                                     scenario, distribution):
     for ctx in xo.context.get_test_contexts():
@@ -74,16 +74,11 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
 
         twiss_tune = line.twiss()['qs']
         theoretical_synchrotron_tune = matcher.get_synchrotron_tune()
-        print(twiss_tune, theoretical_synchrotron_tune)
-        print(twiss_tune - theoretical_synchrotron_tune,
-            (theoretical_synchrotron_tune - twiss_tune)
-                /(theoretical_synchrotron_tune))
 
         assert np.isclose(theoretical_synchrotron_tune,
                           twiss_tune, rtol=3.e-3, atol=1.e-15)
 
-        with flaky_assertions():
-            assert np.isclose(rms_bunch_length, np.std(zeta),
-                            rtol=2e-2, atol=1e-15)
-            assert np.all(np.isclose(hist, tau_distr_y,
-                            atol=3.e-2, rtol=1.e-2))
+        assert np.isclose(rms_bunch_length, np.std(zeta),
+                          rtol=2e-2, atol=1e-15)
+
+        xo.assert_allclose(hist, tau_distr_y, atol=3.e-2, rtol=1.e-2)
