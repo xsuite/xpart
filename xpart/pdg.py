@@ -285,6 +285,8 @@ def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
         return PROTON_MASS_EV
     elif name == 'electron':
         return ELECTRON_MASS_EV
+    elif name == 'positron':
+        return ELECTRON_MASS_EV
     elif name == 'muon':
         return MUON_MASS_EV
     elif name == 'Pb208':
