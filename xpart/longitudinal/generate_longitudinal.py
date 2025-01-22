@@ -24,9 +24,7 @@ def _characterize_line(line, particle_ref,
                           **kwargs # passed to twiss
                           ):
 
-    if line.iscollective:
-        logger.warning('Ignoring collective elements in particles generation.')
-        line = line._get_non_collective_line()
+    line = line._get_non_collective_line()
 
     T_rev = line.get_length()/(particle_ref._xobject.beta0[0]*clight)
     freq_list = []

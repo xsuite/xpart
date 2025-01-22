@@ -124,8 +124,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     zeta_norm = (zeta_norm.get() if hasattr(zeta_norm, "get") else zeta_norm)
     pzeta_norm = (pzeta_norm.get() if hasattr(pzeta_norm, "get") else pzeta_norm)
 
-    if line is not None and line.iscollective:
-        logger.warning('Ignoring collective elements in particles generation.')
+    if line is not None:
         line = line._get_non_collective_line()
 
     # Compute pzeta from delta
