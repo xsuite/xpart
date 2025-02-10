@@ -24,7 +24,7 @@ def generate_qgaussian_longitudinal_coordinates(num_particles=None,
 		normalized horizontal emittance in m rad
 	nemitt_y : float
 		normalized vertical emittance in m rad
-	sigma_z : float
+    sigma_z : float
 		bunch length in meters
 	particle_ref : xp.particle
 		reference particle

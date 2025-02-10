@@ -21,7 +21,7 @@ def generate_parabolic_longitudinal_coordinates(num_particles=None,
 		number of macroparticles
 	nemitt_x : float
 		normalized horizontal emittance in m rad
-	nemitt_y : float
+    nemitt_y : float
 		normalized vertical emittance in m rad
 	sigma_z : float
 		bunch length in meters
