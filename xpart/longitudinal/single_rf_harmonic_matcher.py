@@ -6,6 +6,8 @@
 import numpy as np
 from scipy.constants import c
 import scipy.special
+import scipy.integrate as integrate
+from scipy.special import gamma as Gamma
 
 from ..general import _print
 
@@ -21,7 +23,7 @@ class SingleRFHarmonicMatcher:
                  beta0=None,
                  rms_bunch_length=None, distribution="parabolic",
                  transformation_particles=400000, n_points_in_distribution=300,
-                 verbose=0):
+                 verbose=0, m=4.7, q=1.0):
 
         self.verbose = verbose
         self.transformation_particles = transformation_particles
@@ -66,6 +68,37 @@ class SingleRFHarmonicMatcher:
             _print(f"SingleRFHarmonicMatcher: Gaussian parameter is equal to {corrected_rms:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
 
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_rms)
+        elif distribution == "qgaussian":
+            # Q-Gaussian from Eq. (2.1) in (Umarov, Tsallis, Steinberg, 2008) 
+            #available at https://link.springer.com/article/10.1007/s00032-008-0087-y
+            if q>5./3.:
+                q = 1.6 # slightly below defined region
+                _print(f"WARNING SingleRFHarmonicMatcher: q-value above 5/3 undefined for correct RMS bunch length, truncating q value to {q:.3f}")
+            beta = 1.0/(rms_bunch_length**2 * (5.-3.*q)) # solving from variance
+            lambda_dist = lambda tau, beta: np.sqrt(beta) / self._Cq(q) * self._eq(-beta * tau**2, q)
+            
+            func_to_solve = lambda new_beta: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_beta), -tau_lim, tau_lim))[0]
+            corrected_beta = scipy.optimize.fsolve(func_to_solve, x0=beta)[0]
+            _print(f"SingleRFHarmonicMatcher: q-Gaussian parameter beta = {corrected_beta:.3f} for q={q:.3f} to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
+
+            self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_beta)
+            
+        elif distribution == "binomial":
+            # Binomial distribution adds tail to parabolic, see (Joho, 1980) at https://indico.psi.ch/event/3484/attachments/5948/7502/TM-11-14.pdf
+            # behaviour is Gaussian for m --> inf
+            tau_max = 1.0 # starting value, will be adjusted. Used as benchmarking value with RMS factor for parabola
+            lambda_dist = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5) 
+            binomial_2nd = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5)*tau**2
+            RMS_binomial = np.sqrt(integrate.quad(binomial_2nd, -1, 1, args=(tau_max))[0] / integrate.quad(lambda_dist, -1, 1, args=(tau_max))[0])
+            factor_binomial = tau_max / RMS_binomial
+            _print(f"RMS factor for binimial is {factor_binomial:.3f}")
+            tau_max = factor_binomial*rms_bunch_length 
+            func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max), -tau_lim, tau_lim))[0]
+            corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
+            tau_max = corrected_tau_max
+            self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
+            self.tau_distr_y[abs(self.tau_distr_x) > tau_max] = 0
+            _print(f"SingleRFHarmonicMatcher: Binomial x_lim parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         else:
             raise NotImplementedError
 
@@ -173,3 +206,37 @@ class SingleRFHarmonicMatcher:
 
     def get_synchrotron_tune(self):
         return self.B*np.sqrt(2*self.A*self.C)*self.length/(2*np.pi)
+
+    def _Cq(self, q, margin=5e-4):
+        """
+        Normalization coefficient for Q-Gaussian
+        
+        Normalizing constant from Eq. (2.2) in https://link.springer.com/article/10.1007/s00032-008-0087-y
+        with a small margin around 1.0 for numerical stability
+        """
+        if q < (1 - margin):
+            Cq = (2 * np.sqrt(np.pi) * Gamma(1.0/(1.0-q))) / ((3.0 - q) * np.sqrt(1.0 - q) * Gamma( (3.0-q)/(2*(1.0 -q))))   
+        elif (q > (1.0 - margin) and q < (1.0 + margin)):
+            Cq = np.sqrt(np.pi)
+        else:
+            Cq = (np.sqrt(np.pi) * Gamma((3.0-q)/(2*(q-1.0)))) / (np.sqrt(q-1.0) * Gamma(1.0/(q-1.0)))
+        if q > 3.0:
+            raise ValueError("q must be smaller than 3!")
+        else:
+            return Cq
+    
+    
+    def _eq(self, x, q):
+        """ 
+        Q-exponential function
+        Available at https://link.springer.com/article/10.1007/s00032-008-0087-y
+        """
+        eq = np.zeros(len(x))
+        for i, xx in enumerate(x):
+            if ((q != 1) and (1 + (1 - q) * xx) > 0):
+                eq[i] = (1 + (1 - q) * xx)**(1 / (1 - q))
+            elif q==1:
+                eq[i] = np.exp(xx)
+            else:
+                eq[i] = 0
+        return eq
