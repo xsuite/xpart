@@ -23,28 +23,27 @@ def test_build_particles_parabolic(test_context):
         p0 = xp.Particles(mass0=xp.PROTON_MASS_EV, q0=1, p0c=7e12, x=1, y=3,
                           delta=[10], _context=ctx_ref)
 
-	# Parameters for the test 
+    # Parameters for the test
         num_part = 1000000
 
         # Load machine model (from pymask)
-        filename = ('../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
+        filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
         with open(filename, 'r') as fid:
             input_data = json.load(fid)
         line = xt.Line.from_dict(input_data['line'])
         line.build_tracker(_context=test_context)
 	
-	# Built a set of three particles with different x coordinates
+    # Built a set of three particles with different x coordinates
         zeta, delta, matcher = generate_parabolic_longitudinal_coordinates(num_particles=num_part,
                                                                            nemitt_x=3e-6, 
                                                                            nemitt_y=3e-6, 
                                                                            sigma_z=0.05,
                                                                            particle_ref=p0,
-                                                                           total_intensity_particles=1e10,
                                                                            line=line,
                                                                            return_matcher=True
                                                                            )
 
-	# Test if longitudinal coordinates match with Single
+    # Test if longitudinal coordinates match with Single
 	# Generate distribution from RF matcher
         tau = zeta / p0.beta0[0]
         tau_distr_y = matcher.tau_distr_y
@@ -56,5 +55,3 @@ def test_build_particles_parabolic(test_context):
         hist = hist / sum(hist) * sum(tau_distr_y)
 
         assert np.all(np.isclose(hist, tau_distr_y, atol=5.e-2, rtol=1.e-2))
-
-
