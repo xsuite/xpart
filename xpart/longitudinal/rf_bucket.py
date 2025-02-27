@@ -3,7 +3,10 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-""".. copyright:: CERN"""
+'''
+This module was originally written for PyHEADTAIL
+@author Kevin Li, Adrian Oeftiger
+'''
 
 import numpy as np
 from scipy.constants import c

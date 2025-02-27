@@ -4,6 +4,7 @@
 # ######################################### #
 
 '''
+This module was originally written for PyHEADTAIL
 @author Kevin Li, Adrian Oeftiger
 @date 21.06.2017
 @brief 2D distribution integration methods for y(x) parametrised domains

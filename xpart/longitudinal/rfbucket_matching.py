@@ -4,6 +4,7 @@
 # ######################################### #
 
 '''
+This module was originally written for PyHEADTAIL
 @author Kevin Li, Adrian Oeftiger, Stefan Hegglin
 @date 16.06.2017
 @brief module for matching longitudinal particle distributions to an RFBucket instance
