@@ -316,7 +316,7 @@ class RFBucket:
         def f(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
             focusing_field = reduce(lambda x, y: x+y, [
-                V_i * np.sin(h_i*z/self.R + dphi_i)
+                V_i * np.sin(-h_i*z/self.R + dphi_i)
                 for V_i, h_i, dphi_i in zip(V, h, dphi)])
             if not acceleration:
                 accelerating_field = 0
@@ -406,7 +406,7 @@ class RFBucket:
         def vf(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
             focusing_potential = reduce(lambda x, y: x+y, [
-                self.R/h[i] * V[i] * np.cos(h[i]*z/self.R + dphi[i])
+                -self.R/h[i] * V[i] * np.cos(-h[i]*z/self.R + dphi[i])
                 for i in range(len(V))])
             return coefficient * focusing_potential
 
