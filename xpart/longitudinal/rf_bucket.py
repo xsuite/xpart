@@ -457,8 +457,8 @@ class RFBucket:
                                self.p_increment, acceleration, offset)(z) +
              sum(pot(z) for pot in self._add_potentials
                  if not ignore_add_potentials))
-        if make_convex:
-            v *= np.sign(self.eta0)
+        # if make_convex:
+        #     v *= np.sign(self.eta0)
         return v
 
     # ROOT AND BOUNDARY FINDING ROUTINES
@@ -546,8 +546,8 @@ class RFBucket:
         '''
         h = (-0.5 * self.eta0 * self.beta * c * dp**2 +
              self.total_potential(z) / self.p0)
-        if make_convex:
-            h *= np.sign(self.eta0)
+        # if make_convex:
+        #     h *= np.sign(self.eta0)
         return h
 
     def equihamiltonian(self, zcut):
@@ -664,6 +664,6 @@ class RFBucket:
             z0 = var
 
         h0 = self.beta*c * (z0/beta_z)**2
-        if make_convex:
-            h0 *= np.abs(self.eta0)
+        # if make_convex:
+        h0 *= np.abs(self.eta0)
         return h0
