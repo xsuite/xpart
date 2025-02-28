@@ -28,6 +28,7 @@ def generate_matched_gaussian_bunch(num_particles,
                                     line=None,
                                     particle_ref=None,
                                     engine=None,
+                                    return_matcher=False,
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs,  # Passed to build_particles
                                     ):
@@ -83,7 +84,7 @@ def generate_matched_gaussian_bunch(num_particles,
             raise ValueError(
                 "`line`, `particle_ref` or `particle_on_co` must be provided!")
 
-    zeta, delta = generate_longitudinal_coordinates(
+    zeta, delta, matcher = generate_longitudinal_coordinates(
         distribution='gaussian',
         num_particles=num_particles,
         particle_ref=(particle_ref if particle_ref is not None
@@ -97,6 +98,7 @@ def generate_matched_gaussian_bunch(num_particles,
         p_increment=p_increment,
         sigma_z=sigma_z,
         engine=engine,
+        return_matcher=True,
         **kwargs)
 
     assert len(zeta) == len(delta) == num_particles
@@ -122,7 +124,10 @@ def generate_matched_gaussian_bunch(num_particles,
                       nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                       weight=total_intensity_particles/num_particles,
                       **kwargs)
-    return part
+    if return_matcher:
+        return part, matcher
+    else:
+        return part
 
 
 def split_scheme(filling_scheme, n_chunk=1):

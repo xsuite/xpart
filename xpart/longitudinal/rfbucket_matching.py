@@ -278,6 +278,10 @@ class ThermalDistribution(StationaryDistribution):
         # to conventional literature scale (zero-valued minimum at SFP)
         Hsep = self.Hcut + self.Hmax
         Hn = Hsep - H
+        # if self.H0<1:
+        #     print('Hn', Hn)
+        #     print('H0', self.H0)
+        #     breakpoint()
         # f(Hn) - f(Hsep)
         return np.exp(-Hn / self.H0) - np.exp(-Hsep / self.H0)
 
