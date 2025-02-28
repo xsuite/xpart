@@ -33,7 +33,7 @@ def _characterize_line(line, particle_ref,
     lag_list_deg = []
     voltage_list = []
     h_list = []
-    energy_ref_increment = []
+    energy_ref_increment_list = []
     found_nonlinear_longitudinal = False
     found_linear_longitudinal = False
     for ee in line.elements:
@@ -59,7 +59,7 @@ def _characterize_line(line, particle_ref,
             elif eecp.longitudinal_mode in ['linear_fixed_qs' , 'linear_fixed_rf']:
                 found_linear_longitudinal = True
             if eecp.energy_ref_increment != 0:
-                energy_ref_increment.append(eecp.energy_ref_increment)
+                energy_ref_increment_list.append(eecp.energy_ref_increment)
 
     found_only_linear_longitudinal = False
     if not found_linear_longitudinal and not found_nonlinear_longitudinal:
@@ -89,7 +89,7 @@ def _characterize_line(line, particle_ref,
     dct['qs'] = tw['qs']
     dct['bets0'] = tw['bets0']
     dct['found_only_linear_longitudinal'] = found_only_linear_longitudinal
-    dct['energy_ref_increment'] = energy_ref_increment
+    dct['energy_ref_increment_list'] = energy_ref_increment_list
     return dct
 
 def get_bucket(line, **kwargs):
@@ -207,6 +207,11 @@ def generate_longitudinal_coordinates(
     if rf_phase is None:
         assert line is not None
         rf_phase=(np.array(dct['lag_list_deg']))/180*np.pi
+
+    if energy_ref_increment is None and line is not None:
+        energy_ref_increment_list = dct['energy_ref_increment_list']
+        if energy_ref_increment_list:
+            energy_ref_increment = np.sum(energy_ref_increment_list)
 
     assert sigma_z is not None
 
