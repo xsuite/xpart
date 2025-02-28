@@ -92,6 +92,13 @@ def _characterize_line(line, particle_ref,
     dct['energy_ref_increment'] = energy_ref_increment
     return dct
 
+def get_bucket(line, **kwargs):
+    kwargs['sigma_z'] = 1.
+    return generate_longitudinal_coordinates(line=line,
+                                             engine='pyheadtail',
+                                             _only_bucket=True,
+                                             **kwargs)
+
 def generate_longitudinal_coordinates(
                                     line=None,
                                     num_particles=None,
@@ -110,6 +117,7 @@ def generate_longitudinal_coordinates(
                                     tracker=None,
                                     m=None,
                                     q=None,
+                                    _only_bucket=False,
                                     **kwargs # passed to twiss
                                     ):
 
@@ -226,9 +234,13 @@ def generate_longitudinal_coordinates(
         if distribution != 'gaussian':
             raise NotImplementedError
 
-        dp0c_eV = energy_ref_increment / beta0 # valid for small energy change
-                                               # See Wille, The Physics of Particle Accelerators
-                                               # Appendix B, formula B.16 .
+        if energy_ref_increment:
+            dp0c_eV = energy_ref_increment / beta0 # valid for small energy change
+                                                # See Wille, The Physics of Particle Accelerators
+                                                # Appendix B, formula B.16 .
+        else:
+            dp0c_eV = 0.
+
         dp0c_J = dp0c_eV * qe
         dp0_si = dp0c_J / clight
 
@@ -241,6 +253,8 @@ def generate_longitudinal_coordinates(
                             voltage_list=np.atleast_1d(rf_voltage),
                             phi_offset_list=np.atleast_1d(rf_phase),
                             p_increment=dp0_si)
+        if _only_bucket:
+            return rfbucket
 
         if sigma_z < 0.03 * circumference/np.max(np.atleast_1d(rf_harmonic)):
             logger.info('short bunch, use linear matching')
