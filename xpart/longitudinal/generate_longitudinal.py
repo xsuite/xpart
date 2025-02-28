@@ -228,7 +228,7 @@ def generate_longitudinal_coordinates(
 
         dp0c_eV = energy_ref_increment / beta0 # valid for small energy change
                                                # See Wille, The Physics of Particle Accelerators
-                                               # Appendix B, formula B.16
+                                               # Appendix B, formula B.16 .
         dp0c_J = dp0c_eV * qe
         dp0_si = dp0c_J / clight
 
