@@ -239,13 +239,8 @@ def generate_longitudinal_coordinates(
             matcher = RFBucketMatcher(rfbucket=rfbucket,
                 distribution_type=ThermalDistribution,
                 sigma_z=sigma_z)
-            try:
-                z_particles, delta_particles, _, _ = matcher.generate(
-                                                    macroparticlenumber=num_particles)
-            except:
-                print('Failed longitudinal!')
-                z_particles = np.zeros(num_particles)
-                delta_particles = np.zeros(num_particles)
+            z_particles, delta_particles, _, _ = matcher.generate(
+                                        macroparticlenumber=num_particles)
 
     elif engine == "single-rf-harmonic":
         if distribution not in ["parabolic", "gaussian", "binomial", "qgaussian"]:
