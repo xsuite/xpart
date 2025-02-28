@@ -194,7 +194,7 @@ def generate_longitudinal_coordinates(
 
     if rf_phase is None:
         assert line is not None
-        rf_phase=(np.array(dct['lag_list_deg']) - 180)/180*np.pi
+        rf_phase=(np.array(dct['lag_list_deg']))/180*np.pi
 
     assert sigma_z is not None
 
