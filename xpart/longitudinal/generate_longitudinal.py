@@ -33,6 +33,7 @@ def _characterize_line(line, particle_ref,
     lag_list_deg = []
     voltage_list = []
     h_list = []
+    energy_ref_increment = []
     found_nonlinear_longitudinal = False
     found_linear_longitudinal = False
     for ee in line.elements:
@@ -57,6 +58,8 @@ def _characterize_line(line, particle_ref,
                 found_nonlinear_longitudinal = True
             elif eecp.longitudinal_mode in ['linear_fixed_qs' , 'linear_fixed_rf']:
                 found_linear_longitudinal = True
+            if eecp.energy_ref_increment != 0:
+                energy_ref_increment.append(eecp.energy_ref_increment)
 
     found_only_linear_longitudinal = False
     if not found_linear_longitudinal and not found_nonlinear_longitudinal:
@@ -86,6 +89,7 @@ def _characterize_line(line, particle_ref,
     dct['qs'] = tw['qs']
     dct['bets0'] = tw['bets0']
     dct['found_only_linear_longitudinal'] = found_only_linear_longitudinal
+    dct['energy_ref_increment'] = energy_ref_increment
     return dct
 
 def generate_longitudinal_coordinates(
@@ -102,7 +106,7 @@ def generate_longitudinal_coordinates(
                                     rf_harmonic=None,
                                     rf_voltage=None,
                                     rf_phase=None,
-                                    p_increment=0.,
+                                    energy_ref_increment=None,
                                     tracker=None,
                                     m=None,
                                     q=None,
@@ -198,6 +202,9 @@ def generate_longitudinal_coordinates(
 
     assert sigma_z is not None
 
+    # Compute beta0 from gamma0
+    beta0 = np.sqrt(1 - 1 / gamma0**2)
+
     if engine is None:
         if line is not None and dct['found_only_linear_longitudinal']:
             engine = 'linear'
@@ -205,15 +212,23 @@ def generate_longitudinal_coordinates(
             engine = 'pyheadtail'
 
     if engine == "linear":
+        if energy_ref_increment is not None and energy_ref_increment != 0:
+            raise NotImplementedError(
+                'Reference energy increment not yet supported for linear matching')
         if distribution != 'gaussian':
             raise NotImplementedError
         assert line is not None, ('Not yet implemented if line is not provided')
         sigma_dp = sigma_z / np.abs(dct['bets0'])
         z_particles = sigma_z * np.random.normal(size=num_particles)
         delta_particles = sigma_dp * np.random.normal(size=num_particles)
+        assert energy_ref_increment is None
     elif engine == "pyheadtail":
         if distribution != 'gaussian':
             raise NotImplementedError
+
+        dp0c_eV = energy_ref_increment / beta0 # valid for small energy change
+        dp0c_J = dp0c_eV * qe
+        dp0_si = dp0c_J / clight
 
         rfbucket = RFBucket(circumference=circumference,
                             gamma=gamma0,
@@ -223,19 +238,19 @@ def generate_longitudinal_coordinates(
                             harmonic_list=np.atleast_1d(rf_harmonic),
                             voltage_list=np.atleast_1d(rf_voltage),
                             phi_offset_list=np.atleast_1d(rf_phase),
-                            p_increment=p_increment)
+                            p_increment=dp0_si)
 
         if sigma_z < 0.03 * circumference/np.max(np.atleast_1d(rf_harmonic)):
             logger.info('short bunch, use linear matching')
+            if energy_ref_increment is not None and energy_ref_increment != 0:
+                raise NotImplementedError(
+                    'Reference energy increment not yet supported for linear matching')
             eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
             beta_z = np.abs(eta) * circumference / 2.0 / np.pi / rfbucket.Q_s
             sigma_dp = sigma_z / beta_z
-
             z_particles = sigma_z * np.random.normal(size=num_particles)
             delta_particles = sigma_dp * np.random.normal(size=num_particles)
-
         else:
-            # Generate longitudinal coordinates
             matcher = RFBucketMatcher(rfbucket=rfbucket,
                 distribution_type=ThermalDistribution,
                 sigma_z=sigma_z)
