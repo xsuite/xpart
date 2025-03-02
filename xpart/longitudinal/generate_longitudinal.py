@@ -78,6 +78,12 @@ def _characterize_line(line, particle_ref,
     tw = line.twiss(
         particle_ref=particle_ref, **kwargs)
 
+    p0c_increase_from_energy_program = None
+    if line.energy_program is not None:
+        p0c_increase_from_energy_program = line.energy_program.get_p0c_increse_per_turn_at_t_s(
+                                                        line.vv['t_turn_s'])
+
+
     dct={}
     dct['T_rev'] = T_rev
     dct['freq_list'] = freq_list
@@ -90,6 +96,7 @@ def _characterize_line(line, particle_ref,
     dct['bets0'] = tw['bets0']
     dct['found_only_linear_longitudinal'] = found_only_linear_longitudinal
     dct['energy_ref_increment_list'] = energy_ref_increment_list
+    dct['p0c_increase_from_energy_program'] = p0c_increase_from_energy_program
     return dct
 
 def get_bucket(line, **kwargs):
@@ -208,10 +215,12 @@ def generate_longitudinal_coordinates(
         assert line is not None
         rf_phase=(np.array(dct['lag_list_deg']))/180*np.pi
 
+    p0c_increase_from_energy_program = 0.
     if energy_ref_increment is None and line is not None:
         energy_ref_increment_list = dct['energy_ref_increment_list']
         if energy_ref_increment_list:
             energy_ref_increment = np.sum(energy_ref_increment_list)
+        p0c_increase_from_energy_program = dct['p0c_increase_from_energy_program']
 
     assert sigma_z is not None
 
@@ -239,12 +248,13 @@ def generate_longitudinal_coordinates(
         if distribution != 'gaussian':
             raise NotImplementedError
 
+        dp0c_eV = 0.
         if energy_ref_increment:
             dp0c_eV = energy_ref_increment / beta0 # valid for small energy change
                                                 # See Wille, The Physics of Particle Accelerators
                                                 # Appendix B, formula B.16 .
-        else:
-            dp0c_eV = 0.
+        if p0c_increase_from_energy_program is not None:
+            dp0c_eV += p0c_increase_from_energy_program
 
         dp0c_J = dp0c_eV * qe
         dp0_si = dp0c_J / clight
