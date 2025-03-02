@@ -60,6 +60,15 @@ def _characterize_line(line, particle_ref,
                 found_linear_longitudinal = True
             if eecp.energy_ref_increment != 0:
                 energy_ref_increment_list.append(eecp.energy_ref_increment)
+        elif ee.__class__.__name__ == 'ReferenceEnergyIncrease':
+            eecp = ee.copy(_context=xo.ContextCpu())
+            if eecp.Delta_p0c != 0:
+                # valid for small energy change
+                # See Wille, The Physics of Particle Accelerators
+                # Appendix B, formula B.16 .
+                energy_ref_increment_list.append(
+                    eecp.Delta_p0c * particle_ref._xobject.beta0[0])
+
 
     found_only_linear_longitudinal = False
     if not found_linear_longitudinal and not found_nonlinear_longitudinal:
