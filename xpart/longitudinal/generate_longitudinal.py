@@ -236,6 +236,8 @@ def generate_longitudinal_coordinates(
     # Compute beta0 from gamma0
     beta0 = np.sqrt(1 - 1 / gamma0**2)
 
+    matcher = None
+
     if engine is None:
         if line is not None and dct['found_only_linear_longitudinal']:
             engine = 'linear'
