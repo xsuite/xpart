@@ -328,13 +328,7 @@ def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
         return PROTON_MASS_EV
     elif name == 'e-' or name == 'e+':
         return ELECTRON_MASS_EV
-<<<<<<< Updated upstream
-    elif name == 'positron':
-        return ELECTRON_MASS_EV
-    elif name == 'muon':
-=======
     elif name == '𝛍-' or name == '𝛍+':
->>>>>>> Stashed changes
         return MUON_MASS_EV
     elif name == 'Pb208':
         return Pb208_MASS_EV
@@ -348,8 +342,3 @@ def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
             return expected_mass
         else:
             raise ValueError(f"Exact mass for {name} not found.")
-
-
-
-
-
