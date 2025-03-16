@@ -18,31 +18,53 @@ from xtrack.particles.constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_
 _PDG = {
 #   ID       q  NAME
     0:     [0.,  'undefined'],
-    11:    [-1., 'electron'],
-    -11:   [1.,  'positron'],
-    13:    [-1., 'muon'],
-    15:    [-1., 'tau'],
-    111:   [0.,  'pi0'],
-    211:   [1.,  'pi+'],
-    -211:  [-1., 'pi-'],
-    311:   [0.,  'K0'],
-    321:   [1.,  'K+'],
-    -321:  [-1., 'K-'],
-    2212:  [1.,  'proton'],
-    2112:  [0.,  'neutron'],
-    2224:  [2.,  'Delta++'],
-    2214:  [1.,  'Delta+'],
-    2114:  [0.,  'Delta0'],
-    1114:  [-1., 'Delta-'],
-    3122:  [0.,  'Lambda'],
-    3222:  [1.,  'Sigma+'],
-    3212:  [0.,  'Sigma0'],
-    3112:  [-1., 'Sigma-'],
-    3322:  [0.,  'Xi'],
-    3312:  [-1., 'Xi-'],
+    11:    [-1., 'e-', 'electron', 'e'],
+    -11:   [1.,  'e+', 'positron'],
+    12:    [0.,  '𝛎e', 'electron neutrino'],
+    13:    [-1., '𝛍-', 'muon', 'muon-', '𝛍'],
+    -13:   [1.,  '𝛍+', 'anti-muon', 'muon+'],
+    14:    [0.,  '𝛎𝛍', 'muon neutrino'],
+    15:    [-1., '𝛕-', 'tau', 'tau-', '𝛕'],
+    -15:   [-1., '𝛕+', 'anti-tau', 'tau+'],
+    16:    [0.,  '𝛎𝛕', 'tau neutrino'],
+    22:    [0.,  '𝛄', 'photon'],
+    111:   [0.,  '𝛑0', 'pion', 'pion0', 'pi0'],
+    211:   [1.,  '𝛑+', 'pion+', 'pi+'],
+    -211:  [-1., '𝛑-', 'pion-', 'pi-'],
+    311:   [0.,  'K0', 'kaon', 'kaon0'],
+    321:   [1.,  'K+', 'kaon+'],
+    -321:  [-1., 'K-', 'kaon-'],
+    130:   [0.,  'KL', 'long kaon'],
+    310:   [0.,  'KS', 'short kaon'],
+    421:   [0.,  'D0'],
+    411:   [1.,  'D+'],
+    -411:  [-1., 'D-'],
+    431:   [1.,  'Ds+'],
+    -431:  [-1., 'Ds-'],
+    2212:  [1.,  'p+', 'proton', 'p'],
+    -2212: [1.,  'p-', 'anti-proton'],
+    2112:  [0.,  'n', 'neutron'],
+    2224:  [2.,  '𝚫++', 'delta++'],
+    2214:  [1.,  '𝚫+', 'delta+'],
+    2114:  [0.,  '𝚫0', 'delta0'],
+    1114:  [-1., '𝚫-', 'delta-'],
+    3122:  [0.,  '𝚲', 'lambda'],
+    4122:  [0.,  '𝚲c+', 'lambdac+'],
+    3222:  [1.,  '𝚺+', 'sigma+'],
+    3212:  [0.,  '𝚺0', 'sigma0'],
+    3112:  [-1., '𝚺-', 'sigma-'],
+    3322:  [0.,  '𝚵0', 'xi0'],
+    3312:  [-1., '𝚵-', 'xi-'],
+    4132:  [0.,  '𝚵c0', 'xic0'],
+    4232:  [0.,  '𝚵c+', 'xic+'],
+    4312:  [0.,  "𝚵'c0", "xiprimec0"],
+    4322:  [0.,  "𝚵'c+", "xiprimec+"],
+    3334:  [-1., '𝛀-', 'omega-'],
+    4332:  [-1., '𝛀c0', 'omegac0'],
     1000010020: [1., 'deuterium'],
     1000010030: [1., 'tritium']
 }
+
 
 _elements = {
      1: "H",    2: "He",   3: "Li",   4: "Be",   5: "B",    6: "C",    7: "N",    8: "O",    9: "F",   10: "Ne",
@@ -93,7 +115,6 @@ def get_name_from_pdg_id(pdg_id):
 
 
 def get_pdg_id_from_name(name=None):
-
     if hasattr(name, 'get'):
         name = name.get()
 
@@ -104,12 +125,23 @@ def get_pdg_id_from_name(name=None):
     elif isinstance(name, Number):
         return int(name) # fallback
 
-    _PDG_inv      = {val[1].lower(): pdg_id for pdg_id, val in _PDG.items()}
+    _PDG_inv = {}
+    for pdg_id, val in _PDG.items():
+        for vv in val[1:]:
+            _PDG_inv[vv.lower()] = pdg_id
 
     lname = name.lower()
     aname = ""
     if len(lname) > 4 and lname[:5]=="anti-":
         aname = lname[5:]
+        if aname[-2:] == '++':
+            aname = aname[:-2] + '--'
+        elif aname[-2:] == '--':
+            aname = aname[:-2] + '++'
+        elif aname[-1] == '+':
+            aname = aname[:-1] + '-'
+        elif aname[-1] == '-':
+            aname = aname[:-1] + '+'
 
     # particle
     if lname in _PDG_inv.keys():
@@ -135,7 +167,8 @@ def get_pdg_id_from_name(name=None):
             try:
                 A = int(lname.replace(ion_long[1], '').replace('.','').replace('_','').replace('-','').replace(' ',''))
             except:
-                raise ValueError(f"Wrongly formatted ion name: cannot deduce A from {name}!\n"
+                raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
+                               + f"formatted ion name: cannot deduce A from {name}!\n"
                                + f"Use e.g. 'Pb208', 'Pb 208', 'Pb-208', 'Pb_208', or 'Pb.208'.")
             return _pdg_id_ion(A, Z)
 
@@ -149,7 +182,8 @@ def get_pdg_id_from_name(name=None):
             try:
                 A = int(lname.replace(ion[1], '').replace('.','').replace('_','').replace('-','').replace(' ',''))
             except:
-                raise ValueError(f"Wrongly formatted ion name: cannot deduce A from {name}!\n"
+                raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
+                               + f"formatted ion name: cannot deduce A from {name}!\n"
                                + f"Use e.g. 'Pb208', 'Pb 208', 'Pb-208', 'Pb_208', or 'Pb.208'.")
             return _pdg_id_ion(A, Z)
 
@@ -183,7 +217,16 @@ def get_properties_from_pdg_id(pdg_id):
         return float(q), int(A), int(Z), name
     elif -pdg_id in _PDG.keys():
         antipart = get_properties_from_pdg_id(-pdg_id)
-        return -antipart[0], antipart[1], -antipart[2], f'anti-{antipart[3]}'
+        name = f'anti-{antipart[3]}'
+        if name[-2:] == '++':
+            name = name[:-2] + '--'
+        elif name[-2:] == '--':
+            name = name[:-2] + '++'
+        elif name[-1] == '+':
+            name = name[:-1] + '-'
+        elif name[-1] == '-':
+            name = name[:-1] + '+'
+        return -antipart[0], antipart[1], -antipart[2], name
 
     elif pdg_id > 1000000000:
         # Ion
@@ -230,11 +273,11 @@ def get_pdg_id_from_mass_charge(m, q):
 
     A = round(m/U_MASS_EV)
     if abs(m-ELECTRON_MASS_EV) < 100:
-        return get_pdg_id_from_name('electron')
+        return int(-q)*get_pdg_id_from_name('electron')
     elif abs(m-MUON_MASS_EV) < 100:
-        return get_pdg_id_from_name('muon')
+        return int(-q)*get_pdg_id_from_name('muon')
     elif abs(m-PROTON_MASS_EV) < 1000:
-        return get_pdg_id_from_name('proton')
+        return int(q)*get_pdg_id_from_name('proton')
     elif q <= 0 or A <= 0:
         raise ValueError(f"Particle with {q=} and {m=} not recognised!")
     else:
@@ -281,13 +324,17 @@ def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
                          for pdg in pdg_id])
 
     _, A, _, name = get_properties_from_pdg_id(pdg_id)
-    if name == 'proton':
+    if name == 'p+' or name == 'p-':
         return PROTON_MASS_EV
-    elif name == 'electron':
+    elif name == 'e-' or name == 'e+':
         return ELECTRON_MASS_EV
+<<<<<<< Updated upstream
     elif name == 'positron':
         return ELECTRON_MASS_EV
     elif name == 'muon':
+=======
+    elif name == '𝛍-' or name == '𝛍+':
+>>>>>>> Stashed changes
         return MUON_MASS_EV
     elif name == 'Pb208':
         return Pb208_MASS_EV
