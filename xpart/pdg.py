@@ -18,14 +18,14 @@ from xtrack.particles.constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_
 _PDG = {
 #   ID       q  NAME
     0:     [0.,  'undefined'],
-    11:    [-1., 'e-', 'electron', 'e'],
+    11:    [-1., 'e-', 'e', 'electron'],
     -11:   [1.,  'e+', 'positron'],
     12:    [0.,  '𝛎e', 'electron neutrino'],
-    13:    [-1., '𝛍-', 'muon', 'muon-', '𝛍'],
-    -13:   [1.,  '𝛍+', 'anti-muon', 'muon+'],
+    13:    [-1., '𝛍-', '𝛍', 'muon-', 'muon'],
+    -13:   [1.,  '𝛍+', 'muon+', 'anti-muon'],
     14:    [0.,  '𝛎𝛍', 'muon neutrino'],
-    15:    [-1., '𝛕-', 'tau', 'tau-', '𝛕'],
-    -15:   [-1., '𝛕+', 'anti-tau', 'tau+'],
+    15:    [-1., '𝛕-', '𝛕', 'tau-', 'tau'],
+    -15:   [-1., '𝛕+', 'tau+', 'anti-tau'],
     16:    [0.,  '𝛎𝛕', 'tau neutrino'],
     22:    [0.,  '𝛄', 'photon'],
     111:   [0.,  '𝛑0', 'pion', 'pion0', 'pi0'],
@@ -41,7 +41,7 @@ _PDG = {
     -411:  [-1., 'D-'],
     431:   [1.,  'Ds+'],
     -431:  [-1., 'Ds-'],
-    2212:  [1.,  'p+', 'proton', 'p'],
+    2212:  [1.,  'p+', 'p', 'proton'],
     -2212: [1.,  'p-', 'anti-proton'],
     2112:  [0.,  'n', 'neutron'],
     2224:  [2.,  '𝚫++', 'delta++'],
@@ -108,10 +108,11 @@ _elements_long = {
   116: "Livermorium",   117: "Tennessine",    118: "Oganesson"
 }
 
-def get_name_from_pdg_id(pdg_id):
+
+def get_name_from_pdg_id(pdg_id, long_name=True):
     if hasattr(pdg_id, '__len__'):
         return np.array([get_name_from_pdg_id(pdg) for pdg in pdg_id])
-    return get_properties_from_pdg_id(pdg_id)[-1]
+    return get_properties_from_pdg_id(pdg_id, long_name=long_name)[-1]
 
 
 def get_pdg_id_from_name(name=None):
@@ -193,7 +194,7 @@ def get_pdg_id_from_name(name=None):
 
 # TODO: mass info ?
 # q, A, Z, name
-def get_properties_from_pdg_id(pdg_id):
+def get_properties_from_pdg_id(pdg_id, long_name=False):
     if hasattr(pdg_id, '__len__'):
         result = np.array([get_properties_from_pdg_id(pdg) for pdg in pdg_id]).T
         return result[0].astype(np.float64), result[1].astype(np.int64),\
@@ -201,14 +202,17 @@ def get_properties_from_pdg_id(pdg_id):
 
     if pdg_id in _PDG.keys():
         q = _PDG[pdg_id][0]
-        name = _PDG[pdg_id][1]
-        if name=='proton' or name=='neutron':
-            A = 1
+        if long_name:
+            name = _PDG[pdg_id][-1]
+        else:
+            name = _PDG[pdg_id][1]
+        if abs(pdg_id)==2212 or abs(pdg_id)==2112:
+            A = 1 if pdg_id > 0 else -1
             Z = q
-        elif name=='deuterium':
+        elif pdg_id==1000010020:
             A = 2
             Z = 1
-        elif name=='tritium':
+        elif pdg_id==1000010030:
             A = 3
             Z = 1
         else:
@@ -216,7 +220,7 @@ def get_properties_from_pdg_id(pdg_id):
             Z = 0
         return float(q), int(A), int(Z), name
     elif -pdg_id in _PDG.keys():
-        antipart = get_properties_from_pdg_id(-pdg_id)
+        antipart = get_properties_from_pdg_id(-pdg_id, long_name=long_name)
         name = f'anti-{antipart[3]}'
         if name[-2:] == '++':
             name = name[:-2] + '--'
