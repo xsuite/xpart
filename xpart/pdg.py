@@ -1,6 +1,6 @@
 # copyright ############################### #
 # This file is part of the Xpart Package.   #
-# Copyright (c) CERN, 2023.                 #
+# Copyright (c) CERN, 2025.                 #
 # ######################################### #
 
 import numpy as np
@@ -171,7 +171,7 @@ def get_pdg_id_from_name(name=None):
                 raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
                                + f"formatted ion name: cannot deduce A from {name}!\n"
                                + f"Use e.g. 'Pb208', 'Pb 208', 'Pb-208', 'Pb_208', or 'Pb.208'.")
-            return _pdg_id_ion(A, Z)
+            return get_pdg_id_ion(A, Z)
 
         # ion short name
         elif len(ion) > 0:
@@ -186,7 +186,7 @@ def get_pdg_id_from_name(name=None):
                 raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
                                + f"formatted ion name: cannot deduce A from {name}!\n"
                                + f"Use e.g. 'Pb208', 'Pb 208', 'Pb-208', 'Pb_208', or 'Pb.208'.")
-            return _pdg_id_ion(A, Z)
+            return get_pdg_id_ion(A, Z)
 
         else:
             raise ValueError(f"Particle {name} not found in pdg dictionary!")
@@ -260,9 +260,9 @@ def get_element_full_name_from_Z(z):
     return _elements_long[z]
 
 
-def _pdg_id_ion(A, Z):
+def get_pdg_id_ion(A, Z):
     if hasattr(A, '__len__') and hasattr(Z, '__len__'):
-        return np.array([_pdg_id_ion(aa, zz) for aa, zz in zip(A,Z)])
+        return np.array([get_pdg_id_ion(aa, zz) for aa, zz in zip(A,Z)])
     return  int(1000000000 + Z*10000 + A*10)
 
 
@@ -285,7 +285,7 @@ def get_pdg_id_from_mass_charge(m, q):
     elif q <= 0 or A <= 0:
         raise ValueError(f"Particle with {q=} and {m=} not recognised!")
     else:
-        return _pdg_id_ion(A, q)
+        return get_pdg_id_ion(A, q)
 
 
 def _mass_consistent(pdg_id, m, mask=None):
