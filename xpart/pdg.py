@@ -15,52 +15,58 @@ from xtrack.particles.constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_
 # Not all particles are implemented yet; this can be appended later
 
 
+# This is the internal dictionary of PDG IDs.
+# For each pdg id, we get the charge and a list of names.
+# The first name is the default short name, the last is the default long name.
+# The other names are accepted alternatives. Any superscript or subscript can be used
+# interchangeably with its normal script (if both are used, subscript comes first).
+
 _PDG = {
 #   ID       q  NAME
     0:     [0.,  'undefined'],
-    11:    [-1., 'e-', 'e', 'electron'],
-    -11:   [1.,  'e+', 'positron'],
-    12:    [0.,  '𝛎e', 'electron neutrino'],
-    13:    [-1., '𝛍-', '𝛍', 'muon-', 'muon'],
-    -13:   [1.,  '𝛍+', 'muon+', 'anti-muon'],
-    14:    [0.,  '𝛎𝛍', 'muon neutrino'],
-    15:    [-1., '𝛕-', '𝛕', 'tau-', 'tau'],
-    -15:   [-1., '𝛕+', 'tau+', 'anti-tau'],
-    16:    [0.,  '𝛎𝛕', 'tau neutrino'],
-    22:    [0.,  '𝛄', 'photon'],
-    111:   [0.,  '𝛑0', 'pion', 'pion0', 'pi0'],
-    211:   [1.,  '𝛑+', 'pion+', 'pi+'],
-    -211:  [-1., '𝛑-', 'pion-', 'pi-'],
-    311:   [0.,  'K0', 'kaon', 'kaon0'],
-    321:   [1.,  'K+', 'kaon+'],
-    -321:  [-1., 'K-', 'kaon-'],
+    11:    [-1., 'e⁻', 'e', 'electron'],
+    -11:   [1.,  'e⁺', 'positron'],
+    12:    [0.,  'νₑ', 'electron neutrino'],
+    13:    [-1., 'μ⁻', 'μ', 'muon-', 'muon'],
+    -13:   [1.,  'μ⁺', 'muon+', 'anti-muon'],
+    14:    [0.,  'νμ', 'muon neutrino'],
+    15:    [-1., 'τ⁻', 'τ', 'tau-', 'tau'],
+    -15:   [-1., 'τ⁺', 'tau+', 'anti-tau'],
+    16:    [0.,  'ντ', 'tau neutrino'],
+    22:    [0.,  'γ⁰', 'γ', 'photon'],
+    111:   [0.,  'π⁰', 'π', 'pion', 'pion0', 'pi0'],
+    211:   [1.,  'π⁺', 'pion+', 'pi+'],
+    -211:  [-1., 'π⁻', 'pion-', 'pi-'],
+    311:   [0.,  'K⁰', 'kaon', 'kaon0'],
+    321:   [1.,  'K⁺', 'kaon+'],
+    -321:  [-1., 'K⁻', 'kaon-'],
     130:   [0.,  'KL', 'long kaon'],
-    310:   [0.,  'KS', 'short kaon'],
-    421:   [0.,  'D0'],
-    411:   [1.,  'D+'],
-    -411:  [-1., 'D-'],
-    431:   [1.,  'Ds+'],
-    -431:  [-1., 'Ds-'],
-    2212:  [1.,  'p+', 'p', 'proton'],
-    -2212: [1.,  'p-', 'anti-proton'],
-    2112:  [0.,  'n', 'neutron'],
-    2224:  [2.,  '𝚫++', 'delta++'],
-    2214:  [1.,  '𝚫+', 'delta+'],
-    2114:  [0.,  '𝚫0', 'delta0'],
-    1114:  [-1., '𝚫-', 'delta-'],
-    3122:  [0.,  '𝚲', 'lambda'],
-    4122:  [0.,  '𝚲c+', 'lambdac+'],
-    3222:  [1.,  '𝚺+', 'sigma+'],
-    3212:  [0.,  '𝚺0', 'sigma0'],
-    3112:  [-1., '𝚺-', 'sigma-'],
-    3322:  [0.,  '𝚵0', 'xi0'],
-    3312:  [-1., '𝚵-', 'xi-'],
-    4132:  [0.,  '𝚵c0', 'xic0'],
-    4232:  [0.,  '𝚵c+', 'xic+'],
-    4312:  [0.,  "𝚵'c0", "xiprimec0"],
-    4322:  [0.,  "𝚵'c+", "xiprimec+"],
-    3334:  [-1., '𝛀-', 'omega-'],
-    4332:  [-1., '𝛀c0', 'omegac0'],
+    310:   [0.,  'Kₛ', 'short kaon'],
+    421:   [0.,  'D⁰', 'D'],
+    411:   [1.,  'D⁺'],
+    -411:  [-1., 'D⁻'],
+    431:   [1.,  'Dₛ⁺'],
+    -431:  [-1., 'Dₛ⁻'],
+    2212:  [1.,  'p⁺', 'p', 'proton'],
+    -2212: [1.,  'p⁻', 'anti-proton'],
+    2112:  [0.,  'n⁰', 'n', 'neutron'],
+    2224:  [2.,  'Δ⁺⁺', 'delta++'],
+    2214:  [1.,  'Δ⁺', 'delta+'],
+    2114:  [0.,  'Δ⁰', 'delta0'],
+    1114:  [-1., 'Δ⁻', 'delta-'],
+    3122:  [0.,  'Λ⁰', 'Λ', 'lambda'],
+    4122:  [0.,  'Λc⁺', 'lambdac+'],
+    3222:  [1.,  'Σ⁺', 'sigma+'],
+    3212:  [0.,  'Σ⁰', 'Σ', 'sigma', 'sigma0'],
+    3112:  [-1., 'Σ⁻', 'sigma-'],
+    3322:  [0.,  'Ξ⁰', 'Ξ', 'xi', 'xi0'],
+    3312:  [-1., 'Ξ⁻', 'xi-'],
+    4132:  [0.,  'Ξc⁰', 'Ξc', 'xic', 'xic0'],
+    4232:  [0.,  'Ξc⁺', 'xic+'],
+    4312:  [0.,  "Ξ'c⁰", "Ξ'c", "xiprimec", "xiprimec0"],
+    4322:  [0.,  "Ξ'c⁺", "xiprimec+"],
+    3334:  [-1., 'Ω⁻', 'omega-'],
+    4332:  [-1., 'Ωc⁰', 'Ωc', 'omegac', 'omegac0'],
     1000010020: [1., 'deuterium'],
     1000010030: [1., 'tritium']
 }
@@ -109,10 +115,20 @@ _elements_long = {
 }
 
 
-def get_name_from_pdg_id(pdg_id, long_name=True):
-    if hasattr(pdg_id, '__len__'):
+def is_proton(pdg_id):
+    return pdg_id >= 2212
+
+def is_ion(pdg_id):
+    return pdg_id >= 1000000000
+
+def is_lepton(pdg_id):
+    return 11 <= abs(pdg_id) <= 19
+
+
+def get_name_from_pdg_id(pdg_id, long_name=True, subscripts=True):
+    if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
         return np.array([get_name_from_pdg_id(pdg) for pdg in pdg_id])
-    return get_properties_from_pdg_id(pdg_id, long_name=long_name)[-1]
+    return get_properties_from_pdg_id(pdg_id, long_name=long_name, subscripts=subscripts)[-1]
 
 
 def get_pdg_id_from_name(name=None):
@@ -129,20 +145,12 @@ def get_pdg_id_from_name(name=None):
     _PDG_inv = {}
     for pdg_id, val in _PDG.items():
         for vv in val[1:]:
-            _PDG_inv[vv.lower()] = pdg_id
+            _PDG_inv[_to_normal_script(vv).lower()] = pdg_id
 
-    lname = name.lower()
+    lname = _to_normal_script(name).lower()
     aname = ""
     if len(lname) > 4 and lname[:5]=="anti-":
-        aname = lname[5:]
-        if aname[-2:] == '++':
-            aname = aname[:-2] + '--'
-        elif aname[-2:] == '--':
-            aname = aname[:-2] + '++'
-        elif aname[-1] == '+':
-            aname = aname[:-1] + '-'
-        elif aname[-1] == '-':
-            aname = aname[:-1] + '+'
+        aname = _flip_end_sign(lname[5:])
 
     # particle
     if lname in _PDG_inv.keys():
@@ -153,52 +161,33 @@ def get_pdg_id_from_name(name=None):
         return -_PDG_inv[aname]
 
     else:
-        ion_long = [[Z, ion.lower()] for Z, ion in _elements_long.items()
-                    if lname.startswith(ion.lower())]
-        ion      = [[Z, ion.lower()] for Z, ion in _elements.items()
-                    if lname.startswith(ion.lower())]
-
-        # ion short name
-        if len(ion_long) > 0:
-            # Multiple finds are possible (e.g. [15, P] and [82, Pb] in the case of lead).
-            # Use the result that has the longest name length (most restrictive result)
-            ion_long.sort(key=lambda el: len(el[1]))
-            ion_long = ion_long[-1]
-            Z = ion_long[0]
-            try:
-                A = int(lname.replace(ion_long[1], '').replace('.','').replace('_','').replace('-','').replace(' ',''))
-            except:
-                raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
-                               + f"formatted ion name: cannot deduce A from {name}!\n"
-                               + f"Use e.g. 'Pb208', 'Pb 208', 'Pb-208', 'Pb_208', or 'Pb.208'.")
-            return get_pdg_id_ion(A, Z)
-
-        # ion short name
-        elif len(ion) > 0:
-            # Multiple finds are possible (e.g. [15, P] and [82, Pb] in the case of lead).
-            # Use the result that has the longest name length (most restrictive result)
-            ion.sort(key=lambda el: len(el[1]))
-            ion = ion[-1]
-            Z = ion[0]
-            try:
-                A = int(lname.replace(ion[1], '').replace('.','').replace('_','').replace('-','').replace(' ',''))
-            except:
-                raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
-                               + f"formatted ion name: cannot deduce A from {name}!\n"
-                               + f"Use e.g. 'Pb208', 'Pb 208', 'Pb-208', 'Pb_208', or 'Pb.208'.")
-            return get_pdg_id_ion(A, Z)
-
-        else:
-            raise ValueError(f"Particle {name} not found in pdg dictionary!")
+        ion_name = _digits_to_normalscript(lname).lower()
+        ion_name.replace('_','').replace('-','').replace(' ','')
+        for Z, ion in _elements_long.items():
+            if ion.lower() in ion_name:
+                A = ion_name.replace(ion.lower(), '')
+                if A.isnumeric() and int(A) > 0:
+                    return get_pdg_id_ion(int(A), Z)
+        for Z, ion in _elements.items():
+            if ion.lower() in ion_name:
+                A = ion_name.replace(ion.lower(), '')
+                if A.isnumeric() and int(A) > 0:
+                    return get_pdg_id_ion(int(A), Z)
+        raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
+                        + f"formatted ion name!\nFor ions, use e.g. 'Pb208', 'Pb 208', "
+                        + f"'Pb-208', 'Pb_208', '208Pb', 'lead-208', ...")
 
 
 # TODO: mass info ?
 # q, A, Z, name
-def get_properties_from_pdg_id(pdg_id, long_name=False):
-    if hasattr(pdg_id, '__len__'):
+def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
+    if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
         result = np.array([get_properties_from_pdg_id(pdg) for pdg in pdg_id]).T
         return result[0].astype(np.float64), result[1].astype(np.int64),\
                result[2].astype(np.int64), result[3]
+
+    if isinstance(pdg_id, str):
+        pdg_id = int(pdg_id)
 
     if pdg_id in _PDG.keys():
         q = _PDG[pdg_id][0]
@@ -206,6 +195,8 @@ def get_properties_from_pdg_id(pdg_id, long_name=False):
             name = _PDG[pdg_id][-1]
         else:
             name = _PDG[pdg_id][1]
+            if not subscripts:
+                name = _to_normal_script(name)
         if abs(pdg_id)==2212 or abs(pdg_id)==2112:
             A = 1 if pdg_id > 0 else -1
             Z = q
@@ -220,16 +211,8 @@ def get_properties_from_pdg_id(pdg_id, long_name=False):
             Z = 0
         return float(q), int(A), int(Z), name
     elif -pdg_id in _PDG.keys():
-        antipart = get_properties_from_pdg_id(-pdg_id, long_name=long_name)
-        name = f'anti-{antipart[3]}'
-        if name[-2:] == '++':
-            name = name[:-2] + '--'
-        elif name[-2:] == '--':
-            name = name[:-2] + '++'
-        elif name[-1] == '+':
-            name = name[:-1] + '-'
-        elif name[-1] == '-':
-            name = name[:-1] + '+'
+        antipart = get_properties_from_pdg_id(-pdg_id, long_name=long_name, subscripts=subscripts)
+        name = _flip_end_sign(f'anti-{antipart[3]}')
         return -antipart[0], antipart[1], -antipart[2], name
 
     elif pdg_id > 1000000000:
@@ -242,7 +225,14 @@ def get_properties_from_pdg_id(pdg_id, long_name=False):
         A = int(tmpid /10)
         tmpid -= A*10
         isomer_level = int(tmpid)
-        return float(Z), int(A), int(Z), f'{get_element_name_from_Z(Z)}{A}'#, L, isomer_level, get_element_full_name_from_Z(Z)
+        if long_name:
+            return float(Z), int(A), int(Z), f'{get_element_full_name_from_Z(Z)}-{A}'
+        else:
+            if subscripts:
+                name = f'{_digits_to_superscript(A)}{get_element_name_from_Z(Z)}'
+            else:
+                name = f'{get_element_name_from_Z(Z)}{A}'
+            return float(Z), int(A), int(Z), name
 
     else:
         raise ValueError(f"PDG ID {pdg_id} not recognised!")
@@ -261,25 +251,27 @@ def get_element_full_name_from_Z(z):
 
 
 def get_pdg_id_ion(A, Z):
-    if hasattr(A, '__len__') and hasattr(Z, '__len__'):
+    if hasattr(A, '__len__') and not isinstance(A, str) \
+    and hasattr(Z, '__len__') and not isinstance(Z, str):
         return np.array([get_pdg_id_ion(aa, zz) for aa, zz in zip(A,Z)])
-    return  int(1000000000 + Z*10000 + A*10)
+    return 1000000000 + int(Z)*10000 + int(A)*10
 
 
 # TODO: this should be done a bit nicer, with a lookup table for the masses with A = 0
 def get_pdg_id_from_mass_charge(m, q):
-    if hasattr(q, '__len__') and hasattr(m, '__len__'):
+    if hasattr(q, '__len__') and not isinstance(q, str) \
+    and hasattr(m, '__len__') and not isinstance(m, str):
         return np.array([get_pdg_id_from_mass_charge(mm, qq) for qq, mm in zip(q, m)])
-    elif hasattr(q, '__len__'):
+    elif hasattr(q, '__len__') and not isinstance(q, str):
         return np.array([get_pdg_id_from_mass_charge(m, qq) for qq in q])
-    elif hasattr(m, '__len__'):
+    elif hasattr(m, '__len__') and not isinstance(m, str):
         return np.array([get_pdg_id_from_mass_charge(mm, q) for mm in m])
 
-    A = round(m/U_MASS_EV)
+    A = round(float(m)/U_MASS_EV)
     if abs(m-ELECTRON_MASS_EV) < 100:
-        return int(-q)*get_pdg_id_from_name('electron')
+        return -int(q)*get_pdg_id_from_name('electron')
     elif abs(m-MUON_MASS_EV) < 100:
-        return int(-q)*get_pdg_id_from_name('muon')
+        return -int(q)*get_pdg_id_from_name('muon')
     elif abs(m-PROTON_MASS_EV) < 1000:
         return int(q)*get_pdg_id_from_name('proton')
     elif q <= 0 or A <= 0:
@@ -288,21 +280,87 @@ def get_pdg_id_from_mass_charge(m, q):
         return get_pdg_id_ion(A, q)
 
 
+# TODO: this should be done a bit nicer, with a lookup table
+def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
+    if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
+        return np.array([get_mass_from_pdg_id(pdg,
+                                      allow_approximation=allow_approximation,
+                                      expected_mass=expected_mass)
+                         for pdg in pdg_id])
+
+    _, A, _, name = get_properties_from_pdg_id(pdg_id, subscripts=False)
+    if name == 'p+' or name == 'p-':
+        return PROTON_MASS_EV
+    elif name == 'e-' or name == 'e+':
+        return ELECTRON_MASS_EV
+    elif name == 'μ-' or name == 'μ+':
+        return MUON_MASS_EV
+    elif name == 'Pb208':
+        return Pb208_MASS_EV
+    elif allow_approximation and A>0:
+        print(f"Warning: approximating the mass as {A}u!")
+        return A*U_MASS_EV
+    else:
+        if expected_mass is not None and _mass_consistent(pdg_id, expected_mass):
+            # This is a workaround in case an exact mass is given
+            # (like for the reference particle)
+            return expected_mass
+        else:
+            raise ValueError(f"Exact mass for {name} not found.")
+
+
+def _flip_end_sign(name):
+    if name[-2:] == '⁺⁺':
+        return name[:-2] + '⁻⁻'
+    elif name[-2:] == '++':
+        return name[:-2] + '--'
+    elif name[-2:] == '⁻⁻':
+        return name[:-2] + '⁺⁺'
+    elif name[-2:] == '--':
+        return name[:-2] + '++'
+    elif name[-1] == '⁺':
+        return name[:-1] + '⁻'
+    elif name[-1] == '+':
+        return name[:-1] + '-'
+    elif name[-1] == '⁻':
+        return name[:-1] + '⁺'
+    elif name[-1] == '-':
+        return name[:-1] + '+'
+    else:
+        return name
+
+
+def _digits_to_superscript(val):
+    val = f'{val}'.replace('0', '⁰').replace('1', '¹').replace('2', '²').replace('3', '³')
+    val = val.replace('4', '⁴').replace('5', '⁵').replace('6', '⁶').replace('7', '⁷')
+    return val.replace('8', '⁸').replace('9', '⁹')
+
+def _digits_to_normalscript(val):
+    val = f'{val}'.replace('⁰', '0').replace('¹', '1').replace('²', '2').replace('³', '3')
+    val = val.replace('⁴', '4').replace('⁵', '5').replace('⁶', '6').replace('⁷', '7')
+    return val.replace('⁸', '8').replace('⁹', '9')
+
+def _to_normal_script(val):
+    val = _digits_to_normalscript(val).replace('⁻', '-').replace('⁺', '+').replace('⁰', '0')
+    return val.replace('ₛ', 's').replace('ₑ', 'e')
+
+
 def _mass_consistent(pdg_id, m, mask=None):
-    if hasattr(pdg_id, '__len__') and hasattr(m, '__len__'):
+    if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str) \
+    and hasattr(m, '__len__') and not isinstance(m, str):
         if mask is None:
             return np.all([_mass_consistent(pdg, mm) for pdg, mm in zip(pdg_id, m)])
         else:
             pdg_id = np.array(pdg_id)[mask]
             m = np.array(m)[mask]
             return np.all([_mass_consistent(pdg, mm) for pdg, mm in zip(pdg_id, m)])
-    elif hasattr(pdg_id, '__len__'):
+    elif hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
         if mask is None:
             return np.all([_mass_consistent(pdg, m) for pdg in pdg_id])
         else:
             pdg_id = np.array(pdg_id)[mask]
             return np.all([_mass_consistent(pdg, m) for pdg in pdg_id])
-    elif hasattr(m, '__len__'):
+    elif hasattr(m, '__len__') and not isinstance(m, str):
         if mask is None:
             return np.all([_mass_consistent(pdg_id, mm) for mm in m])
         else:
@@ -317,32 +375,3 @@ def _mass_consistent(pdg_id, m, mask=None):
     else:
         # No check for other particles
         return True
-
-
-# TODO: this should be done a bit nicer, with a lookup table
-def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
-    if hasattr(pdg_id, '__len__'):
-        return np.array([get_mass_from_pdg_id(pdg,
-                                      allow_approximation=allow_approximation,
-                                      expected_mass=expected_mass)
-                         for pdg in pdg_id])
-
-    _, A, _, name = get_properties_from_pdg_id(pdg_id)
-    if name == 'p+' or name == 'p-':
-        return PROTON_MASS_EV
-    elif name == 'e-' or name == 'e+':
-        return ELECTRON_MASS_EV
-    elif name == '𝛍-' or name == '𝛍+':
-        return MUON_MASS_EV
-    elif name == 'Pb208':
-        return Pb208_MASS_EV
-    elif allow_approximation and A>0:
-        print(f"Warning: approximating the mass as {A}u!")
-        return A*U_MASS_EV
-    else:
-        if expected_mass is not None and _mass_consistent(pdg_id, expected_mass):
-            # This is a workaround in case an exact mass is given
-            # (like for the reference particle)
-            return expected_mass
-        else:
-            raise ValueError(f"Exact mass for {name} not found.")
