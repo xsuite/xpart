@@ -21,7 +21,7 @@ from xtrack.particles.constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_
 # The other names are accepted alternatives. Any superscript or subscript can be used
 # interchangeably with its normal script (if both are used, subscript comes first).
 
-_PDG = {
+pdg_table = {
 #   ID       q  NAME
     0:     [0.,  'undefined'],
     11:    [-1., 'e⁻', 'e', 'electron'],
@@ -67,8 +67,8 @@ _PDG = {
     4322:  [0.,  "Ξ'c⁺", "xiprimec+"],
     3334:  [-1., 'Ω⁻', 'omega-'],
     4332:  [-1., 'Ωc⁰', 'Ωc', 'omegac', 'omegac0'],
-    1000010020: [1., 'deuterium'],
-    1000010030: [1., 'tritium']
+    1000010020: [1., '²H', 'H2', 'hydrogen-2', 'deuteron'],
+    1000010030: [1., '³H', 'H3', 'hydrogen-3', 'triton']
 }
 
 
@@ -116,22 +116,65 @@ _elements_long = {
 
 
 def is_proton(pdg_id):
-    return pdg_id >= 2212
+    """Check if a PDG ID corresponds to a proton."""
+    return int(pdg_id) == 2212
 
 def is_ion(pdg_id):
-    return pdg_id >= 1000000000
+    """Check if a PDG ID corresponds to a heavy ion (A+Z > 1)."""
+    return int(pdg_id) >= 1000000000
 
 def is_lepton(pdg_id):
-    return 11 <= abs(pdg_id) <= 19
+    """Check if a PDG ID corresponds to a lepton (neutrinos included)."""
+    return 11 <= abs(int(pdg_id)) <= 16
 
 
 def get_name_from_pdg_id(pdg_id, long_name=True, subscripts=True):
+    """
+    Get the name of a particle from its PDG ID.
+
+    Parameters
+    ----------
+    long_name : bool, default True
+        If True, return the long name of the particle (ASCII-compliant). For a
+        particle in the PDF internal table, this is the last name in the list
+        of alternatives. For an ion, it is the full element name, followed by
+        the mass number. If 'long_name' is False, a short name is returned
+        (Unicode). For a particle in the PDF internal table, this is the first
+        name in the list of alternatives. For an ion, it is the element name
+        preceded (when 'subscripts' is True) of followed (when 'subscripts' is
+        False) by the mass number.
+    subscripts : bool, default True
+        Controls whether or not to allow sub- and superscripts in the short
+        name. Has no function if 'long_name' is True.
+
+    Returns
+    -------
+    str
+        The name of the particle.
+    """
     if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
         return np.array([get_name_from_pdg_id(pdg) for pdg in pdg_id])
     return get_properties_from_pdg_id(pdg_id, long_name=long_name, subscripts=subscripts)[-1]
 
 
 def get_pdg_id_from_name(name=None):
+    """
+    Get a particle's PDG ID from its name.
+
+    Parameters
+    ----------
+    name : str
+        The name of the particle. Can be any alternative from the PDF internal
+        table, with or without sub- or superscripts. For ions, the name can be
+        any combination of the element short or long name and the mass number,
+        for instance 'Pb208', 'Pb 208', Pb-208', 'Pb_208', '208Pb', 'Lead-208',
+        'lead 208', etc.
+
+    Returns
+    -------
+    int
+        The PDG ID of the particle.
+    """
     if hasattr(name, 'get'):
         name = name.get()
 
@@ -143,7 +186,7 @@ def get_pdg_id_from_name(name=None):
         return int(name) # fallback
 
     _PDG_inv = {}
-    for pdg_id, val in _PDG.items():
+    for pdg_id, val in pdg_table.items():
         for vv in val[1:]:
             _PDG_inv[_to_normal_script(vv).lower()] = pdg_id
 
@@ -178,23 +221,53 @@ def get_pdg_id_from_name(name=None):
                         + f"'Pb-208', 'Pb_208', '208Pb', 'lead-208', ...")
 
 
-# TODO: mass info ?
-# q, A, Z, name
 def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
+    """
+    Get the properties of a particle from its PDG ID.
+
+    Parameters
+    ----------
+    pdg_id : int or str
+        The PDG ID of the particle.
+    long_name : bool, default True
+        If True, return the long name of the particle (ASCII-compliant). For a
+        particle in the PDF internal table, this is the last name in the list
+        of alternatives. For an ion, it is the full element name, followed by
+        the mass number. If 'long_name' is False, a short name is returned
+        (Unicode). For a particle in the PDF internal table, this is the first
+        name in the list of alternatives. For an ion, it is the element name
+        preceded (when 'subscripts' is True) of followed (when 'subscripts' is
+        False) by the mass number.
+    subscripts : bool, default True
+        Controls whether or not to allow sub- and superscripts in the short
+        name. Has no function if 'long_name' is True.
+    name : str
+
+    Returns
+    -------
+    q : float
+        The charge of the particle.
+    A : int
+        The mass number of the particle (total number of protons and neutrons).
+    Z : int
+        The atomic number of the particle (number of protons).
+    name : str
+        The name of the particle, with formatting depending on 'long_name' and
+        'subscripts'.
+    """
     if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
         result = np.array([get_properties_from_pdg_id(pdg) for pdg in pdg_id]).T
         return result[0].astype(np.float64), result[1].astype(np.int64),\
                result[2].astype(np.int64), result[3]
 
-    if isinstance(pdg_id, str):
-        pdg_id = int(pdg_id)
+    pdg_id = int(pdg_id)
 
-    if pdg_id in _PDG.keys():
-        q = _PDG[pdg_id][0]
+    if pdg_id in pdg_table.keys():
+        q = pdg_table[pdg_id][0]
         if long_name:
-            name = _PDG[pdg_id][-1]
+            name = pdg_table[pdg_id][-1]
         else:
-            name = _PDG[pdg_id][1]
+            name = pdg_table[pdg_id][1]
             if not subscripts:
                 name = _to_normal_script(name)
         if abs(pdg_id)==2212 or abs(pdg_id)==2112:
@@ -210,7 +283,7 @@ def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
             A = 0
             Z = 0
         return float(q), int(A), int(Z), name
-    elif -pdg_id in _PDG.keys():
+    elif -pdg_id in pdg_table.keys():
         antipart = get_properties_from_pdg_id(-pdg_id, long_name=long_name, subscripts=subscripts)
         name = _flip_end_sign(f'anti-{antipart[3]}')
         return -antipart[0], antipart[1], -antipart[2], name
@@ -239,26 +312,34 @@ def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
 
 
 def get_element_name_from_Z(z):
+    """Get the short element name for the element with Z protons."""
     if z not in _elements:
         raise ValueError(f"Element with {z} protons not known.")
     return _elements[z]
 
 
 def get_element_full_name_from_Z(z):
+    """Get the full element name for the element with Z protons."""
     if z not in _elements_long:
         raise ValueError(f"Element with {z} protons not known.")
     return _elements_long[z]
 
 
 def get_pdg_id_ion(A, Z):
+    """Get the PDG ID for an ion with Z protons and A-Z neutrons."""
     if hasattr(A, '__len__') and not isinstance(A, str) \
     and hasattr(Z, '__len__') and not isinstance(Z, str):
         return np.array([get_pdg_id_ion(aa, zz) for aa, zz in zip(A,Z)])
-    return 1000000000 + int(Z)*10000 + int(A)*10
+    Z = int(Z)
+    A = int(A)
+    if Z < 1 or A < 2 or A < Z:
+        raise ValueError(f"Invalid ion with {Z=} and {A=}!")
+    return 1000000000 + Z*10000 + A*10
 
 
 # TODO: this should be done a bit nicer, with a lookup table for the masses with A = 0
 def get_pdg_id_from_mass_charge(m, q):
+    """Get the PDG ID for a given mass and charge. This is always an estimate."""
     if hasattr(q, '__len__') and not isinstance(q, str) \
     and hasattr(m, '__len__') and not isinstance(m, str):
         return np.array([get_pdg_id_from_mass_charge(mm, qq) for qq, mm in zip(q, m)])
@@ -267,7 +348,9 @@ def get_pdg_id_from_mass_charge(m, q):
     elif hasattr(m, '__len__') and not isinstance(m, str):
         return np.array([get_pdg_id_from_mass_charge(mm, q) for mm in m])
 
-    A = round(float(m)/U_MASS_EV)
+    m = float(m)
+    q = float(q)
+    A = round(m/U_MASS_EV)
     if abs(m-ELECTRON_MASS_EV) < 100:
         return -int(q)*get_pdg_id_from_name('electron')
     elif abs(m-MUON_MASS_EV) < 100:
@@ -282,6 +365,7 @@ def get_pdg_id_from_mass_charge(m, q):
 
 # TODO: this should be done a bit nicer, with a lookup table
 def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
+    """Get the particle mass for a given PDG ID, if in the internal database. If not, it can be extrapolated for ions."""
     if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
         return np.array([get_mass_from_pdg_id(pdg,
                                       allow_approximation=allow_approximation,
