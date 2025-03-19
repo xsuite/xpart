@@ -6,8 +6,7 @@
 import numpy as np
 from numbers import Number
 
-from xtrack.particles.constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_EV, MUON_MASS_EV, Pb208_MASS_EV
-
+import xtrack.particles.masses as xpm
 
 # Monte Carlo numbering scheme as defined by the Particle Data Group
 # See https://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf for implementation
@@ -23,52 +22,52 @@ from xtrack.particles.constants import U_MASS_EV, PROTON_MASS_EV, ELECTRON_MASS_
 
 pdg_table = {
 #   ID       q  NAME
-    0:     [0.,  'undefined'],
-    11:    [-1., 'e⁻', 'e', 'electron'],
-    -11:   [1.,  'e⁺', 'positron'],
-    12:    [0.,  'νₑ', 'electron neutrino'],
-    13:    [-1., 'μ⁻', 'μ', 'muon-', 'muon'],
-    -13:   [1.,  'μ⁺', 'muon+', 'anti-muon'],
-    14:    [0.,  'νμ', 'muon neutrino'],
-    15:    [-1., 'τ⁻', 'τ', 'tau-', 'tau'],
-    -15:   [-1., 'τ⁺', 'tau+', 'anti-tau'],
-    16:    [0.,  'ντ', 'tau neutrino'],
-    22:    [0.,  'γ⁰', 'γ', 'photon'],
-    111:   [0.,  'π⁰', 'π', 'pion', 'pion0', 'pi0'],
-    211:   [1.,  'π⁺', 'pion+', 'pi+'],
-    -211:  [-1., 'π⁻', 'pion-', 'pi-'],
-    311:   [0.,  'K⁰', 'kaon', 'kaon0'],
-    321:   [1.,  'K⁺', 'kaon+'],
-    -321:  [-1., 'K⁻', 'kaon-'],
-    130:   [0.,  'KL', 'long kaon'],
-    310:   [0.,  'Kₛ', 'short kaon'],
-    421:   [0.,  'D⁰', 'D'],
-    411:   [1.,  'D⁺'],
-    -411:  [-1., 'D⁻'],
-    431:   [1.,  'Dₛ⁺'],
-    -431:  [-1., 'Dₛ⁻'],
-    2212:  [1.,  'p⁺', 'p', 'proton'],
-    -2212: [1.,  'p⁻', 'anti-proton'],
-    2112:  [0.,  'n⁰', 'n', 'neutron'],
-    2224:  [2.,  'Δ⁺⁺', 'delta++'],
-    2214:  [1.,  'Δ⁺', 'delta+'],
-    2114:  [0.,  'Δ⁰', 'delta0'],
-    1114:  [-1., 'Δ⁻', 'delta-'],
-    3122:  [0.,  'Λ⁰', 'Λ', 'lambda'],
-    4122:  [0.,  'Λc⁺', 'lambdac+'],
-    3222:  [1.,  'Σ⁺', 'sigma+'],
-    3212:  [0.,  'Σ⁰', 'Σ', 'sigma', 'sigma0'],
-    3112:  [-1., 'Σ⁻', 'sigma-'],
-    3322:  [0.,  'Ξ⁰', 'Ξ', 'xi', 'xi0'],
-    3312:  [-1., 'Ξ⁻', 'xi-'],
-    4132:  [0.,  'Ξc⁰', 'Ξc', 'xic', 'xic0'],
-    4232:  [0.,  'Ξc⁺', 'xic+'],
-    4312:  [0.,  "Ξ'c⁰", "Ξ'c", "xiprimec", "xiprimec0"],
-    4322:  [0.,  "Ξ'c⁺", "xiprimec+"],
-    3334:  [-1., 'Ω⁻', 'omega-'],
-    4332:  [-1., 'Ωc⁰', 'Ωc', 'omegac', 'omegac0'],
-    1000010020: [1., '²H', 'H2', 'hydrogen-2', 'deuteron'],
-    1000010030: [1., '³H', 'H3', 'hydrogen-3', 'triton']
+    0:     [0,  'undefined'],
+    11:    [-1, 'e⁻', 'e', 'electron'],
+    -11:   [1,  'e⁺', 'positron'],
+    12:    [0,  'νₑ', 'electron neutrino'],
+    13:    [-1, 'μ⁻', 'μ', 'muon-', 'muon'],
+    -13:   [1,  'μ⁺', 'muon+', 'anti-muon'],
+    14:    [0,  'νμ', 'muon neutrino'],
+    15:    [-1, 'τ⁻', 'τ', 'tau-', 'tau'],
+    -15:   [1, 'τ⁺', 'tau+', 'anti-tau'],
+    16:    [0,  'ντ', 'tau neutrino'],
+    22:    [0,  'γ⁰', 'γ', 'photon'],
+    111:   [0,  'π⁰', 'π', 'pion', 'pion0', 'pi0'],
+    211:   [1,  'π⁺', 'pion+', 'pi+'],
+    -211:  [-1, 'π⁻', 'pion-', 'pi-'],
+    311:   [0,  'K⁰', 'kaon', 'kaon0'],
+    321:   [1,  'K⁺', 'kaon+'],
+    -321:  [-1, 'K⁻', 'kaon-'],
+    130:   [0,  'KL', 'long kaon'],
+    310:   [0,  'Kₛ', 'short kaon'],
+    421:   [0,  'D⁰', 'D'],
+    411:   [1,  'D⁺'],
+    -411:  [-1, 'D⁻'],
+    431:   [1,  'Dₛ⁺'],
+    -431:  [-1, 'Dₛ⁻'],
+    2212:  [1,  'p⁺', 'p', 'proton'],
+    -2212: [-1,  'p⁻', 'anti-proton'],
+    2112:  [0,  'n⁰', 'n', 'neutron'],
+    2224:  [2,  'Δ⁺⁺', 'delta++'],
+    2214:  [1,  'Δ⁺', 'delta+'],
+    2114:  [0,  'Δ⁰', 'delta0'],
+    1114:  [-1, 'Δ⁻', 'delta-'],
+    3122:  [0,  'Λ⁰', 'Λ', 'lambda'],
+    4122:  [1,  'Λc⁺', 'lambdac+'],
+    3222:  [1,  'Σ⁺', 'sigma+'],
+    3212:  [0,  'Σ⁰', 'Σ', 'sigma', 'sigma0'],
+    3112:  [-1, 'Σ⁻', 'sigma-'],
+    3322:  [0,  'Ξ⁰', 'Ξ', 'xi', 'xi0'],
+    3312:  [-1, 'Ξ⁻', 'xi-'],
+    4132:  [0,  'Ξc⁰', 'Ξc', 'xic', 'xic0'],
+    4232:  [1,  'Ξc⁺', 'xic+'],
+    4312:  [0,  "Ξ'c⁰", "Ξ'c", "xiprimec", "xiprimec0"],
+    4322:  [1,  "Ξ'c⁺", "xiprimec+"],
+    3334:  [-1, 'Ω⁻', 'omega-'],
+    4332:  [0, 'Ωc⁰', 'Ωc', 'omegac', 'omegac0'],
+    1000010020: [1, '²H', 'H2', 'hydrogen-2', 'deuteron'],
+    1000010030: [1, '³H', 'H3', 'hydrogen-3', 'triton']
 }
 
 
@@ -245,7 +244,7 @@ def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
 
     Returns
     -------
-    q : float
+    q : int
         The charge of the particle.
     A : int
         The mass number of the particle (total number of protons and neutrons).
@@ -282,7 +281,7 @@ def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
         else:
             A = 0
             Z = 0
-        return float(q), int(A), int(Z), name
+        return int(q), int(A), int(Z), name
     elif -pdg_id in pdg_table.keys():
         antipart = get_properties_from_pdg_id(-pdg_id, long_name=long_name, subscripts=subscripts)
         name = _flip_end_sign(f'anti-{antipart[3]}')
@@ -299,13 +298,13 @@ def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
         tmpid -= A*10
         isomer_level = int(tmpid)
         if long_name:
-            return float(Z), int(A), int(Z), f'{get_element_full_name_from_Z(Z)}-{A}'
+            return int(Z), int(A), int(Z), f'{get_element_full_name_from_Z(Z)}-{A}'
         else:
             if subscripts:
                 name = f'{_digits_to_superscript(A)}{get_element_name_from_Z(Z)}'
             else:
                 name = f'{get_element_name_from_Z(Z)}{A}'
-            return float(Z), int(A), int(Z), name
+            return int(Z), int(A), int(Z), name
 
     else:
         raise ValueError(f"PDG ID {pdg_id} not recognised!")
@@ -333,12 +332,11 @@ def get_pdg_id_ion(A, Z):
     Z = int(Z)
     A = int(A)
     if Z < 1 or A < 2 or A < Z:
-        raise ValueError(f"Invalid ion with {Z=} and {A=}!")
+        raise ValueError(f"Not an ion ({Z=} and {A=})!")
     return 1000000000 + Z*10000 + A*10
 
 
-# TODO: this should be done a bit nicer, with a lookup table for the masses with A = 0
-def get_pdg_id_from_mass_charge(m, q):
+def get_pdg_id_from_mass_charge(m, q, tolerance=100):
     """Get the PDG ID for a given mass and charge. This is always an estimate."""
     if hasattr(q, '__len__') and not isinstance(q, str) \
     and hasattr(m, '__len__') and not isinstance(m, str):
@@ -349,21 +347,43 @@ def get_pdg_id_from_mass_charge(m, q):
         return np.array([get_pdg_id_from_mass_charge(mm, q) for mm in m])
 
     m = float(m)
-    q = float(q)
-    A = round(m/U_MASS_EV)
-    if abs(m-ELECTRON_MASS_EV) < 100:
-        return -int(q)*get_pdg_id_from_name('electron')
-    elif abs(m-MUON_MASS_EV) < 100:
-        return -int(q)*get_pdg_id_from_name('muon')
-    elif abs(m-PROTON_MASS_EV) < 1000:
-        return int(q)*get_pdg_id_from_name('proton')
-    elif q <= 0 or A <= 0:
-        raise ValueError(f"Particle with {q=} and {m=} not recognised!")
-    else:
+    q = int(q)
+    A = int(round(m/xpm.U_MASS_EV))
+
+    # First we check the internal table of masses
+    found_ids = []
+    for pdg_id, val in _get_mass_table().items():
+        if abs(val-m) <= tolerance:
+            found_ids.append(pdg_id)
+    if len(found_ids) > 0:
+        pdg_id = []
+        for this_pdg_id in found_ids:
+            this_q, this_A, _, _ = get_properties_from_pdg_id(this_pdg_id)
+            if this_q == q and this_A == A:
+                pdg_id.append(this_pdg_id)
+            else:
+                this_q, this_A, _, _ = get_properties_from_pdg_id(-this_pdg_id)
+                if this_q == q and this_A == A:
+                    pdg_id.append(-this_pdg_id)
+        if len(pdg_id) == 1:
+            return pdg_id[0]
+        elif len(pdg_id) > 1:
+            raise ValueError(f"Multiple particles found for {m=} and {q=}: {found_ids}. "
+                           + f"Decrease the tolerance. If this does not work, it might be "
+                           + f"ambiguous and not resolvable with mass and charge alone "
+                           + f"(like for a neutral particle that is not its own anti-particle).")
+
+    # Then we check for ions
+    if q > 0 and A > 1:
         return get_pdg_id_ion(A, q)
 
+    # Not found
+    else:
+        raise ValueError(f"Particle with charge {q} and mass {m} eV not recognised!\nIf "
+                       + f"the particle mass is expected to be present in the internal "
+                       + f"mass table in Xtrack, try increasing the tolerance.")
 
-# TODO: this should be done a bit nicer, with a lookup table
+
 def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
     """Get the particle mass for a given PDG ID, if in the internal database. If not, it can be extrapolated for ions."""
     if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str):
@@ -372,25 +392,22 @@ def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
                                       expected_mass=expected_mass)
                          for pdg in pdg_id])
 
-    _, A, _, name = get_properties_from_pdg_id(pdg_id, subscripts=False)
-    if name == 'p+' or name == 'p-':
-        return PROTON_MASS_EV
-    elif name == 'e-' or name == 'e+':
-        return ELECTRON_MASS_EV
-    elif name == 'μ-' or name == 'μ+':
-        return MUON_MASS_EV
-    elif name == 'Pb208':
-        return Pb208_MASS_EV
-    elif allow_approximation and A>0:
+    pdg_id = int(pdg_id)
+    _mass_table = _get_mass_table()
+    if pdg_id in _mass_table:
+        return _mass_table[pdg_id]
+    elif -pdg_id in _mass_table:
+        return _mass_table[-pdg_id]
+    elif pdg_id > 1000000000 and allow_approximation:
+        _, A, _, _ = get_properties_from_pdg_id(pdg_id)
         print(f"Warning: approximating the mass as {A}u!")
-        return A*U_MASS_EV
+        return A*xpm.U_MASS_EV
+    elif expected_mass is not None and _mass_consistent(pdg_id, expected_mass):
+        # This is a workaround in case an exact mass is given
+        # (like for the reference particle)
+        return expected_mass
     else:
-        if expected_mass is not None and _mass_consistent(pdg_id, expected_mass):
-            # This is a workaround in case an exact mass is given
-            # (like for the reference particle)
-            return expected_mass
-        else:
-            raise ValueError(f"Exact mass for {name} not found.")
+        raise ValueError(f"Exact mass not found for particle with PDG ID {pdg_id}.")
 
 
 def _flip_end_sign(name):
@@ -429,6 +446,25 @@ def _to_normal_script(val):
     return val.replace('ₛ', 's').replace('ₑ', 'e')
 
 
+# Dynamically set mass_table from xtrack.particles.masses to avoid circular imports and loops
+_mass_table = {}
+def _get_mass_table():
+    if _mass_table == {}:
+        for name, mass in xpm.__dict__.items():
+            if name.endswith('_MASS_EV') and name != 'U_MASS_EV':
+                # Mass definitions for charged particles are without the charge identifier,
+                # so we need to try these first.
+                try:
+                    pdg_id = get_pdg_id_from_name(f'{name[:-8]}+')
+                except ValueError:
+                    pdg_id = get_pdg_id_from_name(name[:-8])
+                if pdg_id not in _mass_table:
+                    _mass_table[pdg_id] = mass
+                else:
+                    raise ValueError(f"Duplicate mass in Xtrack for particle {pdg_id}!")
+    return _mass_table
+
+
 def _mass_consistent(pdg_id, m, mask=None):
     if hasattr(pdg_id, '__len__') and not isinstance(pdg_id, str) \
     and hasattr(m, '__len__') and not isinstance(m, str):
@@ -451,11 +487,9 @@ def _mass_consistent(pdg_id, m, mask=None):
             m = np.array(m)[mask]
             return np.all([_mass_consistent(pdg_id, mm) for mm in m])
 
-    q, A, _, name = get_properties_from_pdg_id(pdg_id)
-    if name=='proton' or name=='electron' or name=='muon':
+    try:
+        q, _, _, _ = get_properties_from_pdg_id(pdg_id)
         return pdg_id == get_pdg_id_from_mass_charge(m, q)
-    elif A > 1:
-        return A==round(m/U_MASS_EV)
-    else:
-        # No check for other particles
+    except ValueError:
+        # No check if mass cannot be retrieved
         return True
