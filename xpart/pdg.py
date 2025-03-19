@@ -203,8 +203,9 @@ def get_pdg_id_from_name(name=None):
         return -_PDG_inv[aname]
 
     else:
-        ion_name = _digits_to_normalscript(lname).lower()
-        ion_name.replace('_','').replace('-','').replace(' ','')
+        ion_name = lname.lower()
+        ion_name = ion_name.replace('_','').replace('-','')
+        ion_name = ion_name.replace(' ','').replace('.','')
         for Z, ion in _elements_long.items():
             if ion.lower() in ion_name:
                 A = ion_name.replace(ion.lower(), '')
@@ -217,7 +218,7 @@ def get_pdg_id_from_name(name=None):
                     return get_pdg_id_ion(int(A), Z)
         raise ValueError(f"Particle {name} not found in pdg dictionary, or wrongly "
                         + f"formatted ion name!\nFor ions, use e.g. 'Pb208', 'Pb 208', "
-                        + f"'Pb-208', 'Pb_208', '208Pb', 'lead-208', ...")
+                        + f"'Pb-208', 'Pb_208', 'Pb.208', '208Pb', 'lead-208', ...")
 
 
 def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
