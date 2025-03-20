@@ -8,7 +8,7 @@ from xtrack.particles import (Particles, PROTON_MASS_EV, ELECTRON_MASS_EV,
                               enable_pyheadtail_interface, disable_pyheadtail_interface)
 pmass = PROTON_MASS_EV  # backwards compatibility
 
-from .pdg import get_pdg_id_from_name, get_name_from_pdg_id
+from xtrack.particles.pdg import get_pdg_id_from_name, get_name_from_pdg_id
 
 from .build_particles import build_particles
 from .matched_gaussian import (generate_matched_gaussian_bunch,
