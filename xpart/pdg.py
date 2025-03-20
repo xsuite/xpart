@@ -32,7 +32,7 @@ pdg_table = {
     15:    [-1, 'τ⁻', 'τ', 'tau-', 'tau'],
     -15:   [1, 'τ⁺', 'tau+', 'anti-tau'],
     16:    [0,  'ντ', 'tau neutrino'],
-    22:    [0,  'γ⁰', 'γ', 'photon'],
+    22:    [0,  'γ⁰', 'γ', 'gamma', 'photon'],
     111:   [0,  'π⁰', 'π', 'pion', 'pion0', 'pi0'],
     211:   [1,  'π⁺', 'pion+', 'pi+'],
     -211:  [-1, 'π⁻', 'pion-', 'pi-'],
@@ -70,8 +70,7 @@ pdg_table = {
     1000010030: [1, '³H', 'H3', 'hydrogen-3', 'triton']
 }
 
-
-_elements = {
+elements = {
      1: "H",    2: "He",   3: "Li",   4: "Be",   5: "B",    6: "C",    7: "N",    8: "O",    9: "F",   10: "Ne",
     11: "Na",  12: "Mg",  13: "Al",  14: "Si",  15: "P",   16: "S",   17: "Cl",  18: "Ar",  19: "K",   20: "Ca",
     21: "Sc",  22: "Ti",  23: "V",   24: "Cr",  25: "Mn",  26: "Fe",  27: "Co",  28: "Ni",  29: "Cu",  30: "Zn",
@@ -85,8 +84,9 @@ _elements = {
    101: "Md", 102: "No", 103: "Lr", 104: "Rf", 105: "Db", 106: "Sg", 107: "Bh", 108: "Hs", 109: "Mt", 110: "Ds",
    111: "Rg", 112: "Cn", 113: "Nh", 114: "Fl", 115: "Mc", 116: "Lv", 117: "Ts", 118: "Og"
 }
+_elements_inv = {vv: kk for kk, vv in elements.items()}
 
-_elements_long = {
+elements_long = {
     1: "Hydrogen",        2: "Helium",          3: "Lithium",         4: "Beryllium",       5: "Boron",
     6: "Carbon",          7: "Nitrogen",        8: "Oxygen",          9: "Fluorine",       10: "Neon",
    11: "Sodium",         12: "Magnesium",      13: "Aluminum",       14: "Silicon",        15: "Phosphorus",
@@ -112,6 +112,7 @@ _elements_long = {
   111: "Roentgenium",   112: "Copernicium",   113: "Nihonium",      114: "Flerovium",     115: "Moscovium",
   116: "Livermorium",   117: "Tennessine",    118: "Oganesson"
 }
+_elements_long_inv = {vv: kk for kk, vv in elements_long.items()}
 
 
 def is_proton(pdg_id):
@@ -120,7 +121,13 @@ def is_proton(pdg_id):
 
 def is_ion(pdg_id):
     """Check if a PDG ID corresponds to a heavy ion (A+Z > 1)."""
-    return int(pdg_id) >= 1000000000
+    tmpid = pdg_id - 1000000000
+    L = int(tmpid/1e7)
+    tmpid -= L*1e7
+    Z = int(tmpid /1e4)
+    tmpid -= Z*1e4
+    A = int(tmpid /10)
+    return (int(pdg_id) >= 1000000000) and (Z > 0) and (A > Z)
 
 def is_lepton(pdg_id):
     """Check if a PDG ID corresponds to a lepton (neutrinos included)."""
@@ -184,15 +191,16 @@ def get_pdg_id_from_name(name=None):
     elif isinstance(name, Number):
         return int(name) # fallback
 
-    _PDG_inv = {}
-    for pdg_id, val in pdg_table.items():
-        for vv in val[1:]:
-            _PDG_inv[_to_normal_script(vv).lower()] = pdg_id
-
-    lname = _to_normal_script(name).lower()
+    lname = _to_normal_script(name).lower().replace('ς', 'σ')
     aname = ""
     if len(lname) > 4 and lname[:5]=="anti-":
         aname = _flip_end_sign(lname[5:])
+    elif len(lname) > 4 and lname[:5]=="anti ":
+        aname = _flip_end_sign(lname[5:])
+    elif len(lname) > 3 and lname[:4]=="anti":
+        aname = _flip_end_sign(lname[4:])
+
+    _PDG_inv = get_pdg_inv()
 
     # particle
     if lname in _PDG_inv.keys():
@@ -206,12 +214,12 @@ def get_pdg_id_from_name(name=None):
         ion_name = lname.lower()
         ion_name = ion_name.replace('_','').replace('-','')
         ion_name = ion_name.replace(' ','').replace('.','')
-        for Z, ion in _elements_long.items():
+        for Z, ion in elements_long.items():
             if ion.lower() in ion_name:
                 A = ion_name.replace(ion.lower(), '')
                 if A.isnumeric() and int(A) > 0:
                     return get_pdg_id_ion(int(A), Z)
-        for Z, ion in _elements.items():
+        for Z, ion in elements.items():
             if ion.lower() in ion_name:
                 A = ion_name.replace(ion.lower(), '')
                 if A.isnumeric() and int(A) > 0:
@@ -271,22 +279,22 @@ def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
             if not subscripts:
                 name = _to_normal_script(name)
         if abs(pdg_id)==2212 or abs(pdg_id)==2112:
-            A = 1 if pdg_id > 0 else -1
+            A = 1
             Z = q
         elif pdg_id==1000010020:
             A = 2
             Z = 1
+            if not long_name and not subscripts:
+                name = 'H2'
         elif pdg_id==1000010030:
             A = 3
             Z = 1
+            if not long_name and not subscripts:
+                name = 'H3'
         else:
             A = 0
             Z = 0
         return int(q), int(A), int(Z), name
-    elif -pdg_id in pdg_table.keys():
-        antipart = get_properties_from_pdg_id(-pdg_id, long_name=long_name, subscripts=subscripts)
-        name = _flip_end_sign(f'anti-{antipart[3]}')
-        return -antipart[0], antipart[1], -antipart[2], name
 
     elif pdg_id > 1000000000:
         # Ion
@@ -307,22 +315,35 @@ def get_properties_from_pdg_id(pdg_id, long_name=False, subscripts=True):
                 name = f'{get_element_name_from_Z(Z)}{A}'
             return int(Z), int(A), int(Z), name
 
+    elif -pdg_id in pdg_table.keys() or pdg_id < -1000000000:
+        antipart = get_properties_from_pdg_id(-pdg_id, long_name=long_name, subscripts=subscripts)
+        name = _flip_end_sign(f'anti-{antipart[3]}')
+        return -antipart[0], antipart[1], -antipart[2], name
+
     else:
         raise ValueError(f"PDG ID {pdg_id} not recognised!")
 
 
 def get_element_name_from_Z(z):
     """Get the short element name for the element with Z protons."""
-    if z not in _elements:
+    if z not in elements:
         raise ValueError(f"Element with {z} protons not known.")
-    return _elements[z]
-
+    return elements[z]
 
 def get_element_full_name_from_Z(z):
     """Get the full element name for the element with Z protons."""
-    if z not in _elements_long:
+    if z not in elements_long:
         raise ValueError(f"Element with {z} protons not known.")
-    return _elements_long[z]
+    return elements_long[z]
+
+def get_Z_from_element_name(name):
+    """Get the atomic number from the short or long element name."""
+    if name in _elements_inv:
+        return _elements_inv[name]
+    elif name in _elements_long_inv:
+        return _elements_long_inv[name]
+    else:
+        raise ValueError(f"Element {name} not recognised!")
 
 
 def get_pdg_id_ion(A, Z):
@@ -337,7 +358,7 @@ def get_pdg_id_ion(A, Z):
     return 1000000000 + Z*10000 + A*10
 
 
-def get_pdg_id_from_mass_charge(m, q, tolerance=100):
+def get_pdg_id_from_mass_charge(m, q, rtol=1e-3):
     """Get the PDG ID for a given mass and charge. This is always an estimate."""
     if hasattr(q, '__len__') and not isinstance(q, str) \
     and hasattr(m, '__len__') and not isinstance(m, str):
@@ -349,22 +370,25 @@ def get_pdg_id_from_mass_charge(m, q, tolerance=100):
 
     m = float(m)
     q = int(q)
-    A = int(round(m/xpm.U_MASS_EV))
+    A = round(m/xpm.U_MASS_EV)
 
     # First we check the internal table of masses
     found_ids = []
     for pdg_id, val in _get_mass_table().items():
-        if abs(val-m) <= tolerance:
+        if abs(val) < 1e-12:
+            if abs(m) < 1e-12:
+                found_ids.append(pdg_id)
+        elif abs(val-m)/val <= rtol:
             found_ids.append(pdg_id)
     if len(found_ids) > 0:
         pdg_id = []
         for this_pdg_id in found_ids:
-            this_q, this_A, _, _ = get_properties_from_pdg_id(this_pdg_id)
-            if this_q == q and this_A == A:
+            this_q, _, _, _ = get_properties_from_pdg_id(this_pdg_id)
+            if this_q == q:
                 pdg_id.append(this_pdg_id)
             else:
-                this_q, this_A, _, _ = get_properties_from_pdg_id(-this_pdg_id)
-                if this_q == q and this_A == A:
+                this_q, _, _, _ = get_properties_from_pdg_id(-this_pdg_id)
+                if this_q == q:
                     pdg_id.append(-this_pdg_id)
         if len(pdg_id) == 1:
             return pdg_id[0]
@@ -411,6 +435,16 @@ def get_mass_from_pdg_id(pdg_id, allow_approximation=True, expected_mass=None):
         raise ValueError(f"Exact mass not found for particle with PDG ID {pdg_id}.")
 
 
+# Dynamically set _pdg_inv so it can be defined only here
+_PDG_inv = {}
+def get_pdg_inv():
+    if _PDG_inv == {}:
+        for pdg_id, val in pdg_table.items():
+            for vv in val[1:]:
+                _PDG_inv[_to_normal_script(vv).lower()] = pdg_id
+    return _PDG_inv
+
+
 def _flip_end_sign(name):
     if name[-2:] == '⁺⁺':
         return name[:-2] + '⁻⁻'
@@ -435,16 +469,15 @@ def _flip_end_sign(name):
 def _digits_to_superscript(val):
     val = f'{val}'.replace('0', '⁰').replace('1', '¹').replace('2', '²').replace('3', '³')
     val = val.replace('4', '⁴').replace('5', '⁵').replace('6', '⁶').replace('7', '⁷')
-    return val.replace('8', '⁸').replace('9', '⁹')
+    return val.replace('8', '⁸').replace('9', '⁹').replace('+', '⁺').replace('-', '⁻')
 
 def _digits_to_normalscript(val):
     val = f'{val}'.replace('⁰', '0').replace('¹', '1').replace('²', '2').replace('³', '3')
     val = val.replace('⁴', '4').replace('⁵', '5').replace('⁶', '6').replace('⁷', '7')
-    return val.replace('⁸', '8').replace('⁹', '9')
+    return val.replace('⁸', '8').replace('⁹', '9').replace('⁺', '+').replace('⁻', '-')
 
 def _to_normal_script(val):
-    val = _digits_to_normalscript(val).replace('⁻', '-').replace('⁺', '+').replace('⁰', '0')
-    return val.replace('ₛ', 's').replace('ₑ', 'e')
+    return _digits_to_normalscript(val).replace('ₛ', 's').replace('ₑ', 'e')
 
 
 # Dynamically set mass_table from xtrack.particles.masses to avoid circular imports and loops
@@ -494,3 +527,21 @@ def _mass_consistent(pdg_id, m, mask=None):
     except ValueError:
         # No check if mass cannot be retrieved
         return True
+
+
+# Make sure no duouble names exist in the pdg_table, after removing subscripts
+# and going to lower case
+def _check_pdg_table():
+    names = [vvv for vv in pdg_table.values() for vvv in vv[1:]]
+    names = [_to_normal_script(name).lower() for name in names]
+    if len(names) != len(np.unique(names)):
+        double_names = []
+        for i, name1 in enumerate(names):
+            for name2 in names[i+1:]:
+                if _to_normal_script(name1).lower() \
+                == _to_normal_script(name2).lower():
+                    double_names.append(name1)
+                    double_names.append(name2)
+        raise ValueError(f"Duplicate names in pdg_table:\n{double_names}")
+
+_check_pdg_table()
