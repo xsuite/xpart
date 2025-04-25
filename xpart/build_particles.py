@@ -449,6 +449,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         particles.start_tracking_at_element = at_element
 
+    particles.spin_x[:num_particles] = particle_ref._xobject.spin_x[0]
+    particles.spin_y[:num_particles] = particle_ref._xobject.spin_y[0]
+    particles.spin_z[:num_particles] = particle_ref._xobject.spin_z[0]
     if 'spin_x' in kwargs:
         particles.spin_x[:num_particles] = kwargs['spin_x']
     if 'spin_y' in kwargs:
