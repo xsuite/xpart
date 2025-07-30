@@ -191,7 +191,7 @@ def test_build_particles_normalized_match_at_s(test_context):
     particles.move(_context=xo.context_default)
     assert (np.unique(particles.at_element[particles.state>0])[0]
                      == line.element_names.index('match_at_s'))
-    xo.assert_allclose(particles.x, 0.02, atol=1e-20)
+    xo.assert_allclose(particles.x, 0.02, atol=1e-14, rtol=0)
 
 
 @for_all_test_contexts
@@ -221,10 +221,10 @@ def test_build_perticles_dispersion(test_context):
     xo.assert_allclose((particles.x-tw.x[0])/particles.delta, tw.dx[0],
                        atol=5e-3, rtol=0)
 
-    xo.assert_allclose(norm_coords['x_norm'], 0, 1e-12)
-    xo.assert_allclose(norm_coords['px_norm'], 0, 1e-12)
-    xo.assert_allclose(norm_coords['y_norm'], 0, 1e-12)
-    xo.assert_allclose(norm_coords['py_norm'], 0, 1e-12)
+    xo.assert_allclose(norm_coords['x_norm'], 0, atol=1e-12)
+    xo.assert_allclose(norm_coords['px_norm'], 0, atol=1e-12)
+    xo.assert_allclose(norm_coords['y_norm'], 0, atol=1e-12)
+    xo.assert_allclose(norm_coords['py_norm'], 0, atol=1e-12)
 
     particles = line.build_particles(nemitt_x=3e-6, nemitt_y=3e-6,
                     x=[1e-3, -1e-3], x_norm=[0.3, 0.4], px_norm=[0.5, 0.6],

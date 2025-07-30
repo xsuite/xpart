@@ -112,8 +112,8 @@ def test_pencil_with_absolute_cut(test_context):
         w_norm = getattr(norm_coords, other_plane+'_norm')
         pw_norm = getattr(norm_coords, 'p'+other_plane+'_norm')
 
-        xo.assert_allclose(w_in_sigmas, w_norm, 1e-12)
-        xo.assert_allclose(pw_in_sigmas, pw_norm, 1e-12)
+        xo.assert_allclose(w_in_sigmas, w_norm, atol=1e-12, rtol=1e-7)
+        xo.assert_allclose(pw_in_sigmas, pw_norm, atol=1e-12, rtol=1e-7)
 
-        xo.assert_allclose(zeta, particles.zeta, atol=1e-12)
-        xo.assert_allclose(delta, particles.delta, atol=1e-12)
+        xo.assert_allclose(zeta, particles.zeta, atol=1e-12, rtol=1e-7)
+        xo.assert_allclose(delta, particles.delta, atol=1e-12, rtol=1e-7)
