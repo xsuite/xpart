@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d
 def generate_radial_distribution(q, beta):
     """
     Compute the 4D radial distribution function for a round q-Gaussian.
-    This can be numerically unstable if extreme values of q, beta,
+    This can be numerically unstable if extreme values of q, beta.
 
     Parameters:
         q (float): q-parameter (q > 1).
@@ -135,3 +135,5 @@ def generate_round_4D_q_gaussian_normalised(q, beta, n_part):
     py = -A_y * np.sin(beta_y)
 
     return x, px, y, py
+
+
