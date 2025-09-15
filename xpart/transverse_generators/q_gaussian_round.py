@@ -1,7 +1,7 @@
 #################################################
 # This code randomly samples 4D                 #
 # q-Gaussian distributions (q>1) using the      #
-# methods of Batygin                            #
+# samplign methods of Batygin                   #
 # https://doi.org/10.1016/j.nima.2004.10.029    #
 # and the 4D q-Gaussian formula derived in      #
 # https://cds.cern.ch/record/2912366?ln=en      #
