@@ -55,11 +55,10 @@ beta = 1
 x_norm, px_norm, y_norm, py_norm = xp.generate_round_4D_q_gaussian_normalised(q=q, beta=beta, n_part=int(1e6))
 
 
-x = np.linspace(-5, 5, 4000)
-f = q_gaussian_1d(x, q, beta, normalize=True)
-
 
 # PLOT normalised x against 1D q-Gaussian
+x = np.linspace(-10, 10, 1000)
+f = q_gaussian_1d(x=x, q=q, beta=beta, normalize=True)
 plt.plot(x, f, color='blue', label=f'1D q-Gaussian q={q}, beta={beta}')
 plt.hist(x_norm, bins=200, density=True, label=f'sampled q-Gaussian q={q}, beta={beta}')
 plt.legend()

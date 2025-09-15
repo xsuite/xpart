@@ -27,7 +27,7 @@ def generate_radial_distribution(q, beta):
     assert q > 1, "q must be greater than 1"
     F = np.linspace(0, 3000, 100000) # can be unstable
     term1 = -(beta**2) * (q - 3) * (q**2 - 1) / 4 / np.pi**2
-    if q < 1.01:
+    if abs(q - 1) < 1e-2:
         term2 = -1 / (1 - q)
     else:
         term2 = gamma(q / (q - 1)) / gamma(1 / (q - 1))
@@ -65,7 +65,7 @@ def generate_cdf(g_F, F):
         np.ndarray: CDF of g(F).
     """
     delta_F = np.diff(F, prepend=0)
-    cdf = np.cumsum(g_F * delta_F)
+    cdf = np.cumsum(g_F * delta_F) # todo: rewrite with scipy.integrate.quad(g_F, -np.inf, np.inf)
     cdf = np.clip(cdf, 0, np.inf)
     return cdf
 
@@ -132,7 +132,7 @@ def generate_round_4D_q_gaussian_normalised(q, beta, n_part):
     x = A_x * np.cos(beta_x)
     px = -A_x * np.sin(beta_x)
     y = -A_y * np.cos(beta_y)
-    py = -A_y * np.sin(beta_y)
+    py = A_y * np.sin(beta_y)
 
     return x, px, y, py
 
