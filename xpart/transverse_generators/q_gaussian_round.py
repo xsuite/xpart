@@ -1,12 +1,11 @@
 #################################################
 # This code randomly samples 4D                 #
 # q-Gaussian distributions (q>1) using the      #
-# samplign methods of Batygin                   #
+# sampling methods of Batygin                   #
 # https://doi.org/10.1016/j.nima.2004.10.029    #
 # and the 4D q-Gaussian formula derived in      #
 # https://cds.cern.ch/record/2912366?ln=en      #
 #################################################
-
 
 import numpy as np
 from scipy.special import gamma
@@ -16,6 +15,7 @@ from scipy.interpolate import interp1d
 def generate_radial_distribution(q, beta):
     """
     Compute the 4D radial distribution function for a round q-Gaussian.
+    This can be numerically unstable if extreme values of q, beta,
 
     Parameters:
         q (float): q-parameter (q > 1).
@@ -25,7 +25,7 @@ def generate_radial_distribution(q, beta):
         tuple: (f_F, F) where f_F is the radial distribution, and F is the radial coordinate array.
     """
     assert q > 1, "q must be greater than 1"
-    F = np.linspace(0, 3000, 100000)
+    F = np.linspace(0, 3000, 100000) # can be unstable
     term1 = -(beta**2) * (q - 3) * (q**2 - 1) / 4 / np.pi**2
     if q < 1.01:
         term2 = -1 / (1 - q)
@@ -36,9 +36,10 @@ def generate_radial_distribution(q, beta):
     return term1 * term2 * term3, F
 
 
-def generate_PDF(f_F, F):
+def generate_pdf(f_F, F):
     """
     Compute the PDF g(F) from f(F) using the Abel transform in 4D.
+    Cleans up the boundaries and gives correct normalisation factor.
 
     Parameters:
         f_F (np.ndarray): Distribution array.
@@ -47,13 +48,12 @@ def generate_PDF(f_F, F):
     Returns:
         np.ndarray: Transformed PDF g(F).
     """
-    f_F[0] = 0
-    f_F[-1] = 0
-    g_F = np.pi**2 * f_F * F
-    return g_F
+    f_F = f_F.copy()
+    f_F[0] = f_F[-1] = 0  # Boundary cleanup
+    return np.pi**2 * f_F * F
 
 
-def generate_CDF(g_F, F):
+def generate_cdf(g_F, F):
     """
     Compute the cumulative distribution function (CDF) of g(F).
 
@@ -64,9 +64,11 @@ def generate_CDF(g_F, F):
     Returns:
         np.ndarray: CDF of g(F).
     """
-    return np.cumsum(
-        np.diff(np.insert(F, 0, 0)) * g_F
-    )
+    delta_F = np.diff(F, prepend=0)
+    cdf = np.cumsum(g_F * delta_F)
+    cdf = np.clip(cdf, 0, np.inf)
+    return cdf
+
 
 def sample_from_inv_cdf(Np, cdf_g, F):
     """
@@ -88,7 +90,7 @@ def sample_from_inv_cdf(Np, cdf_g, F):
     return interpolator(uniform_samples)
 
 
-def generate_random_A(F_G):
+def generate_random_a(F_G):
     """
     Generate A_x and A_y coordinates based on F_G distribution.
 
@@ -104,8 +106,7 @@ def generate_random_A(F_G):
     return A_x, A_y
 
 
-# function to generate a round 4D q-Gaussian
-def generate_round_4D_qgaussian_normalised(q, beta, n_part):
+def generate_round_4D_q_gaussian_normalised(q, beta, n_part):
     """
     Generate particles sampled from a 4D round q-Gaussian distribution.
 
@@ -118,10 +119,10 @@ def generate_round_4D_qgaussian_normalised(q, beta, n_part):
         tuple: Arrays of positions and momenta (x, px, y, py).
     """
     f_F, F = generate_radial_distribution(q, beta)  # 4D distribution
-    g_F = generate_PDF(f_F, F)  # PDF of 4D distribution
-    cdf_g = generate_CDF(g_F, F)  # CDF
+    g_F = generate_pdf(f_F, F)  # PDF of 4D distribution
+    cdf_g = generate_cdf(g_F, F)  # CDF
     F_G = sample_from_inv_cdf(n_part, cdf_g, F)  # Inverse function
-    A_x, A_y = generate_random_A(F_G)  # random generator distributed like F_G
+    A_x, A_y = generate_random_a(F_G)  # random generator distributed like F_G
 
     # Sample angles for all particles
     beta_x = np.random.uniform(0, 2 * np.pi, n_part)

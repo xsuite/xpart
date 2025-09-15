@@ -12,7 +12,6 @@ import xtrack as xt
 
 def q_gaussian_1d(x, q, beta, normalize=False):
     """
-
     Args:
         x:
         q: q-parameter
@@ -50,23 +49,21 @@ line.particle_ref = xp.Particles.from_dict(ddd['particle'])
 
 line.build_tracker()
 
-q = 1.1
-beta = 0.6
+q = 1.2
+beta = 1
 
-x_norm, px_norm, y_norm, py_norm = xp.generate_round_4D_qgaussian_normalised(q=q, beta=beta, n_part=int(1e6))
+x_norm, px_norm, y_norm, py_norm = xp.generate_round_4D_q_gaussian_normalised(q=q, beta=beta, n_part=int(1e6))
 
 
-x = np.linspace(-10, 10, 1000)
+x = np.linspace(-5, 5, 4000)
 f = q_gaussian_1d(x, q, beta, normalize=True)
 
 
 # PLOT normalised x against 1D q-Gaussian
 plt.plot(x, f, color='blue', label=f'1D q-Gaussian q={q}, beta={beta}')
-plt.hist(x_norm, bins=100, density=True, label=f'sampled q-Gaussian q={q}, beta={beta}')
+plt.hist(x_norm, bins=200, density=True, label=f'sampled q-Gaussian q={q}, beta={beta}')
 plt.legend()
 plt.show()
-
-
 
 particles = line.build_particles(
                                zeta=0, delta=1e-3,
@@ -77,11 +74,12 @@ particles = line.build_particles(
                                nemitt_x=3e-6, nemitt_y=3e-6)
 
 # CHECKS
-
 y_rms = np.std(particles.y)
 py_rms = np.std(particles.py)
 x_rms = np.std(particles.x)
 px_rms = np.std(particles.px)
+
+print('y rms: ', y_rms, 'py rms: ', py_rms,'x rms: ', x_rms, 'px rms: ', px_rms)
 
 
 

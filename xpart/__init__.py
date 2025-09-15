@@ -22,7 +22,7 @@ from .transverse_generators import generate_2D_pencil_with_absolute_cut
 from .transverse_generators import generate_2D_gaussian
 from .transverse_generators import (generate_hypersphere_2D, generate_hypersphere_4D,
                                     generate_hypersphere_6D)
-from .transverse_generators import generate_round_4D_qgaussian_normalised
+from .transverse_generators import generate_round_4D_q_gaussian_normalised
 
 from .longitudinal import generate_longitudinal_coordinates
 from .longitudinal.generate_longitudinal import _characterize_line
