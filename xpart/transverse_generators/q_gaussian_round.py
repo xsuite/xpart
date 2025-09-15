@@ -18,7 +18,7 @@ def generate_radial_distribution(q, beta):
     Compute the 4D radial distribution function for a round q-Gaussian.
 
     Parameters:
-        q (float): Entropic index (q > 1).
+        q (float): q-parameter (q > 1).
         beta (float): Scale parameter.
 
     Returns:
@@ -66,16 +66,7 @@ def generate_CDF(g_F, F):
     """
     return np.cumsum(
         np.diff(np.insert(F, 0, 0)) * g_F
-    )  # fast cumulative trapezoid approx
-
-
-# Functions for random sampling in 4D
-def random_beta(F_G):
-    for i in range(len(F_G)):
-        beta_x = np.random.uniform(0, 2 * np.pi, 1)
-        beta_y = np.random.uniform(0, 2 * np.pi, 1)
-    return beta_x, beta_y
-
+    )
 
 def sample_from_inv_cdf(Np, cdf_g, F):
     """
