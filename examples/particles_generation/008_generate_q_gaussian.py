@@ -34,7 +34,7 @@ def q_gaussian_1d(x, q, beta, normalize=False):
 
 bunch_intensity = 1e11
 sigma_z = 22.5e-2
-n_part = int(5e5)
+n_part = int(5e6)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
@@ -47,20 +47,15 @@ line.particle_ref = xp.Particles.from_dict(ddd['particle'])
 
 line.build_tracker()
 
-q = 1.2
+q = 1.3
 beta = 1
 
 x_norm, px_norm, y_norm, py_norm = xp.generate_round_4D_q_gaussian_normalised(q=q, beta=beta, n_part=int(1e6))
 
-
-
 # PLOT normalised x against 1D q-Gaussian
 x = np.linspace(-10, 10, 1000)
 f = q_gaussian_1d(x=x, q=q, beta=beta, normalize=True)
-plt.plot(x, f, color='blue', label=f'1D q-Gaussian q={q}, beta={beta}')
-plt.hist(x_norm, bins=200, density=True, label=f'sampled q-Gaussian q={q}, beta={beta}')
-plt.legend()
-plt.show()
+
 
 particles = line.build_particles(
                                zeta=0, delta=1e-3,
@@ -77,6 +72,28 @@ x_rms = np.std(particles.x)
 px_rms = np.std(particles.px)
 
 print('y rms: ', y_rms, 'py rms: ', py_rms,'x rms: ', x_rms, 'px rms: ', px_rms)
+
+plt.close('all')
+fig1 = plt.figure(1, figsize=(6.4, 7))
+ax21 = fig1.add_subplot(3,1,1)
+ax22 = fig1.add_subplot(3,1,2)
+ax23 = fig1.add_subplot(3,1,3)
+ax21.plot(particles.x*1000, particles.px, '.', markersize=1)
+ax21.set_xlabel(r'x [mm]')
+ax21.set_ylabel(r'px [-]')
+ax22.plot(particles.y*1000, particles.py, '.', markersize=1)
+ax22.set_xlabel(r'y [mm]')
+ax22.set_ylabel(r'py [-]')
+ax23.plot(x, f, color='k', label=f'1D q-Gaussian q={q}, beta={beta}')
+ax23.hist(x_norm, bins=200, density=True, label=f'normalised sampled q-Gaussian q={q}, beta={beta}')
+ax23.set_xlabel(r'normalised x')
+ax23.set_xlabel(r'normalised amplitude')
+ax23.legend()
+
+fig1.subplots_adjust(bottom=.08, top=.93, hspace=.33, left=.18,
+                     right=.96, wspace=.33)
+plt.show()
+
 
 
 
