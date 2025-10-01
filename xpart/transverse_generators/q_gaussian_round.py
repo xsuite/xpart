@@ -13,7 +13,7 @@ from scipy.special import gamma
 from scipy.interpolate import interp1d
 
 
-def generate_radial_distribution(q:float, beta:float):
+def generate_radial_distribution(q, beta, F):
     """
     Compute the 4D radial distribution function for a round q-Gaussian.
     This can be numerically unstable if extreme values of q, beta as the
@@ -21,13 +21,16 @@ def generate_radial_distribution(q:float, beta:float):
 
     Parameters:
         q (float): q-parameter (1 < q < 5/3).
-        beta (float): Scale parameter.
+        beta (float): Scale parameter, (beta > 1)
+        F: sample space parameter, can be user defined
 
     Returns:
         tuple: (f_F, F) where f_F is the radial distribution, and F is the radial coordinate array.
     """
     assert q > 1, "q must be greater than 1"
-    F = np.linspace(0, 30000, 1000000) # can be unstable
+    assert q < 5/3, "q must be less than 5/3"
+    assert beta > 0, "beta must be greater than 0"
+
     term1 = -(beta**2) * (q - 3) * (q**2 - 1) / 4 / np.pi**2
     if abs(q - 1) < 1e-2:
         term2 = -1 / (1 - q)
@@ -108,7 +111,7 @@ def generate_random_a(F_G):
     return A_x, A_y
 
 
-def generate_round_4D_q_gaussian_normalised(q, beta, n_part):
+def generate_round_4D_q_gaussian_normalised(q, beta, n_part, sample_space=None):
     """
     Generate particles sampled from a 4D round q-Gaussian distribution.
 
@@ -116,11 +119,17 @@ def generate_round_4D_q_gaussian_normalised(q, beta, n_part):
         q (float): q-Gaussian q parameter.
         beta (float): Scale parameter.
         n_part (int): Number of particles to sample.
+        sample_space: Default np.linspace(0, 30000, 1000000)
 
     Returns:
         tuple: Arrays of positions and momenta (x, px, y, py).
     """
-    f_F, F = generate_radial_distribution(q, beta)  # 4D distribution
+    if sample_space is None:
+        F = np.linspace(0, 30000, 1000000)
+    else:
+        F = sample_space
+
+    f_F, F = generate_radial_distribution(q, beta, F)  # 4D distribution
     g_F = generate_pdf(f_F, F)  # PDF of 4D distribution
     cdf_g = generate_cdf(g_F, F)  # CDF
     F_G = sample_from_inv_cdf(n_part, cdf_g, F)  # Inverse function
