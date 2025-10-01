@@ -1,10 +1,11 @@
 #################################################
 # This code randomly samples 4D                 #
-# q-Gaussian distributions (q>1) using the      #
+# q-Gaussian distributions (1<q<5/3) using the  #
 # sampling methods of Batygin                   #
 # https://doi.org/10.1016/j.nima.2004.10.029    #
 # and the 4D q-Gaussian formula derived in      #
 # https://cds.cern.ch/record/2912366?ln=en      #
+# These distributions are non-factorizable.     #
 #################################################
 
 import numpy as np
@@ -12,20 +13,21 @@ from scipy.special import gamma
 from scipy.interpolate import interp1d
 
 
-def generate_radial_distribution(q, beta):
+def generate_radial_distribution(q:float, beta:float):
     """
     Compute the 4D radial distribution function for a round q-Gaussian.
-    This can be numerically unstable if extreme values of q, beta.
+    This can be numerically unstable if extreme values of q, beta as the
+    sample space needs to be increased (eg for very high q or beta)
 
     Parameters:
-        q (float): q-parameter (q > 1).
+        q (float): q-parameter (1 < q < 5/3).
         beta (float): Scale parameter.
 
     Returns:
         tuple: (f_F, F) where f_F is the radial distribution, and F is the radial coordinate array.
     """
     assert q > 1, "q must be greater than 1"
-    F = np.linspace(0, 3000, 100000) # can be unstable
+    F = np.linspace(0, 30000, 1000000) # can be unstable
     term1 = -(beta**2) * (q - 3) * (q**2 - 1) / 4 / np.pi**2
     if abs(q - 1) < 1e-2:
         term2 = -1 / (1 - q)

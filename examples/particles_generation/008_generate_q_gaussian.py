@@ -22,10 +22,8 @@ def q_gaussian_1d(x, q, beta, normalize=False):
         q-Gaussian function defined on x
 
     """
-    assert q < 3, "q must be less than 3 for normalizability"
-    # Compute the argument of the power
+    assert q < 5/3, "q must be less than 5/3"
     arg = 1 - (1 - q) * beta * x**2
-    # Set values outside domain to 0
     f = np.where(arg > 0, arg**(1 / (1 - q)), 0)
     if normalize:
         dx = x[1] - x[0]
