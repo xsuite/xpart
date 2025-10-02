@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 import xpart as xp
 import xtrack as xt
 
-
 def q_gaussian_1d(x, q, beta, normalize=False):
     """
     Args:
@@ -30,7 +29,6 @@ def q_gaussian_1d(x, q, beta, normalize=False):
         area = np.sum(f) * dx
         f /= area
     return f
-
 
 bunch_intensity = 1e11
 sigma_z = 22.5e-2
@@ -63,14 +61,6 @@ particles = line.build_particles(
                                y_norm=y_norm,
                                py_norm=py_norm,
                                nemitt_x=3e-6, nemitt_y=3e-6)
-
-# CHECKS
-y_rms = np.std(particles.y)
-py_rms = np.std(particles.py)
-x_rms = np.std(particles.x)
-px_rms = np.std(particles.px)
-
-print('y rms: ', y_rms, 'py rms: ', py_rms,'x rms: ', x_rms, 'px rms: ', px_rms)
 
 # plot 1D q-gaussian against projection
 x = np.linspace(-10, 10, 1000)
