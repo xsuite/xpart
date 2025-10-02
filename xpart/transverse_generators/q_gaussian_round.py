@@ -116,16 +116,30 @@ def generate_round_4D_q_gaussian_normalised(q, beta, n_part, sample_space=None):
     Generate particles sampled from a 4D round q-Gaussian distribution.
 
     Parameters:
-        q (float): q-Gaussian q parameter.
-        beta (float): Scale parameter.
-        n_part (int): Number of particles to sample.
-        sample_space: Default np.linspace(0, 30000, 1000000)
+    -----------
+    q : float
+        The q parameter of the q-Gaussian distribution. Must satisfy 1 < q < 5/3.
+    beta : float
+        Scale parameter (analogous to beta function) for the distribution.
+    n_part : int
+        Number of particles to generate.
+    sample_space : array_like, optional
+        1D array of radius values at which to evaluate the radial PDF/CDF.
+        If None, defaults to `np.linspace(0, 300, 1000000)`.
 
-    Returns:
-        tuple: Arrays of positions and momenta (x, px, y, py).
+    Returns
+    -------
+    x : np.ndarray
+        Horizontal position coordinates.
+    px : np.ndarray
+        Horizontal momentum coordinates.
+    y : np.ndarray
+        Vertical position coordinates.
+    py : np.ndarray
+        Vertical momentum coordinates.
     """
     if sample_space is None:
-        F = np.linspace(0, 30000, 1000000)
+        F = np.linspace(0, 3e2, 1e6)
     else:
         F = sample_space
 
