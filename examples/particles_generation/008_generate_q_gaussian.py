@@ -50,12 +50,11 @@ line.build_tracker()
 q = 1.3
 beta = 1
 
-x_norm, px_norm, y_norm, py_norm = xp.generate_round_4D_q_gaussian_normalised(q=q, beta=beta, n_part=int(1e6))
-
-# PLOT normalised x against 1D q-Gaussian
-x = np.linspace(-10, 10, 1000)
-f = q_gaussian_1d(x=x, q=q, beta=beta, normalize=True)
-
+x_norm, px_norm, y_norm, py_norm = xp.generate_round_4D_q_gaussian_normalised(
+    q=q,
+    beta=beta,
+    n_part=int(1e6)
+)
 
 particles = line.build_particles(
                                zeta=0, delta=1e-3,
@@ -73,6 +72,10 @@ px_rms = np.std(particles.px)
 
 print('y rms: ', y_rms, 'py rms: ', py_rms,'x rms: ', x_rms, 'px rms: ', px_rms)
 
+# plot 1D q-gaussian against projection
+x = np.linspace(-10, 10, 1000)
+f = q_gaussian_1d(x=x, q=q, beta=beta, normalize=True)
+
 plt.close('all')
 fig1 = plt.figure(1, figsize=(6.4, 7))
 ax21 = fig1.add_subplot(3,1,1)
@@ -85,9 +88,10 @@ ax22.plot(particles.y*1000, particles.py, '.', markersize=1)
 ax22.set_xlabel(r'y [mm]')
 ax22.set_ylabel(r'py [-]')
 ax23.plot(x, f, color='k', label=f'1D q-Gaussian q={q}, beta={beta}')
-ax23.hist(x_norm, bins=200, density=True,alpha=0.5, label=f'normalised sampled q-Gaussian q={q}, beta={beta}, $x$ projection')
-ax23.hist(y_norm, bins=200, density=True,alpha=0.5, label=f'normalised sampled q-Gaussian q={q}, beta={beta} $y$ projection')
-
+ax23.hist(x_norm, bins=200, density=True, alpha=0.5,
+          label=f'normalised sampled q-Gaussian q={q}, beta={beta}, $x$ projection')
+ax23.hist(y_norm, bins=200, density=True, alpha=0.5,
+          label=f'normalised sampled q-Gaussian q={q}, beta={beta} $y$ projection')
 ax23.set_xlabel(r'normalised x')
 ax23.set_xlabel(r'normalised amplitude')
 ax23.legend()
