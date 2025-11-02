@@ -67,9 +67,8 @@ def generate_matched_gaussian_bunch(num_particles,
             DeprecationWarning)
         line = tracker.line
 
-    if line is not None:
-        assert line.tracker is not None, ("The line has no tracker. Please use "
-                                          "`Line.build_tracker()`")
+    if line is not None and line.tracker is None:
+        line.build_tracker()
 
     if particle_ref is not None and particle_on_co is not None:
         raise ValueError("`particle_ref` and `particle_on_co`"
