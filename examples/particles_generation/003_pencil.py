@@ -3,7 +3,6 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-import json
 import numpy as np
 
 import xpart as xp
@@ -13,13 +12,9 @@ num_particles = 10000
 nemitt_x = 2.5e-6
 nemitt_y = 3e-6
 
-# Load machine model (from pymask)
-filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
-with open(filename, 'r') as fid:
-    input_data = json.load(fid)
-line=xt.Line.from_dict(input_data['line'])
-line.particle_ref = xp.Particles.from_dict(input_data['particle'])
-line.build_tracker()
+line = xt.load('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
+
+line.set_particle_ref('proton', p0c=7e12)
 
 # Horizontal plane: generate gaussian distribution in normalized coordinates
 x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)

@@ -2,22 +2,16 @@
 # This file is part of the Xpart Package.   #
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
-import json
 
 import xpart as xp
 import xobjects as xo
 import xtrack as xt
 
-ctx = xo.ContextCpu() # choose a context
-
-# Load machine model and built a line
-filename = ('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
-with open(filename, 'r') as fid:
-    line = xt.Line.from_dict(json.load(fid)['line'])
-line.build_tracker(_context=ctx)
+# Load machine model
+line = xt.load('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 
 # Attach a reference particle to the line
-line.particle_ref = xp.Particles(p0c=7e12, mass0=xp.PROTON_MASS_EV, q0=1, x=1 , y=3)
+line.set_particle_ref('proton', p0c=7e12, x=1, y=3)
 
 # Built a set of three particles with different y coordinates
 # (context and particle_ref are taken from the line)

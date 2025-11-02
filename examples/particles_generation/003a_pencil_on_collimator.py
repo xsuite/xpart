@@ -3,7 +3,6 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-import json
 import numpy as np
 
 import xpart as xp
@@ -13,17 +12,13 @@ num_particles = 10000
 nemitt_x = 2.5e-6
 nemitt_y = 3e-6
 
-# Load machine model
-filename = ('../../../xtrack/test_data/hllhc15_noerrors_nobb/line_and_particle.json')
-with open(filename, 'r') as fid:
-    input_data = json.load(fid)
-line=xt.Line.from_dict(input_data['line'])
-line.particle_ref = xp.Particles.from_dict(input_data['particle'])
-line.build_tracker()
+line = xt.load('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
+
+line.set_particle_ref('proton', p0c=7e12)
 
 # Location of the collimator
 at_element = 'tcp.d6l7.b1'
-at_s = line.line.get_s_position(at_element) + 1.
+at_s = line.get_s_position(at_element) + 1.
 y_cut = 3e-3 # position of the jaw
 pencil_dr_sigmas = 3 # width of the pencil
 side = '+' # side of the pencil

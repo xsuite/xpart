@@ -130,7 +130,8 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         line = tracker.line
 
     if line is not None:
-        assert line.tracker is not None
+        if not line._has_valid_tracker():
+            line.build_tracker()
 
     # kwargs are passed to line.twiss
 
