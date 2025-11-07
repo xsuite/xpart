@@ -13,10 +13,11 @@ import xobjects as xo
 
 from xpart.longitudinal import generate_binomial_longitudinal_coordinates
 
-from xobjects.test_helpers import for_all_test_contexts
+from xobjects.test_helpers import fix_random_seed, for_all_test_contexts
 
 
 @for_all_test_contexts
+@fix_random_seed(42343298)
 def test_build_particles_binomial(test_context):
     # Build a reference particle
     p0 = xp.Particles(mass0=xp.PROTON_MASS_EV, q0=1, p0c=7e12, x=1, y=3,
@@ -33,14 +34,15 @@ def test_build_particles_binomial(test_context):
     line.build_tracker(_context=test_context)
 	
     # Built a set of three particles with different x coordinates
-    zeta, delta, matcher = generate_binomial_longitudinal_coordinates(num_particles=num_part,
-                                                                      nemitt_x=3e-6,
-                                                                      nemitt_y=3e-6,
-                                                                      sigma_z=0.05,
-                                                                      particle_ref=p0,
-                                                                      line=line,
-                                                                      return_matcher=True
-                                                                      )
+    zeta, delta, matcher = generate_binomial_longitudinal_coordinates(
+        num_particles=num_part,
+        nemitt_x=3e-6,
+        nemitt_y=3e-6,
+        sigma_z=0.05,
+        particle_ref=p0,
+        line=line,
+        return_matcher=True,
+    )
 
     # Test if longitudinal coordinates match with Single
 	# Generate distribution from RF matcher
