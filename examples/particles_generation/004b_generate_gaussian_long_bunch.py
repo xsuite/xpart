@@ -3,8 +3,6 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-import json
-
 import numpy as np
 from scipy.constants import e as qe
 from scipy.constants import m_p
@@ -18,11 +16,7 @@ n_part = int(5e5)
 nemitt_x = 2e-6
 nemitt_y = 2.5e-6
 
-filename = ('../../../xtrack/test_data/sps_ions/line_and_particle.json')
-with open(filename, 'r') as fid:
-    ddd = json.load(fid)
-line = xt.Line.from_dict(ddd)
-line.build_tracker()
+line = xt.load('../../../xtrack/test_data/sps_ions/line_and_particle.json')
 
 particles = xp.generate_matched_gaussian_bunch(
          num_particles=n_part, total_intensity_particles=bunch_intensity,

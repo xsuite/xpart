@@ -3,7 +3,6 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-import json
 import numpy as np
 
 import xpart as xp
@@ -13,14 +12,9 @@ num_particles = 10000
 nemitt_x = 2.5e-6
 nemitt_y = 3e-6
 
-# Load machine model
-filename = ('../../../xtrack/test_data/hllhc15_noerrors_nobb/line_and_particle.json')
-line = xt.Line.from_json(filename)
-with open(filename, 'r') as fid:
-    input_data = json.load(fid)
-line = xt.Line.from_dict(input_data['line'])
-line.particle_ref = xp.Particles.from_dict(input_data['particle'])
-line.build_tracker()
+line = xt.load('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
+
+line.set_particle_ref('proton', p0c=7e12)
 
 # Location of the collimator
 at_element = 'tcp.6l3.b1' # High dispersion
@@ -54,7 +48,7 @@ particles = line.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                 at_element=at_element, match_at_s=at_s)
 
 # Drift to at_s position for checking
-drift_to_at_s = xt.Drift(length=at_s-line.line.get_s_position(at_element))
+drift_to_at_s = xt.Drift(length=at_s - line.get_s_position(at_element))
 drift_to_at_s.track(particles)
 
 # Checks and plots
