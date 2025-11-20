@@ -183,7 +183,7 @@ def test_build_particles_normalized_match_at_s(test_context):
 
     particles.move(_context=xo.context_default)
     assert not np.allclose(particles.x, 0.02, atol=1e-20)
-    line.unfreeze()
+    line.discard_tracker()
     line.insert_element(element=xt.Marker(), name='match_at_s', at_s=match_at_s)
     line.build_tracker(_context=test_context)
     particles.move(_context=test_context)
