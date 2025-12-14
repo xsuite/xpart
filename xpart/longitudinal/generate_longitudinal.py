@@ -43,7 +43,10 @@ def _characterize_line(line, particle_ref,
                 freq_list.append(eecp.frequency)
                 lag_list_deg.append(eecp.lag)
                 voltage_list.append(eecp.voltage)
-                h_list.append(eecp.frequency*T_rev)
+                if eecp.frequency == 0:
+                    h_list.append(eecp.harmonic)
+                else:
+                    h_list.append(eecp.frequency*T_rev)
                 found_nonlinear_longitudinal = True
         elif ee.__class__.__name__ == 'LineSegmentMap':
             eecp = ee.copy(_context=xo.ContextCpu())
