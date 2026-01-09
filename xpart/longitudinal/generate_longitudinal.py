@@ -28,6 +28,8 @@ def _characterize_line(line, particle_ref,
         logger.warning('Ignoring collective elements in particles generation.')
         line = line._get_non_collective_line()
 
+    radiation_active = line._radiation_model is not None
+
     T_rev = line.get_length()/(particle_ref._xobject.beta0[0]*clight)
     freq_list = []
     lag_list_deg = []
@@ -40,7 +42,10 @@ def _characterize_line(line, particle_ref,
         if ee.__class__.__name__ == 'Cavity':
             eecp = ee.copy(_context=xo.ContextCpu())
             if ee.voltage != 0:
-                lag_list_deg.append(eecp.lag)
+                lag = eecp.lag
+                if radiation_active:
+                    lag += eecp.lag_taper
+                lag_list_deg.append(lag)
                 voltage_list.append(eecp.voltage)
                 if eecp.frequency == 0:
                     h_list.append(eecp.harmonic)
