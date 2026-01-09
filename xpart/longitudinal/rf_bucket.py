@@ -272,7 +272,9 @@ class RFBucket:
         center of the bucket. Analytical formula neglects any
         added forces / potentials via add_fields.
         """
-        hVcosphi = sum([h * self.V[i] * np.cos(self.phi_offset_list[i])
+        hVcosphi = sum([h * self.V[i] * np.cos(
+                            self.phi_offset_list[i]
+                          - 2*np.pi*h*self.z_sfp / self.circumference)
                         for i, h in enumerate(self.h)])
         # if hV == 0:
         #     ix = np.argmax(self.V)
