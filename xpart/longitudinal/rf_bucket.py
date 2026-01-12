@@ -279,7 +279,7 @@ class RFBucket:
         # if hV == 0:
         #     ix = np.argmax(self.V)
         #     hV = self.h[ix] * self.V[ix]
-        return np.sqrt(-self.charge_coulomb*np.abs(self.eta0)*hVcosphi /
+        return np.sqrt(-self.charge_coulomb*self.eta0*hVcosphi /
                        (2*np.pi*self.p0*self.beta*c))
 
     def add_fields(self, add_forces, add_potentials):
