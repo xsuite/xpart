@@ -184,9 +184,9 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
                                         _force_at_element=0 # the twiss has only this element
                                         )
     if plane == 'x':
-        pencil_cut_sigmas = np.abs(p_on_cut_norm.x_norm)
+        pencil_cut_sigmas = np.abs(p_on_cut_norm.x_norm)[0]
     else:
-        pencil_cut_sigmas = np.abs(p_on_cut_norm.y_norm)
+        pencil_cut_sigmas = np.abs(p_on_cut_norm.y_norm)[0]
 
     # Generate normalized pencil in the selected plane (here w is x or y according to plane)
     w_in_sigmas, pw_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
