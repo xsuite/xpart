@@ -49,7 +49,7 @@ class SingleRFHarmonicMatcher:
             # correct bunch length (due to truncation at separatrix)
             if tau_max > tau_lim:
                 # analytical_tau_max = np.sqrt((5*tau_lim**3*rms_bunch_length**2 - 3*tau_lim**5)/(15*tau_lim*rms_bunch_length**2 - 5*tau_lim**3))
-                func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max), -tau_lim, tau_lim))[0]
+                func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max[0]), -tau_lim, tau_lim))[0]
                 corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
                 tau_max = corrected_tau_max
             self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
@@ -62,7 +62,7 @@ class SingleRFHarmonicMatcher:
             lambda_dist = lambda tau, rms: np.exp(-tau**2/2./rms**2)
 
             # correct bunch length (due to truncation at separatrix)
-            func_to_solve = lambda new_rms: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_rms), -tau_lim, tau_lim))[0]
+            func_to_solve = lambda new_rms: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_rms[0]), -tau_lim, tau_lim))[0]
             corrected_rms = scipy.optimize.fsolve(func_to_solve, x0=rms_bunch_length)[0]
 
             _print(f"SingleRFHarmonicMatcher: Gaussian parameter is equal to {corrected_rms:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
@@ -76,24 +76,24 @@ class SingleRFHarmonicMatcher:
                 _print(f"WARNING SingleRFHarmonicMatcher: q-value above 5/3 undefined for correct RMS bunch length, truncating q value to {q:.3f}")
             beta = 1.0/(rms_bunch_length**2 * (5.-3.*q)) # solving from variance
             lambda_dist = lambda tau, beta: np.sqrt(beta) / self._Cq(q) * self._eq(-beta * tau**2, q)
-            
-            func_to_solve = lambda new_beta: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_beta), -tau_lim, tau_lim))[0]
+
+            func_to_solve = lambda new_beta: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_beta[0]), -tau_lim, tau_lim))[0]
             corrected_beta = scipy.optimize.fsolve(func_to_solve, x0=beta)[0]
             _print(f"SingleRFHarmonicMatcher: q-Gaussian parameter beta = {corrected_beta:.3f} for q={q:.3f} to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
 
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_beta)
-            
+
         elif distribution == "binomial":
             # Binomial distribution adds tail to parabolic, see (Joho, 1980) at https://indico.psi.ch/event/3484/attachments/5948/7502/TM-11-14.pdf
             # behaviour is Gaussian for m --> inf
             tau_max = 1.0 # starting value, will be adjusted. Used as benchmarking value with RMS factor for parabola
-            lambda_dist = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5) 
+            lambda_dist = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5)
             binomial_2nd = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5)*tau**2
             RMS_binomial = np.sqrt(integrate.quad(binomial_2nd, -1, 1, args=(tau_max))[0] / integrate.quad(lambda_dist, -1, 1, args=(tau_max))[0])
             factor_binomial = tau_max / RMS_binomial
             _print(f"RMS factor for binimial is {factor_binomial:.3f}")
-            tau_max = factor_binomial*rms_bunch_length 
-            func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max), -tau_lim, tau_lim))[0]
+            tau_max = factor_binomial*rms_bunch_length
+            func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max[0]), -tau_lim, tau_lim))[0]
             corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
             tau_max = corrected_tau_max
             self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
@@ -224,13 +224,15 @@ class SingleRFHarmonicMatcher:
             raise ValueError("q must be smaller than 3!")
         else:
             return Cq
-    
-    
+
     def _eq(self, x, q):
-        """ 
+        """
         Q-exponential function
         Available at https://link.springer.com/article/10.1007/s00032-008-0087-y
         """
+        isscalar = np.isscalar(x)
+        if isscalar:
+            x = np.array([x])
         eq = np.zeros(len(x))
         for i, xx in enumerate(x):
             if ((q != 1) and (1 + (1 - q) * xx) > 0):
@@ -239,4 +241,6 @@ class SingleRFHarmonicMatcher:
                 eq[i] = np.exp(xx)
             else:
                 eq[i] = 0
+        if isscalar:
+            eq = eq[0]
         return eq
