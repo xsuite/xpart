@@ -5,7 +5,7 @@ requires = [
     'numpy',
 ]
 
-[pytest]
+[tool.pytest]
 markers = [
     "context_dependent: marks test as one that depends on the execution context",
 ]
