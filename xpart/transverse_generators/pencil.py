@@ -153,9 +153,10 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         drift_to_at_s = None
 
     if twiss is None:
-        twiss = line.twiss(at_s=match_at_s,
-            at_elements=([at_element] if match_at_s is None else None),
-            **kwargs)
+        line = line.copy()
+        line.cut_at_s([match_at_s])
+        twiss = line.twiss(at_elements=([at_element] if match_at_s is None else None), **kwargs)
+        twiss = twiss.rows[np.searchsorted(twiss.s, match_at_s)]
 
     if side=='+':
         assert twiss[plane][0] < absolute_cut, 'The cut is on the wrong side'

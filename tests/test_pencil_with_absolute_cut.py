@@ -83,7 +83,9 @@ def test_pencil_with_absolute_cut(test_context):
         particles.move(_context=xo.ContextCpu())
         # Checks
 
-        tw_at_s = line.twiss(at_s=at_s)
+        line.cut_at_s([at_s])
+        tw = line.twiss()
+        tw_at_s = tw.rows[np.searchsorted(tw.s, at_s)]
         norm_coords = tw_at_s.get_normalized_coordinates(
                         particles, nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                         _force_at_element=0)

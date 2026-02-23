@@ -165,7 +165,7 @@ def test_build_particles_normalized_match_at_s(test_context):
     match_at_s = line.get_s_position(i_next_active) - 0.11
 
     # Ensure there is a Marker between at_element and match_at_s (to test behave_likes_drift)
-    line.insert_element(element=xt.Marker(), name='test_marker', at_s=s_start + 0.3*(match_at_s-s_start))
+    line.insert('test_marker', obj=xt.Marker(), at=s_start + 0.3*(match_at_s-s_start))
 
     line.build_tracker(_context=test_context)
 
@@ -184,7 +184,7 @@ def test_build_particles_normalized_match_at_s(test_context):
     particles.move(_context=xo.context_default)
     assert not np.allclose(particles.x, 0.02, atol=1e-20)
     line.discard_tracker()
-    line.insert_element(element=xt.Marker(), name='match_at_s', at_s=match_at_s)
+    line.insert('match_at_s', obj=xt.Marker(), at=match_at_s)
     line.build_tracker(_context=test_context)
     particles.move(_context=test_context)
     line.track(particles, ele_stop='match_at_s')
