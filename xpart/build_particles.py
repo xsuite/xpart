@@ -230,6 +230,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
             tt = line.get_table()
             s_at_element = tt['s', at_element]
+            idx_at_element = tt.rows.indices[at_element][0]
             if np.abs(match_at_s - s_at_element) < s_tol:
                 match_at_s = None
             else:
@@ -487,9 +488,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         else:
             assert particle_on_co.at_element[0] == at_element
             particles.s[:num_particles] = particle_on_co._xobject.s[0]
-        particles.at_element[:num_particles] = at_element
+        particles.at_element[:num_particles] = idx_at_element
 
-        particles.start_tracking_at_element = at_element
+        particles.start_tracking_at_element = idx_at_element
 
     particles.spin_x[:num_particles] = particle_ref._xobject.spin_x[0]
     particles.spin_y[:num_particles] = particle_ref._xobject.spin_y[0]
