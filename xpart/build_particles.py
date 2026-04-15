@@ -270,7 +270,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     line.env.new('_xpart_aux_marker', xt.Marker)
                 ltransport = line.env.new_line(length=ds, components=[
                     line.env.place('_xpart_aux_marker', at=0)])
-                ltransport.particle_ref = line.particle_ref.copy()
+                ltransport.particle_ref = tw_init.particle_on_co.copy()
                 tw_init.particle_on_co.at_element = 0
                 tw_init.element_name = '_xpart_aux_marker'
                 tw_transport = ltransport.twiss(init=tw_init)
