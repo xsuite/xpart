@@ -237,6 +237,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     tw_transport = ltransport.twiss(init=tw_init)
                     WW = tw_transport.W_matrix[-1, :, :]
                     particle_on_co = tw_transport.get_twiss_init('_end_point').particle_on_co
+                    del line.env.elements['_xpart_aux_marker']
         elif W_matrix is None and R_matrix is not None:
             import xtrack.linear_normal_form as lnf
             WW, _, _, _ = lnf.compute_linear_normal_form(R_matrix, **kwargs)
