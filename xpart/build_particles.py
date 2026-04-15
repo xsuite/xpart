@@ -254,28 +254,28 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             tw = line.twiss(particle_on_co=particle_on_co,
                             particle_ref=particle_ref,
                             R_matrix=R_matrix, **kwargs)
-            if at_element is None:
-                tw_init = tw.get_twiss_init(at_element=0)
+            if at_element is None and match_at_s is None:
+                WW = tw.W_matrix[0, :, :]
+                particle_on_co = tw.particle_on_co.copy()
             else:
                 tw_init = tw.get_twiss_init(at_element=at_element)
-
-            if match_at_s is None:
-                WW = tw_init.W_matrix
-                particle_on_co = tw_init.particle_on_co
-            else:
-                # Transport the W_matrix from at_element to match_at_s
-                ds = match_at_s - s_at_element
-                assert ds > 0
-                if '_xpart_aux_marker' not in line.env.elements:
-                    line.env.new('_xpart_aux_marker', xt.Marker)
-                ltransport = line.env.new_line(length=ds, components=[
-                    line.env.place('_xpart_aux_marker', at=0)])
-                ltransport.particle_ref = tw_init.particle_on_co.copy()
-                tw_init.particle_on_co.at_element = 0
-                tw_init.element_name = '_xpart_aux_marker'
-                tw_transport = ltransport.twiss(init=tw_init)
-                WW = tw_transport.W_matrix[-1, :, :]
-                particle_on_co = tw_transport.get_twiss_init('_end_point').particle_on_co
+                if match_at_s is None:
+                    WW = tw_init.W_matrix
+                    particle_on_co = tw_init.particle_on_co
+                else:
+                    # Transport the W_matrix from at_element to match_at_s
+                    ds = match_at_s - s_at_element
+                    assert ds > 0
+                    if '_xpart_aux_marker' not in line.env.elements:
+                        line.env.new('_xpart_aux_marker', xt.Marker)
+                    ltransport = line.env.new_line(length=ds, components=[
+                        line.env.place('_xpart_aux_marker', at=0)])
+                    ltransport.particle_ref = tw_init.particle_on_co.copy()
+                    tw_init.particle_on_co.at_element = 0
+                    tw_init.element_name = '_xpart_aux_marker'
+                    tw_transport = ltransport.twiss(init=tw_init)
+                    WW = tw_transport.W_matrix[-1, :, :]
+                    particle_on_co = tw_transport.get_twiss_init('_end_point').particle_on_co
         elif W_matrix is None and R_matrix is not None:
             import xtrack.linear_normal_form as lnf
             WW, _, _, _ = lnf.compute_linear_normal_form(R_matrix, **kwargs)
