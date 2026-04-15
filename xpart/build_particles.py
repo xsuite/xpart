@@ -66,6 +66,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     """
 
+    if match_at_s is not None:
+        assert at_element is not None, (
+            'If `match_at_s` is provided, `at_element` needs to be provided and'
+            'needs to correspond to previous element in the sequence'
+        )
+
     if line is not None and tracker is not None:
         raise ValueError(
             'line and tracker cannot be provided at the same time.')
@@ -78,6 +84,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if line is not None:
         assert line.tracker is not None, ("The line must have a tracker, "
             "please call Line.build_tracker() first.")
+        tt = line.tracker._tracker_data_base._line_table
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
     Particles = xt.Particles  # To get the right Particles class depending on pyheatail interface state
@@ -178,18 +185,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Only this case is covered if not starting at element 0
         assert line is not None
         assert mode == 'normalized_transverse'
+        idx_at_element = tt.rows.indices[at_element][0]
 
     if mode == 'normalized_transverse':
 
         if match_at_s is not None:
-            assert at_element is not None, (
-                'If `match_at_s` is provided, `at_element` needs to be provided and'
-                'needs to correspond to previous element in the sequence'
-            )
-
-            tt = line.get_table()
             s_at_element = tt['s', at_element]
-            idx_at_element = tt.rows.indices[at_element][0]
+
             if np.abs(match_at_s - s_at_element) < s_tol:
                 match_at_s = None
             else:
@@ -445,10 +447,8 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         if match_at_s is not None:
             particles.s[:num_particles] = particle_on_co._xobject.s[0] - ds
         else:
-            assert particle_on_co.at_element[0] == at_element
             particles.s[:num_particles] = particle_on_co._xobject.s[0]
         particles.at_element[:num_particles] = idx_at_element
-
         particles.start_tracking_at_element = idx_at_element
 
     particles.spin_x[:num_particles] = particle_ref._xobject.spin_x[0]
