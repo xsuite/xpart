@@ -178,47 +178,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Only this case is covered if not starting at element 0
         assert line is not None
         assert mode == 'normalized_transverse'
-    #     if isinstance(at_element, str):
-    #         at_element = line._element_names_unique.index(at_element)
-    #     assert R_matrix is None # Not clear if it is at the element or at start machine
-    #     if particle_on_co is not None:
-    #         assert particle_on_co._xobject.at_element == 0
-
-    # if match_at_s is not None:
-    #     assert at_element is not None, (
-    #         'If `match_at_s` is provided, `at_element` needs to be provided and'
-    #         'needs to correspond to the corresponding element in the sequence'
-    #     )
-    #     s_elements = line.get_s_elements()
-    #     s_at_element = s_elements[at_element]
-    #     if np.abs(match_at_s - s_at_element) < s_tol:
-    #         at_element_line_rmat = at_element
-    #         line_rmat = line
-    #         match_at_s = None
-    #     else:
-    #         # Match at a position where there is no marker and backtrack to the previous marker
-    #         expected_at_element = np.searchsorted(s_elements, match_at_s)
-    #         names_between = line._element_names_unique[at_element:expected_at_element]
-    #         only_passives_between = all(
-    #             xt._is_aperture(line.get(nn), line) or xt._behaves_like_drift(line.get(nn), line)
-    #             for nn in names_between
-    #         )
-
-    #         if at_element != expected_at_element and (at_element >= expected_at_element or not only_passives_between):
-    #             raise ValueError(
-    #                 "`match_at_s` can only be placed in the drifts downstream of the "
-    #                 "specified `at_element`. No active element can be present in between."
-    #             )
-
-    #         (tracker_rmat, _
-    #             ) = xt.twiss._build_auxiliary_tracker_with_extra_markers(
-    #                 tracker=line.tracker, at_s=[match_at_s],
-    #                 marker_prefix='xpart_rmat_')
-    #         at_element_line_rmat = tracker_rmat.line._element_names_unique.index('xpart_rmat_0')
-    #         line_rmat = tracker_rmat.line
-    # else:
-    #     line_rmat = line
-    #     at_element_line_rmat = at_element
 
     if mode == 'normalized_transverse':
 
