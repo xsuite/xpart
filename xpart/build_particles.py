@@ -186,11 +186,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         assert line is not None
         assert mode == 'normalized_transverse'
         idx_at_element = tt.rows.indices[at_element][0]
+        s_at_element = tt['s', at_element]
 
     if mode == 'normalized_transverse':
 
         if match_at_s is not None:
-            s_at_element = tt['s', at_element]
 
             if np.abs(match_at_s - s_at_element) < s_tol:
                 match_at_s = None
@@ -444,10 +444,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         auxdrift.track(particles)
 
     if at_element is not None:
-        if match_at_s is not None:
-            particles.s[:num_particles] = particle_on_co._xobject.s[0] - ds
-        else:
-            particles.s[:num_particles] = particle_on_co._xobject.s[0]
+        particles.s[:num_particles] = s_at_element
         particles.at_element[:num_particles] = idx_at_element
         particles.start_tracking_at_element = idx_at_element
 
