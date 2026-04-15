@@ -224,20 +224,15 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     WW = tw_init.W_matrix
                     particle_on_co = tw_init.particle_on_co
                 else:
-                    # Transport the W_matrix from at_element to match_at_s
+                    # Transport the W_matrix and particle_on_co from at_element to match_at_s
                     ds = match_at_s - s_at_element
                     assert ds > 0
-                    if '_xpart_aux_marker' not in line.env.elements:
-                        line.env.new('_xpart_aux_marker', xt.Marker)
-                    ltransport = line.env.new_line(length=ds, components=[
-                        line.env.place('_xpart_aux_marker', at=0)])
-                    ltransport.particle_ref = tw_init.particle_on_co.copy()
-                    tw_init.particle_on_co.at_element = 0
-                    tw_init.element_name = '_xpart_aux_marker'
-                    tw_transport = ltransport.twiss(init=tw_init)
+
+                    tw_transport = _trasport_twiss_over_drift(line.env, tw_init, ds)
+
                     WW = tw_transport.W_matrix[-1, :, :]
                     particle_on_co = tw_transport.get_twiss_init('_end_point').particle_on_co
-                    del line.env.elements['_xpart_aux_marker']
+
         elif W_matrix is None and R_matrix is not None:
             import xtrack.linear_normal_form as lnf
             WW, _, _, _ = lnf.compute_linear_normal_form(R_matrix, **kwargs)
@@ -460,3 +455,27 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         particles.spin_z[:num_particles] = kwargs['spin_z']
 
     return particles
+
+def _trasport_twiss_over_drift(env, tw_init, ds):
+    assert ds > 0
+    tw_init = tw_init.copy()
+
+    if '_xpart_aux_marker' not in env.elements:
+        env.new('_xpart_aux_marker', xt.Marker)
+    if '_xpart_aux_drift' not in env.elements:
+        env.new('_xpart_aux_drift', xt.Drift, length=ds)
+    env['_xpart_aux_drift'].length = ds
+    env['_xpart_aux_drift'].model = 'exact'
+
+    ltransport = env.new_line(components=[
+        '_xpart_aux_marker', '_xpart_aux_drift'])
+    ltransport.particle_ref = tw_init.particle_on_co.copy()
+
+    tw_init.particle_on_co.at_element = 0
+    tw_init.element_name = '_xpart_aux_marker'
+
+    tw_transport = ltransport.twiss(init=tw_init)
+    del env.elements['_xpart_aux_marker']
+    del env.elements['_xpart_aux_drift']
+
+    return tw_transport
