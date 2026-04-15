@@ -5,6 +5,7 @@
 
 import numpy as np
 from .polar import generate_2D_uniform_circular_sector
+from ..build_particles import _trasport_twiss_over_drift
 from ..general import _print
 
 import xpart as xp
@@ -118,8 +119,6 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
 
     '''
 
-
-
     if line is not None and tracker is not None:
         raise ValueError(
             'line and tracker cannot be provided at the same time.')
@@ -153,7 +152,14 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         drift_to_at_s = None
 
     if twiss is None:
-        twiss = line.twiss(at_elements=([at_element] if match_at_s is None else None), at_s=match_at_s, **kwargs)
+        # twiss = line.twiss(at_elements=([at_element] if match_at_s is None else None), at_s=match_at_s, **kwargs)
+        twiss = line.twiss(**kwargs).rows[at_element]
+        if match_at_s is not None:
+            tt = line.tracker._tracker_data_base._line_table
+            ds = match_at_s - tt['s', at_element]
+            assert ds > 0
+            tw_init = twiss.get_twiss_init(at_element=at_element)
+            twiss = _trasport_twiss_over_drift(line.env, tw_init, ds).rows['_end_point']
     if side=='+':
         assert twiss[plane][0] < absolute_cut, 'The cut is on the wrong side'
     else:
