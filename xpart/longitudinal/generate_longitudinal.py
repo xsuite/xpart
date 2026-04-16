@@ -105,7 +105,7 @@ def _characterize_line(line, particle_ref,
                                                         line.vv['t_turn_s'])
     energy_loss_from_radiation = 0.
     if radiation_active:
-        energy_loss_from_radiation = tw.eneloss_turn
+        energy_loss_from_radiation = tw.energy_loss
 
     dct={}
     dct['T_rev'] = T_rev

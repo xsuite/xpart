@@ -66,6 +66,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     """
 
+    if match_at_s is not None:
+        assert at_element is not None, (
+            'If `match_at_s` is provided, `at_element` needs to be provided and'
+            'needs to correspond to previous element in the sequence'
+        )
+
     if line is not None and tracker is not None:
         raise ValueError(
             'line and tracker cannot be provided at the same time.')
@@ -78,6 +84,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if line is not None:
         assert line.tracker is not None, ("The line must have a tracker, "
             "please call Line.build_tracker() first.")
+        tt = line.tracker._tracker_data_base._line_table
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
     Particles = xt.Particles  # To get the right Particles class depending on pyheatail interface state
@@ -178,65 +185,54 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         # Only this case is covered if not starting at element 0
         assert line is not None
         assert mode == 'normalized_transverse'
-        if isinstance(at_element, str):
-            at_element = line._element_names_unique.index(at_element)
-        assert R_matrix is None # Not clear if it is at the element or at start machine
-        if particle_on_co is not None:
-            assert particle_on_co._xobject.at_element == 0
-
-    if match_at_s is not None:
-        assert at_element is not None, (
-            'If `match_at_s` is provided, `at_element` needs to be provided and'
-            'needs to correspond to the corresponding element in the sequence'
-        )
-        s_elements = line.get_s_elements()
-        s_at_element = s_elements[at_element]
-        if np.abs(match_at_s - s_at_element) < s_tol:
-            at_element_line_rmat = at_element
-            line_rmat = line
-            match_at_s = None
-        else:
-            # Match at a position where there is no marker and backtrack to the previous marker
-            expected_at_element = np.searchsorted(s_elements, match_at_s)
-            names_between = line._element_names_unique[at_element:expected_at_element]
-            only_passives_between = all(
-                xt._is_aperture(line[nn], line) or xt._behaves_like_drift(line[nn], line)
-                for nn in names_between
-            )
-
-            if at_element != expected_at_element and (at_element >= expected_at_element or not only_passives_between):
-                raise ValueError(
-                    "`match_at_s` can only be placed in the drifts downstream of the "
-                    "specified `at_element`. No active element can be present in between."
-                )
-
-            (tracker_rmat, _
-                ) = xt.twiss._build_auxiliary_tracker_with_extra_markers(
-                    tracker=line.tracker, at_s=[match_at_s],
-                    marker_prefix='xpart_rmat_')
-            at_element_line_rmat = tracker_rmat.line._element_names_unique.index('xpart_rmat_0')
-            line_rmat = tracker_rmat.line
-    else:
-        line_rmat = line
-        at_element_line_rmat = at_element
+        idx_at_element = tt.rows.indices[at_element][0]
+        s_at_element = tt['s', at_element]
 
     if mode == 'normalized_transverse':
+
+        if match_at_s is not None:
+
+            if np.abs(match_at_s - s_at_element) < s_tol:
+                match_at_s = None
+            else:
+                # Check that match_at_s and at_element are consistent
+                names_between = tt.rows[tt.s < match_at_s].rows[:at_element].name
+                assert len(names_between) > 0
+                expected_at_element = names_between[-1]
+                only_passives_between = all(
+                    xt._is_aperture(line.get(nn), line) or xt._behaves_like_drift(line.get(nn), line)
+                    for nn in names_between)
+                if (at_element != expected_at_element
+                    and (at_element >= expected_at_element or not only_passives_between)):
+                    raise ValueError("`match_at_s` can only be placed in the "
+                    "drifts downstream of the specified `at_element`. '"
+                    "No active element can be present in between."
+                    )
 
         if W_matrix is None and line is not None:
             if method is not None:
                 kwargs['method'] = method
-            tw = line_rmat.twiss(particle_on_co=particle_on_co,
-                                    particle_ref=particle_ref,
-                                    R_matrix=R_matrix, **kwargs)
-            tw_state = tw.get_twiss_init(at_element=
-                (at_element_line_rmat if at_element_line_rmat is not None else 0))
+            tw = line.twiss(particle_on_co=particle_on_co,
+                            particle_ref=particle_ref,
+                            R_matrix=R_matrix, **kwargs)
+            if at_element is None and match_at_s is None:
+                WW = tw.W_matrix[0, :, :]
+                particle_on_co = tw.particle_on_co.copy()
+            else:
+                tw_init = tw.get_twiss_init(at_element=at_element)
+                if match_at_s is None:
+                    WW = tw_init.W_matrix
+                    particle_on_co = tw_init.particle_on_co
+                else:
+                    # Transport the W_matrix and particle_on_co from at_element to match_at_s
+                    ds = match_at_s - s_at_element
+                    assert ds > 0
 
-            # This is not initialized by get_twiss_init
-            tw_state.particle_on_co.at_element = line_rmat._element_names_unique.index(
-                                                        tw_state.element_name)
+                    tw_transport = _trasport_twiss_over_drift(line.env, tw_init, ds)
 
-            WW = tw_state.W_matrix
-            particle_on_co = tw_state.particle_on_co
+                    WW = tw_transport.W_matrix[-1, :, :]
+                    particle_on_co = tw_transport.get_twiss_init('_end_point').particle_on_co
+
         elif W_matrix is None and R_matrix is not None:
             import xtrack.linear_normal_form as lnf
             WW, _, _, _ = lnf.compute_linear_normal_form(R_matrix, **kwargs)
@@ -423,6 +419,9 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     part_dict['weight'] = np.ones(num_particles, dtype=np.float64)
 
+    if line is not None and not line._has_valid_tracker():
+        line.build_tracker()
+
     if _context is None and _buffer is None and line is not None:
         _context = line._buffer.context
 
@@ -436,21 +435,14 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if match_at_s is not None:
         # Backtrack to at_element
-        length_aux_drift = -match_at_s + line.get_s_position(at_element)
-        assert length_aux_drift <= 0
-        auxdrift = xt.Drift(length=length_aux_drift,
+        auxdrift = xt.Drift(length=-ds,
                             _context=line._buffer.context)
         auxdrift.track(particles)
 
     if at_element is not None:
-        if match_at_s is not None:
-            particles.s[:num_particles] = particle_on_co._xobject.s[0] + length_aux_drift
-        else:
-            assert particle_on_co.at_element[0] == at_element
-            particles.s[:num_particles] = particle_on_co._xobject.s[0]
-        particles.at_element[:num_particles] = at_element
-
-        particles.start_tracking_at_element = at_element
+        particles.s[:num_particles] = s_at_element
+        particles.at_element[:num_particles] = idx_at_element
+        particles.start_tracking_at_element = idx_at_element
 
     particles.spin_x[:num_particles] = particle_ref._xobject.spin_x[0]
     particles.spin_y[:num_particles] = particle_ref._xobject.spin_y[0]
@@ -463,3 +455,27 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         particles.spin_z[:num_particles] = kwargs['spin_z']
 
     return particles
+
+def _trasport_twiss_over_drift(env, tw_init, ds):
+    assert ds > 0
+    tw_init = tw_init.copy()
+
+    if '_xpart_aux_marker' not in env.elements:
+        env.new('_xpart_aux_marker', xt.Marker)
+    if '_xpart_aux_drift' not in env.elements:
+        env.new('_xpart_aux_drift', xt.Drift, length=ds)
+    env['_xpart_aux_drift'].length = ds
+    env['_xpart_aux_drift'].model = 'exact'
+
+    ltransport = env.new_line(components=[
+        '_xpart_aux_marker', '_xpart_aux_drift'])
+    ltransport.particle_ref = tw_init.particle_on_co.copy()
+
+    tw_init.particle_on_co.at_element = 0
+    tw_init.element_name = '_xpart_aux_marker'
+
+    tw_transport = ltransport.twiss(init=tw_init)
+    del env.elements['_xpart_aux_marker']
+    del env.elements['_xpart_aux_drift']
+
+    return tw_transport
