@@ -33,6 +33,7 @@ def _characterize_line(line, particle_ref,
     T_rev = line.get_length()/(particle_ref._xobject.beta0[0]*clight)
     freq_list = []
     lag_list_deg = []
+    phase_list_rad = []
     voltage_list = []
     h_list = []
     energy_ref_increment_list = []
@@ -43,9 +44,11 @@ def _characterize_line(line, particle_ref,
             eecp = ee.copy(_context=xo.ContextCpu())
             if ee.voltage != 0:
                 lag = eecp.lag
+                phase = eecp.phase
                 if radiation_active:
                     lag += eecp.lag_taper
                 lag_list_deg.append(lag)
+                phase_list_rad.append(phase)
                 voltage_list.append(eecp.voltage)
                 if eecp.frequency == 0:
                     h_list.append(eecp.harmonic)
@@ -61,6 +64,7 @@ def _characterize_line(line, particle_ref,
             if eecp.longitudinal_mode in ['nonlinear' , 'linear_fixed_rf']:
                 freq_list += list(eecp.frequency_rf)
                 lag_list_deg += list(eecp.lag_rf)
+                phase_list_rad += list(0 * np.array(eecp.lag_rf)) # not yet there
                 voltage_list += list(eecp.voltage_rf)
                 h_list += [ff*T_rev for ff in eecp.frequency_rf]
             if eecp.longitudinal_mode  == 'nonlinear':
@@ -111,6 +115,7 @@ def _characterize_line(line, particle_ref,
     dct['T_rev'] = T_rev
     dct['freq_list'] = freq_list
     dct['lag_list_deg'] = lag_list_deg
+    dct['phase_list_rad'] = phase_list_rad
     dct['voltage_list'] = voltage_list
     dct['h_list'] = h_list
     dct['momentum_compaction_factor'] = tw['momentum_compaction_factor']
@@ -240,7 +245,8 @@ def generate_longitudinal_coordinates(
 
     if rf_phase is None:
         assert line is not None
-        rf_phase=(np.array(dct['lag_list_deg']))/180*np.pi
+        rf_phase=((np.array(dct['lag_list_deg'])) / 180 * np.pi
+                 + np.array(dct['phase_list_rad']))
 
     p0c_increase_from_energy_program = 0.
     if energy_ref_increment is None and line is not None:
