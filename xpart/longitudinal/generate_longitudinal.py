@@ -64,7 +64,7 @@ def _characterize_line(line, particle_ref,
             if eecp.longitudinal_mode in ['nonlinear' , 'linear_fixed_rf']:
                 freq_list += list(eecp.frequency_rf)
                 lag_list_deg += list(eecp.lag_rf)
-                phase_list_rad += list(0 * np.array(eecp.lag_rf)) # not yet there
+                phase_list_rad += list(eecp.phase_rf)
                 voltage_list += list(eecp.voltage_rf)
                 h_list += [ff*T_rev for ff in eecp.frequency_rf]
             if eecp.longitudinal_mode  == 'nonlinear':
