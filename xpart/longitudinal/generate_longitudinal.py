@@ -98,7 +98,7 @@ def _characterize_line(line, particle_ref,
         assert len(freq_list) > 0
 
     if radiation_active:
-        kwargs['eneloss_and_damping'] = True
+        kwargs['radiation_analysis'] = True
 
     tw = line.twiss(
         particle_ref=particle_ref, **kwargs)
