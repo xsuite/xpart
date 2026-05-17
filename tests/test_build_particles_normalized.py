@@ -154,7 +154,8 @@ def test_build_particles_normalized_match_at_s(test_context):
 
     at_element = 'ip6'
     i_start = line.element_names.index(at_element)
-    s_start = line.get_s_position(i_start)
+    tt = line.get_table()
+    s_start = tt['s', i_start]
     # Find first active element
     for iele in range(i_start, len(line)):
         ee = line[iele]
@@ -162,7 +163,7 @@ def test_build_particles_normalized_match_at_s(test_context):
             i_next_active = iele
             break
 
-    match_at_s = line.get_s_position(i_next_active) - 0.11
+    match_at_s = tt['s', i_next_active] - 0.11
 
     # Ensure there is a Marker between at_element and match_at_s (to test behave_likes_drift)
     line.insert('test_marker', obj=xt.Marker(), at=s_start + 0.3*(match_at_s-s_start))

@@ -32,7 +32,8 @@ def test_pencil_with_absolute_cut(test_context):
     # Location of the collimator
     at_element = 'tcp.6l3.b1' # High dispersion
     # at_element = 'tcp.d6l7.b1' # Low dispersion
-    at_s = line.get_s_position(at_element) + 1.
+    tt = line.get_table()
+    at_s = tt['s', at_element] + 1.
     absolute_cut = 3e-3 # position of the jaw
     pencil_dr_sigmas = 3 # width of the pencil
 
@@ -77,7 +78,7 @@ def test_pencil_with_absolute_cut(test_context):
 
         # Drift to at_s position for checking
         drift_to_at_s = xt.Drift(_context=test_context,
-                        length=at_s-line.get_s_position(at_element))
+                        length=at_s-tt['s', at_element])
         drift_to_at_s.track(particles)
 
         particles.move(_context=xo.ContextCpu())

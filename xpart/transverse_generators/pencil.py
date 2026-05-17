@@ -146,8 +146,9 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
 
     if match_at_s is not None:
         import xtrack as xt
+        tt = line.get_table()
         drift_to_at_s = xt.Drift(_context=line._context,
-            length=match_at_s - line.get_s_position(at_element))
+            length=match_at_s - tt['s', at_element])
     else:
         drift_to_at_s = None
 
@@ -219,4 +220,3 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         return p_pencil_at_s.x, p_pencil_at_s.px
     else:
         return p_pencil_at_s.y, p_pencil_at_s.py
-

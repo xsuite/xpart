@@ -18,7 +18,6 @@ particles = line.build_particles(x_norm=[0,1,2], px_norm=[0,0,0], # in sigmas
 particles = line.build_particles(x_norm=[0,1,2], px_norm=[0,0,0], # in sigmas
                    nemitt_x=2.5e-6, nemitt_y=2.5e-6,
                    at_element='ip6',
-                   match_at_s=line.get_s_position('ip6') + 100
+                   match_at_s=line.get_table()['s', 'ip6'] + 100
                    )
-
 

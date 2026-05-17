@@ -18,7 +18,8 @@ line.set_particle_ref('proton', p0c=7e12)
 
 # Location of the collimator
 at_element = 'tcp.d6l7.b1'
-at_s = line.get_s_position(at_element) + 1.
+tt = line.get_table()
+at_s = tt['s', at_element] + 1.
 y_cut = 3e-3 # position of the jaw
 pencil_dr_sigmas = 3 # width of the pencil
 side = '+' # side of the pencil
@@ -47,7 +48,7 @@ particles = line.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                 at_element=at_element, match_at_s=at_s)
 
 # Drift to at_s position for checking
-drift_to_at_s = xt.Drift(length=at_s-line.get_s_position(at_element))
+drift_to_at_s = xt.Drift(length=at_s-tt['s', at_element])
 drift_to_at_s.track(particles)
 
 # Checks and plots
