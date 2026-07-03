@@ -3,5 +3,5 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-from xtrack.linear_normal_form import healy_symplectify, compute_linear_normal_form
+from xtrack.linear_normal_form import healy_symplectify, get_linear_normal_form
 

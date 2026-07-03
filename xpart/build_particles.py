@@ -235,7 +235,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
         elif W_matrix is None and R_matrix is not None:
             import xtrack.linear_normal_form as lnf
-            WW, _, _, _ = lnf.compute_linear_normal_form(R_matrix, **kwargs)
+            WW, _, _, _ = lnf.get_linear_normal_form(R_matrix, **kwargs)
         else:
             WW = W_matrix
 
