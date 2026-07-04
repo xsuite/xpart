@@ -8,12 +8,13 @@ import pathlib
 
 import numpy as np
 import pytest
-from xpart.tests.test_multi_bunch_gauss_gen import TEST_DATA_FOLDER
 import xtrack as xt
 import xobjects as xo
 
 import xpart as xp
 from xobjects.test_helpers import fix_random_seed
+
+TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 
 
 @pytest.mark.parametrize('scenario', ['psb_injection', 'sps_ions', 'lhc_protons'])

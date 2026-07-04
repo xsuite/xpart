@@ -74,7 +74,7 @@ def test_short_bunch(test_context):
     nemitt_x = 2e-6
     nemitt_y = 2.5e-6
 
-    filename = test_data_folder.joinpath(
+    filename = TEST_DATA_FOLDER.joinpath(
             'sps_w_spacecharge/line_no_spacecharge_and_particle.json')
     with open(filename, 'r') as fid:
         ddd = json.load(fid)
