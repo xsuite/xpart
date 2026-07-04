@@ -44,7 +44,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
             filename = TEST_DATA_FOLDER.joinpath('sps_ions/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
-            line = xt.Line.from_dict(input_data['line'])
+            line = xt.Line.from_dict(input_data)
             line.build_tracker(_context=ctx)
             rms_bunch_length = 0.10
         elif scenario == "psb_injection":
@@ -52,7 +52,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
             filename = TEST_DATA_FOLDER.joinpath('psb_injection/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
-            line = xt.Line.from_dict(input_data['line'])
+            line = xt.Line.from_dict(input_data)
             line.build_tracker(_context=ctx)
             rms_bunch_length = 17.
         else:
