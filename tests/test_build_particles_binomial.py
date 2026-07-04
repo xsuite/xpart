@@ -6,6 +6,7 @@
 import json
 
 import numpy as np
+from pathlib import Path
 
 import xpart as xp
 import xtrack as xt
@@ -15,6 +16,7 @@ from xpart.longitudinal import generate_binomial_longitudinal_coordinates
 
 from xobjects.test_helpers import fix_random_seed, for_all_test_contexts
 
+TEST_DATA_FOLDER = Path(__file__).parent / '../../xtrack/test_data/lhc_no_bb'
 
 @for_all_test_contexts
 @fix_random_seed(42343298)
@@ -27,12 +29,12 @@ def test_build_particles_binomial(test_context):
     num_part = 1000000
 
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = TEST_DATA_FOLDER.joinpath('line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data['line'])
     line.build_tracker(_context=test_context)
-	
+
     # Built a set of three particles with different x coordinates
     zeta, delta, matcher = generate_binomial_longitudinal_coordinates(
         num_particles=num_part,
