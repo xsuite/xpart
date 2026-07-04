@@ -47,6 +47,7 @@ def _characterize_line(line, particle_ref,
                 phase = eecp.phase
                 if radiation_active:
                     lag += eecp.lag_taper
+                    phase += eecp.phase_taper
                 lag_list_deg.append(lag)
                 phase_list_rad.append(phase)
                 voltage_list.append(eecp.voltage)
