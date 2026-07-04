@@ -4,10 +4,13 @@
 # ######################################### #
 
 import json
+import pathlib
 import numpy as np
 
 import xpart as xp
 import xtrack as xt
+
+TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 
 from xobjects.test_helpers import for_all_test_contexts
 
@@ -19,7 +22,7 @@ def test_pencil(test_context):
     nemitt_y = 3e-6
 
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data['line'])

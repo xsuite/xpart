@@ -4,9 +4,11 @@
 # ######################################### #
 
 import json
+import pathlib
 
 import numpy as np
 import pytest
+from xpart.tests.test_multi_bunch_gauss_gen import TEST_DATA_FOLDER
 import xtrack as xt
 import xobjects as xo
 
@@ -28,8 +30,7 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
                               delta=[10], _context=ctx)
 
             # Load machine model (from pymask)
-            filename = xt._pkg_root.parent.joinpath(
-                'test_data/lhc_no_bb/line_and_particle.json')
+            filename = TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
             line = xt.Line.from_dict(input_data['line'])
@@ -39,20 +40,18 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
 
         elif scenario == "sps_ions":
             # Load machine model (spsion)
-            filename = xt._pkg_root.parent.joinpath(
-                'test_data/sps_ions/line_and_particle.json')
+            filename = TEST_DATA_FOLDER.joinpath('sps_ions/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
-            line = xt.Line.from_dict(input_data)
+            line = xt.Line.from_dict(input_data['line'])
             line.build_tracker(_context=ctx)
             rms_bunch_length = 0.10
         elif scenario == "psb_injection":
             # Load machine model (psb injection)
-            filename = xt._pkg_root.parent.joinpath(
-                'test_data/psb_injection/line_and_particle.json')
+            filename = TEST_DATA_FOLDER.joinpath('psb_injection/line_and_particle.json')
             with open(filename, 'r') as fid:
                 input_data = json.load(fid)
-            line = xt.Line.from_dict(input_data)
+            line = xt.Line.from_dict(input_data['line'])
             line.build_tracker(_context=ctx)
             rms_bunch_length = 17.
         else:

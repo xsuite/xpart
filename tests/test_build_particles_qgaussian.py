@@ -4,6 +4,7 @@
 # ######################################### #
 
 import json
+import pathlib
 
 import numpy as np
 
@@ -14,6 +15,8 @@ import xobjects as xo
 from xpart.longitudinal import generate_qgaussian_longitudinal_coordinates
 
 from xobjects.test_helpers import fix_random_seed, for_all_test_contexts
+
+XT_TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 
 
 @for_all_test_contexts
@@ -27,12 +30,12 @@ def test_build_particles_qgaussian(test_context):
     num_part = 3000000
 
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = XT_TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data['line'])
     line.build_tracker(_context=test_context)
-	
+
     # Built a set of three particles with different x coordinates
     zeta, delta, matcher = generate_qgaussian_longitudinal_coordinates(
         num_particles=num_part,

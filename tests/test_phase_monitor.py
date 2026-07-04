@@ -6,6 +6,7 @@
 import json
 
 import numpy as np
+import pathlib
 
 import xobjects as xo
 import xpart as xp
@@ -13,12 +14,12 @@ import xtrack as xt
 
 from xobjects.test_helpers import for_all_test_contexts
 
-test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
+TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 
 
 @for_all_test_contexts
 def test_phase_monitor(test_context):
-    filename = test_data_folder.joinpath(
+    filename = TEST_DATA_FOLDER.joinpath(
         'sps_w_spacecharge/line_no_spacecharge_and_particle.json')
     with open(filename, 'r') as fid:
         ddd = json.load(fid)

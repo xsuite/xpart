@@ -5,14 +5,14 @@
 
 import numpy as np
 import json
+import pathlib
 
 import xpart as xp
 import xtrack as xt
 
 from xobjects.test_helpers import for_all_test_contexts
 
-test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
-
+TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 
 @for_all_test_contexts
 def test_classical_particle_radius_ions(test_context):
@@ -20,7 +20,7 @@ def test_classical_particle_radius_ions(test_context):
     Test classical particle radius for ions
     """
     # Load SPS ion sequence with Pb82 ions
-    fname_line = test_data_folder.joinpath('sps_ions/line_and_particle.json')
+    fname_line = TEST_DATA_FOLDER.joinpath('sps_ions/line_and_particle.json')
     with open(fname_line, 'r') as fid:
         input_data = json.load(fid)
 
@@ -37,7 +37,7 @@ def test_classical_particle_radius_protons(test_context):
     Test classical particle radius for protons
     """
     # Load SPS sequence without space charge
-    fname_line = test_data_folder.joinpath('sps_w_spacecharge/'
+    fname_line = TEST_DATA_FOLDER.joinpath('sps_w_spacecharge/'
                                            'line_no_spacecharge_and_particle.json')
     with open(fname_line, 'r') as fid:
         input_data = json.load(fid)
@@ -53,10 +53,8 @@ def test_showing():
     """
     Test whether showing particle values gives reasonable output
     """
-    test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
-
     # Load SPS ion sequence with Pb82 ions
-    fname_line = test_data_folder.joinpath('sps_ions/line_and_particle.json')
+    fname_line = TEST_DATA_FOLDER.joinpath('sps_ions/line_and_particle.json')
     with open(fname_line, 'r') as fid:
         input_data = json.load(fid)
 

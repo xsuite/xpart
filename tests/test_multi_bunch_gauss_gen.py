@@ -4,6 +4,7 @@
 # ######################################### #
 
 import json
+import pathlib
 
 import numpy as np
 
@@ -13,7 +14,7 @@ import xtrack as xt
 
 from xobjects.test_helpers import for_all_test_contexts, fix_random_seed
 
-test_data_folder = xt._pkg_root.joinpath('../test_data').absolute()
+TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 
 @for_all_test_contexts
 @fix_random_seed(6453645)
@@ -24,7 +25,7 @@ def test_multi_bunch_gaussian_generation(test_context):
     nemitt_x = 2e-6
     nemitt_y = 2.5e-6
 
-    filename = test_data_folder.joinpath(
+    filename = TEST_DATA_FOLDER.joinpath(
         'lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
