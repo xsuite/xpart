@@ -16,7 +16,7 @@ from xpart.longitudinal import generate_binomial_longitudinal_coordinates
 
 from xobjects.test_helpers import fix_random_seed, for_all_test_contexts
 
-TEST_DATA_FOLDER = Path(__file__).parent / '../../xtrack/test_data/lhc_no_bb'
+XT_TEST_DATA_FOLDER = Path(__file__).parent / '../../xtrack/test_data'
 
 @for_all_test_contexts
 @fix_random_seed(42343298)
@@ -29,7 +29,7 @@ def test_build_particles_binomial(test_context):
     num_part = 1000000
 
     # Load machine model (from pymask)
-    filename = TEST_DATA_FOLDER.joinpath('line_and_particle.json')
+    filename = XT_TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data['line'])

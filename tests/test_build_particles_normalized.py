@@ -4,6 +4,7 @@
 # ######################################### #
 
 import json
+from pathlib import Path
 
 import numpy as np
 
@@ -13,6 +14,7 @@ import xobjects as xo
 
 from xobjects.test_helpers import for_all_test_contexts
 
+XT_TEST_DATA_FOLDER = Path(__file__).parent / '../../xtrack/test_data'
 
 @for_all_test_contexts
 def test_build_particles_normalized(test_context):
@@ -22,7 +24,7 @@ def test_build_particles_normalized(test_context):
 
 
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = XT_TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data['line'])
@@ -84,7 +86,7 @@ def test_build_particles_normalized(test_context):
 
 @for_all_test_contexts
 def test_build_particles_normalized_ions(test_context):
-    filename = xt._pkg_root.parent / 'test_data' / 'sps_ions' / 'line_and_particle.json'
+    filename = XT_TEST_DATA_FOLDER.joinpath('sps_ions/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data)
@@ -115,7 +117,7 @@ def test_build_particles_normalized_closed_orbit(test_context):
 
 
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = XT_TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data['line'])
@@ -147,7 +149,7 @@ def test_build_particles_normalized_match_at_s(test_context):
                       delta=[10], _context=test_context)
 
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath('test_data/lhc_no_bb/line_and_particle.json')
+    filename = XT_TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
     line = xt.Line.from_dict(input_data['line'])
@@ -199,8 +201,7 @@ def test_build_particles_normalized_match_at_s(test_context):
 def test_build_perticles_dispersion(test_context):
 
     # Load machine model (from pymask)
-    filename = xt._pkg_root.parent.joinpath(
-                                'test_data/lhc_no_bb/line_and_particle.json')
+    filename = XT_TEST_DATA_FOLDER.joinpath('lhc_no_bb/line_and_particle.json')
     with open(filename, 'r') as fid:
         input_data = json.load(fid)
 
