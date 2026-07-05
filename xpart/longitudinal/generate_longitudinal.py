@@ -267,6 +267,8 @@ def generate_longitudinal_coordinates(
 
     matcher = None
 
+    breakpoint()
+
     if engine is None:
         if line is not None and dct['found_only_linear_longitudinal']:
             engine = 'linear'
@@ -322,8 +324,7 @@ def generate_longitudinal_coordinates(
             if energy_ref_increment is not None and energy_ref_increment != 0:
                 raise NotImplementedError(
                     'Reference energy increment not yet supported for linear matching')
-            eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
-            beta_z = np.abs(eta) * circumference / 2.0 / np.pi / rfbucket.Q_s
+            beta_z = rfbucket.beta_z
             sigma_dp = sigma_z / beta_z
             z_particles = sigma_z * np.random.normal(size=num_particles)
             delta_particles = sigma_dp * np.random.normal(size=num_particles)
@@ -337,7 +338,7 @@ def generate_longitudinal_coordinates(
     elif engine == "single-rf-harmonic":
         if distribution not in ["parabolic", "gaussian", "binomial", "qgaussian"]:
             raise NotImplementedError
-        eta = momentum_compaction_factor - 1/particle_ref._xobject.gamma0[0]**2
+        beta_z = rfbucket.beta_z
 
         # if fragment
         if particle_ref._xobject.chi[0] != 1.0:
@@ -369,7 +370,10 @@ def generate_longitudinal_coordinates(
                                    zeta=z_particles, ptau=ptau)
         delta_particles = np.array(temp_particles.delta)
     else:
-        raise NotImplementedError # TODO better message
+        raise NotImplementedError(
+            f"Longitudinal generation engine {engine!r} is not supported. "
+            "Supported engines are 'linear', 'pyheadtail', and "
+            "'single-rf-harmonic'.")
 
     if return_matcher:
         return z_particles, delta_particles, matcher
