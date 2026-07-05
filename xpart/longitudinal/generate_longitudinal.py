@@ -267,8 +267,6 @@ def generate_longitudinal_coordinates(
 
     matcher = None
 
-    breakpoint()
-
     if engine is None:
         if line is not None and dct['found_only_linear_longitudinal']:
             engine = 'linear'
