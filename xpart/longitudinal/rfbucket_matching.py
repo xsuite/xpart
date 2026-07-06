@@ -225,7 +225,7 @@ class RFBucketMatcher:
         z_right = rfbucket.z_right
         zero, mean, var, cov = self.get_moment_integrators()
 
-        var_x = var(self.psi, lambda x: -rfbucket.separatrix(x),
+        var_x = var(self.psi, lambda x: rfbucket.separatrix(x, sgn=-1),
                     rfbucket.separatrix, z_left, z_right,
                     direction='x') # x means z direction
 
@@ -237,7 +237,7 @@ class RFBucketMatcher:
         zero, mean, var, cov = self.get_moment_integrators()
 
         var_x, cov_xy, var_y = cov(
-            self.psi, lambda x: -rfbucket.separatrix(x),
+            self.psi, lambda x: rfbucket.separatrix(x, sgn=-1),
             rfbucket.separatrix, z_left, z_right)
 
         return (np.sqrt(var_x*var_y - cov_xy**2) *

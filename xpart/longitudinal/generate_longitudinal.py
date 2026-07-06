@@ -127,6 +127,7 @@ def _characterize_line(line, particle_ref,
     dct['energy_ref_increment_list'] = energy_ref_increment_list
     dct['p0c_increase_from_energy_program'] = p0c_increase_from_energy_program
     dct['energy_loss_from_radiation'] = energy_loss_from_radiation
+    dct['delta0'] = tw.delta[0]
     return dct
 
 def get_bucket(line, **kwargs):
@@ -155,6 +156,7 @@ def generate_longitudinal_coordinates(
                                     tracker=None,
                                     m=None,
                                     q=None,
+                                    delta0=None,
                                     _only_bucket=False,
                                     **kwargs # passed to twiss
                                     ):
@@ -249,6 +251,10 @@ def generate_longitudinal_coordinates(
         rf_phase=((np.array(dct['lag_list_deg'])) / 180 * np.pi
                  + np.array(dct['phase_list_rad']))
 
+    if delta0 is None:
+        assert line is not None
+        delta0 = dct['delta0']
+
     p0c_increase_from_energy_program = 0.
     if energy_ref_increment is None and line is not None:
         energy_ref_increment_list = dct['energy_ref_increment_list']
@@ -313,7 +319,8 @@ def generate_longitudinal_coordinates(
                             harmonic_list=np.atleast_1d(rf_harmonic),
                             voltage_list=np.atleast_1d(rf_voltage),
                             phi_offset_list=np.atleast_1d(rf_phase),
-                            p_increment=dp0_si)
+                            p_increment=dp0_si,
+                            dp0=delta0)
         if _only_bucket:
             return rfbucket
 

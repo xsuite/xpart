@@ -621,7 +621,7 @@ class RFBucket:
             h *= np.sign(self.eta0)
         return h
 
-    def equihamiltonian(self, zcut):
+    def equihamiltonian(self, zcut, sgn=1):
         '''Return a function dp_at that encodes the equi-Hamiltonian
         contour line that cuts the z axis at (zcut, 0).
         In more detail, dp_at(z) returns the (positive) dp value at
@@ -632,14 +632,14 @@ class RFBucket:
             hcut = self.hamiltonian(zcut, self.dp0)
             r = np.abs(2./(self.eta0*self.beta*c) *
                        (self.total_potential(z)/self.p0 - hcut))
-            return self.dp0 + np.sqrt(r.clip(min=0))
+            return self.dp0 + np.sqrt(r.clip(min=0)) * sgn
         return dp_at
 
-    def separatrix(self, z):
+    def separatrix(self, z, sgn=1):
         '''Return the positive dp value corresponding to the separatrix
         Hamiltonian contour line at the given z.
         '''
-        dp_separatrix_at = self.equihamiltonian(self.z_ufp_separatrix)
+        dp_separatrix_at = self.equihamiltonian(self.z_ufp_separatrix, sgn=sgn)
         return dp_separatrix_at(z)
 
     def h_sfp(self, make_convex=False):
