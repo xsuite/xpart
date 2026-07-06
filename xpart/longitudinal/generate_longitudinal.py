@@ -331,13 +331,13 @@ def generate_longitudinal_coordinates(
             return rfbucket
 
         rf_bucket_spacing = circumference / np.max(np.atleast_1d(rf_harmonic))
-        bucket_half_aperture = min(
+        bucket_half_width = min(
             np.abs(rfbucket.z_sfp_extr - rfbucket.z_left),
             np.abs(rfbucket.z_right - rfbucket.z_sfp_extr),
         )
         short_bunch_threshold = min(
             0.03 * rf_bucket_spacing,
-            0.1 * bucket_half_aperture,
+            0.1 * bucket_half_width,
         )
 
         if sigma_z < short_bunch_threshold:
