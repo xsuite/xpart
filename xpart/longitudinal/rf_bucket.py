@@ -53,7 +53,7 @@ class RFBucket:
     def __init__(self, circumference, gamma, mass_kg,
                  charge_coulomb, alpha_array, p_increment,
                  harmonic_list, voltage_list, phi_offset_list,
-                 z_offset=None, dp0 = 0):
+                 z_offset=None, dp0 = 0, zeta0=0):
         '''Implements only the leading order momentum compaction factor.
 
         Arguments:
@@ -64,6 +64,7 @@ class RFBucket:
         calibrate the separatrix Hamiltonian value to zero) is done.
         z_offset is per default determined by the zero crossing located
         closest to z == 0.
+        - zeta0 shifts the RF force and potential in zeta.
         '''
 
         self.charge_coulomb = charge_coulomb
@@ -81,6 +82,7 @@ class RFBucket:
         self.V = voltage_list
         self.dphi = phi_offset_list
         self.dp0 = dp0
+        self.zeta0 = zeta0
 
         """Additional electric force fields to be added on top of the
         RF electric force field.
@@ -107,8 +109,10 @@ class RFBucket:
             ### Within a 2 bucket length interval we find all zero crossings
             ### of the non-accelerated total_force and identify the outermost
             ### separatrix UFPs via their minimal (convexified) potential value
-            domain_to_find_bucket_centre = np.linspace(-1.999*zmax, 1.999*zmax,
-                                                       self.sampling_points)
+            domain_to_find_bucket_centre = np.linspace(
+                self.zeta0 - 1.999*zmax,
+                self.zeta0 + 1.999*zmax,
+                self.sampling_points)
             z0 = self.zero_crossings(
                 partial(self.total_force, acceleration=False),
                 domain_to_find_bucket_centre)
@@ -207,7 +211,7 @@ class RFBucket:
         '''Return the (left-most) absolute extremal stable fix point
         within the bucket.
         '''
-        sfp_extr_index = np.argmax(self.hamiltonian(self.z_sfp, 0,
+        sfp_extr_index = np.argmax(self.hamiltonian(self.z_sfp, self.dp0,
                                                     make_convex=True))
         return self.z_sfp[sfp_extr_index]
 
@@ -275,7 +279,8 @@ class RFBucket:
         """
         hVcosphi = sum([h * self.V[i] * np.cos(
                             self.phi_offset_list[i]
-                          - 2*np.pi*h*self.z_sfp / self.circumference)
+                          - 2*np.pi*h*(self.z_sfp - self.zeta0)
+                            / self.circumference)
                         for i, h in enumerate(self.h)])
         # if hV == 0:
         #     ix = np.argmax(self.V)
@@ -319,8 +324,9 @@ class RFBucket:
     def rf_force(self, V, h, dphi, p_increment, acceleration=True):
         def f(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
+            z_rel = z - self.zeta0
             focusing_field = reduce(lambda x, y: x+y, [
-                V_i * np.sin(-h_i*z/self.R + dphi_i)
+                V_i * np.sin(-h_i*z_rel/self.R + dphi_i)
                 for V_i, h_i, dphi_i in zip(V, h, dphi)])
             if not acceleration:
                 accelerating_field = 0
@@ -409,8 +415,9 @@ class RFBucket:
         '''
         def vf(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
+            z_rel = z - self.zeta0
             focusing_potential = reduce(lambda x, y: x+y, [
-                -self.R/h[i] * V[i] * np.cos(-h[i]*z/self.R + dphi[i])
+                -self.R/h[i] * V[i] * np.cos(-h[i]*z_rel/self.R + dphi[i])
                 for i in range(len(V))])
             return coefficient * focusing_potential
 
@@ -623,10 +630,10 @@ class RFBucket:
 
     def equihamiltonian(self, zcut, sgn=1):
         '''Return a function dp_at that encodes the equi-Hamiltonian
-        contour line that cuts the z axis at (zcut, 0).
+        contour line that cuts the z axis at (zcut, self.dp0).
         In more detail, dp_at(z) returns the (positive) dp value at
         its given z argument such that
-        self.hamiltonian(z, dp_at(z)) == self.hamiltonian(zcut, 0) .
+        self.hamiltonian(z, dp_at(z)) == self.hamiltonian(zcut, self.dp0) .
         '''
         def dp_at(z):
             hcut = self.hamiltonian(zcut, self.dp0)
@@ -684,16 +691,17 @@ class RFBucket:
         equihamiltonian line.
         """
         if z is not None:
-            zl = -sigma * z
-            zr = +sigma * z
-            f = self.equihamiltonian(sigma * z)
+            z_center = self.z_sfp_extr
+            zl = z_center - sigma * z
+            zr = z_center + sigma * z
+            f = self.equihamiltonian(z_center + sigma * z)
         else:
             zl = self.z_left
             zr = self.z_right
             f = self.separatrix
 
         Q, error = dblquad(lambda y, x: 1, zl, zr,
-                           lambda x: 0, f)
+                           lambda x: self.dp0, f)
 
         return Q * 2*self.p0/np.abs(self.charge_coulomb)
 

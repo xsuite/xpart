@@ -127,6 +127,7 @@ def _characterize_line(line, particle_ref,
     dct['energy_ref_increment_list'] = energy_ref_increment_list
     dct['p0c_increase_from_energy_program'] = p0c_increase_from_energy_program
     dct['energy_loss_from_radiation'] = energy_loss_from_radiation
+    dct['zeta0'] = tw.zeta[0]
     dct['delta0'] = tw.delta[0]
     return dct
 
@@ -156,6 +157,7 @@ def generate_longitudinal_coordinates(
                                     tracker=None,
                                     m=None,
                                     q=None,
+                                    zeta0=None,
                                     delta0=None,
                                     _only_bucket=False,
                                     **kwargs # passed to twiss
@@ -251,6 +253,9 @@ def generate_longitudinal_coordinates(
         rf_phase=((np.array(dct['lag_list_deg'])) / 180 * np.pi
                  + np.array(dct['phase_list_rad']))
 
+    if zeta0 is None:
+        zeta0 = dct['zeta0'] if line is not None else 0
+
     if delta0 is None:
         assert line is not None
         delta0 = dct['delta0']
@@ -290,8 +295,8 @@ def generate_longitudinal_coordinates(
             raise NotImplementedError
         assert line is not None, ('Not yet implemented if line is not provided')
         sigma_dp = sigma_z / np.abs(dct['bets0'])
-        z_particles = sigma_z * np.random.normal(size=num_particles)
-        delta_particles = sigma_dp * np.random.normal(size=num_particles)
+        z_particles = zeta0 + sigma_z * np.random.normal(size=num_particles)
+        delta_particles = delta0 + sigma_dp * np.random.normal(size=num_particles)
         assert energy_ref_increment is None
     elif engine == "pyheadtail":
         if distribution != 'gaussian':
@@ -320,6 +325,7 @@ def generate_longitudinal_coordinates(
                             voltage_list=np.atleast_1d(rf_voltage),
                             phi_offset_list=np.atleast_1d(rf_phase),
                             p_increment=dp0_si,
+                            zeta0=zeta0,
                             dp0=delta0)
         if _only_bucket:
             return rfbucket
@@ -331,8 +337,8 @@ def generate_longitudinal_coordinates(
                     'Reference energy increment not yet supported for linear matching')
             beta_z = rfbucket.beta_z
             sigma_dp = sigma_z / beta_z
-            z_particles = sigma_z * np.random.normal(size=num_particles)
-            delta_particles = sigma_dp * np.random.normal(size=num_particles)
+            z_particles = zeta0 + sigma_z * np.random.normal(size=num_particles)
+            delta_particles = delta0 + sigma_dp * np.random.normal(size=num_particles)
         else:
             matcher = RFBucketMatcher(rfbucket=rfbucket,
                 distribution_type=ThermalDistribution,
