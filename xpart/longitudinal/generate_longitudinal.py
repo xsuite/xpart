@@ -330,7 +330,17 @@ def generate_longitudinal_coordinates(
         if _only_bucket:
             return rfbucket
 
-        if sigma_z < 0.03 * circumference/np.max(np.atleast_1d(rf_harmonic)):
+        rf_bucket_spacing = circumference / np.max(np.atleast_1d(rf_harmonic))
+        bucket_half_aperture = min(
+            np.abs(rfbucket.z_sfp_extr - rfbucket.z_left),
+            np.abs(rfbucket.z_right - rfbucket.z_sfp_extr),
+        )
+        short_bunch_threshold = min(
+            0.03 * rf_bucket_spacing,
+            0.1 * bucket_half_aperture,
+        )
+
+        if sigma_z < short_bunch_threshold:
             logger.info('short bunch, use linear matching')
             if energy_ref_increment is not None and energy_ref_increment != 0:
                 raise NotImplementedError(
