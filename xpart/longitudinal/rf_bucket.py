@@ -644,9 +644,9 @@ class RFBucket:
 
     def h_sfp(self, make_convex=False):
         '''Return the extremal Hamiltonian value at the corresponding
-        stable fix point (self.z_sfp_extr, 0) of the bucket.
+        stable fix point (self.z_sfp_extr, self.dp0) of the bucket.
         '''
-        return self.hamiltonian(self.z_sfp_extr, 0, make_convex)
+        return self.hamiltonian(self.z_sfp_extr, self.dp0, make_convex)
 
     def dp_max(self, zcut):
         '''Return the maximal dp value along the equihamiltonian which

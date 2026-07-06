@@ -180,8 +180,8 @@ class RFBucketMatcher:
         self.psi_for_variable(self.variable)
 
         xmin, xmax = self.rfbucket.z_left, self.rfbucket.z_right
-        ymin = -self.rfbucket.dp_max(self.rfbucket.z_right)
-        ymax = -ymin
+        ymax = self.rfbucket.dp_max(self.rfbucket.z_right)
+        ymin = 2 * self.rfbucket.dp0 - ymax
 
         # rejection sampling
         uniform = np.random.uniform
