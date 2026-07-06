@@ -53,7 +53,7 @@ class RFBucket:
     def __init__(self, circumference, gamma, mass_kg,
                  charge_coulomb, alpha_array, p_increment,
                  harmonic_list, voltage_list, phi_offset_list,
-                 z_offset=None, *args, **kwargs):
+                 z_offset=None, dp0 = 0):
         '''Implements only the leading order momentum compaction factor.
 
         Arguments:
@@ -80,6 +80,7 @@ class RFBucket:
         self.h = harmonic_list
         self.V = voltage_list
         self.dphi = phi_offset_list
+        self.dp0 = dp0
 
         """Additional electric force fields to be added on top of the
         RF electric force field.
@@ -614,7 +615,7 @@ class RFBucket:
               make_convex=True in order to return
               sign(eta)*hamiltonian(z, dp).
         '''
-        h = (-0.5 * self.eta0 * self.beta * c * dp**2 +
+        h = (-0.5 * self.eta0 * self.beta * c * (dp - self.dp0)**2 +
              self.total_potential(z) / self.p0)
         if make_convex:
             h *= np.sign(self.eta0)
@@ -628,10 +629,10 @@ class RFBucket:
         self.hamiltonian(z, dp_at(z)) == self.hamiltonian(zcut, 0) .
         '''
         def dp_at(z):
-            hcut = self.hamiltonian(zcut, 0)
+            hcut = self.hamiltonian(zcut, self.dp0)
             r = np.abs(2./(self.eta0*self.beta*c) *
                        (self.total_potential(z)/self.p0 - hcut))
-            return np.sqrt(r.clip(min=0))
+            return self.dp0 + np.sqrt(r.clip(min=0))
         return dp_at
 
     def separatrix(self, z):

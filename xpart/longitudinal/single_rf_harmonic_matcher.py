@@ -210,7 +210,7 @@ class SingleRFHarmonicMatcher:
     def _Cq(self, q, margin=5e-4):
         """
         Normalization coefficient for Q-Gaussian
-        
+
         Normalizing constant from Eq. (2.2) in https://link.springer.com/article/10.1007/s00032-008-0087-y
         with a small margin around 1.0 for numerical stability
         """
