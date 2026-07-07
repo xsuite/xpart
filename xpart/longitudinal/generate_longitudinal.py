@@ -30,6 +30,13 @@ def _characterize_line(line, particle_ref,
 
     radiation_active = line._radiation_model is not None
 
+
+    if radiation_active:
+        kwargs['radiation_analysis'] = True
+
+    tw = line.twiss(
+        particle_ref=particle_ref, **kwargs)
+
     T_rev = line.get_length()/(particle_ref._xobject.beta0[0]*clight)
     freq_list = []
     lag_list_deg = []
@@ -40,12 +47,13 @@ def _characterize_line(line, particle_ref,
     energy_ref_increment_list = []
     found_nonlinear_longitudinal = False
     found_linear_longitudinal = False
-    for ee in line.elements:
+    for ii, ee in enumerate(line.elements):
         if ee.__class__.__name__ == 'Cavity':
             eecp = ee.copy(_context=xo.ContextCpu())
             if ee.voltage != 0:
                 lag = eecp.lag
                 phase = eecp.phase
+                shift_zeta_list.append(tw.zeta[ii] - tw.zeta[0])
                 if radiation_active:
                     lag += eecp.lag_taper
                     phase += eecp.phase_taper
@@ -83,9 +91,6 @@ def _characterize_line(line, particle_ref,
                 # Appendix B, formula B.16 .
                 energy_ref_increment_list.append(
                     eecp.Delta_p0c * particle_ref._xobject.beta0[0])
-        elif ee.__class__.__name__ == 'TimeDelay':
-            eecp = ee.copy(_context=xo.ContextCpu())
-            shift_zeta_list.append(eecp.shift_zeta)
 
     found_only_linear_longitudinal = False
     if not found_linear_longitudinal and not found_nonlinear_longitudinal:
@@ -100,12 +105,6 @@ def _characterize_line(line, particle_ref,
 
     if found_nonlinear_longitudinal:
         assert len(freq_list) > 0
-
-    if radiation_active:
-        kwargs['radiation_analysis'] = True
-
-    tw = line.twiss(
-        particle_ref=particle_ref, **kwargs)
 
     p0c_increase_from_energy_program = None
     if line.energy_program is not None:
@@ -155,13 +154,13 @@ def generate_longitudinal_coordinates(
                                     rf_harmonic=None,
                                     rf_voltage=None,
                                     rf_phase=None,
+                                    rf_shift_zeta=None,
                                     energy_ref_increment=None,
                                     energy_loss_from_radiation=None,
                                     tracker=None,
                                     m=None,
                                     q=None,
                                     delta0=None,
-                                    shift_zeta=None,
                                     _only_bucket=False,
                                     **kwargs # passed to twiss
                                     ):
@@ -260,11 +259,9 @@ def generate_longitudinal_coordinates(
         assert line is not None
         delta0 = dct['delta0']
 
-    if shift_zeta is None:
+    if rf_shift_zeta is None:
         assert line is not None
-        shift_zeta = 0.
-        for ss in dct['shift_zeta_list']:
-            shift_zeta += ss
+        rf_shift_zeta=dct['shift_zeta_list']
 
     p0c_increase_from_energy_program = 0.
     if energy_ref_increment is None and line is not None:
@@ -331,7 +328,7 @@ def generate_longitudinal_coordinates(
                             voltage_list=np.atleast_1d(rf_voltage),
                             phi_offset_list=np.atleast_1d(rf_phase),
                             p_increment=dp0_si,
-                            shift_zeta=shift_zeta,
+                            shift_zeta_list=np.atleast_1d(rf_shift_zeta),
                             dp0=delta0)
         if _only_bucket:
             return rfbucket
