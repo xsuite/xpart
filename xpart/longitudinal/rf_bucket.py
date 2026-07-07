@@ -3,7 +3,10 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
-""".. copyright:: CERN"""
+'''
+This module was originally written for PyHEADTAIL
+@author Kevin Li, Adrian Oeftiger, Stefan Hegglin
+'''
 
 import numpy as np
 from scipy.constants import c
@@ -12,8 +15,6 @@ from scipy.integrate import dblquad
 from functools import partial, wraps
 
 from .curve_tools import zero_crossings as cvt_zero_crossings
-
-from functools import reduce
 
 
 def attach_clean_buckets(rf_parameter_changing_method, rfsystems_instance):
@@ -53,19 +54,18 @@ class RFBucket:
     def __init__(self, circumference, gamma, mass_kg,
                  charge_coulomb, alpha_array, p_increment,
                  harmonic_list, voltage_list, phi_offset_list,
-                 shift_zeta_list,
-                 z_offset=None, dp0 = 0):
+                 shift_zeta_list=None,
+                 zeta0=None, dp0=0):
         '''Implements only the leading order momentum compaction factor.
 
         Arguments:
         - mass_kg is the mass of the particle type in the beam
         - charge_coulomb is the charge of the particle type in the beam
-        - z_offset determines the centre for the bucket interval
+        - zeta0 determines the centre for the bucket interval
         over which the root finding (of the electric force field to
         calibrate the separatrix Hamiltonian value to zero) is done.
-        z_offset is per default determined by the zero crossing located
-        closest to z == 0.
-        - shift_zeta shifts the RF force and potential in zeta.
+        - shift_zeta_list accounts for the zeta slippage between the start
+        of the ring and each RF element location.
         '''
 
         self.charge_coulomb = charge_coulomb
@@ -79,11 +79,19 @@ class RFBucket:
         self.p_increment = p_increment
 
         self.circumference = circumference
-        self.h = harmonic_list
-        self.V = voltage_list
-        self.dphi = phi_offset_list
+        self.h = np.atleast_1d(harmonic_list)
+        self.V = np.atleast_1d(voltage_list)
+        self.dphi = np.atleast_1d(phi_offset_list)
         self.dp0 = dp0
-        self.shift_zeta_list = shift_zeta_list
+        if shift_zeta_list is None:
+            shift_zeta_list = np.zeros_like(self.h, dtype=float)
+        self.shift_zeta_list = np.atleast_1d(shift_zeta_list)
+
+        if not (len(self.h) == len(self.V) == len(self.dphi)
+                == len(self.shift_zeta_list)):
+            raise ValueError(
+                'harmonic_list, voltage_list, phi_offset_list and '
+                'shift_zeta_list must have the same length')
 
         """Additional electric force fields to be added on top of the
         RF electric force field.
@@ -96,36 +104,9 @@ class RFBucket:
 
         zmax = self.circumference / (2*np.amin(self.h))
 
-        if z_offset is None:
-            # i_fund = np.argmin(self.h) # index of fundamental RF element
-            # phi_offset = self.dphi[i_fund]
-            # # account for bucket size between -pi and pi.
-            # # below transition there should be no relocation of the
-            # # bucket interval by an offset of pi! we only need relative
-            # # offset w.r.t. normal phi setting at given gamma (0 resp. pi)
-            # if self.eta0 < 0:
-            #     phi_offset -= np.pi
-            # z_offset = -phi_offset * self.R / self.h[i_fund]
-            ### the above approach does not take into account higher harmonics!
-            ### Within a 2 bucket length interval we find all zero crossings
-            ### of the non-accelerated total_force and identify the outermost
-            ### separatrix UFPs via their minimal (convexified) potential value
-            domain_to_find_bucket_centre = np.linspace(
-                - 1.999*zmax,
-                + 1.999*zmax,
-                self.sampling_points)
-            z0 = self.zero_crossings(
-                partial(self.total_force, acceleration=False),
-                domain_to_find_bucket_centre)
-            convex_pot0 = (
-                np.array(self.total_potential(z0, acceleration=False)) *
-                np.sign(self.eta0) / self.charge_coulomb)  # charge for numerical reasons
-            outer_separatrix_pot0 = np.min(convex_pot0)
-            outer_separatrix_z0 = z0[np.isclose(convex_pot0,
-                                                outer_separatrix_pot0)]
-            # outer_separatrix_z0 should contain exactly 2 entries
-            z_offset = np.mean(outer_separatrix_z0)
-        self.z_offset = z_offset
+        if zeta0 is None:
+            raise ValueError('zeta0 must be provided')
+        self.zeta0 = zeta0
 
         """Minimum and maximum z values on either side of the
         stationary bucket to cover the maximally possible bucket area,
@@ -133,7 +114,7 @@ class RFBucket:
         (This range is always larger than the outmost unstable fix
         points of the real bucket including self.p_increment .)
         """
-        self.interval = (z_offset - 1.01*zmax, z_offset + 1.01*zmax)
+        self.interval = (zeta0 - 1.01*zmax, zeta0 + 1.01*zmax)
 
     @property
     def gamma(self):
@@ -234,26 +215,6 @@ class RFBucket:
             self._z_left, self._z_right, _ = self._get_bucket_boundaries()
             return self._z_right
 
-    #@property
-    #@deprecated("--> Will become z_left.\n")
-    #def zleft(self):
-    #    '''Return the left bucket boundary within self.interval .'''
-    #    try:
-    #        return self._z_left
-    #    except AttributeError:
-    #        self._z_left, self._z_right, _ = self._get_bucket_boundaries()
-    #        return self._z_left
-
-    #@property
-    #@deprecated("--> Will become z_right.\n")
-    #def zright(self):
-    #    '''Return the right bucket boundary within self.interval .'''
-    #    try:
-    #        return self._z_right
-    #    except AttributeError:
-    #        self._z_left, self._z_right, _ = self._get_bucket_boundaries()
-    #        return self._z_right
-
     @property
     def R(self):
         return self.circumference/(2*np.pi)
@@ -267,11 +228,6 @@ class RFBucket:
     def beta_z(self):
         return np.abs(self.eta0 * self.R / self.Q_s)
 
-    #@property
-    #@deprecated('--> Use Q_s instead!')
-    #def Qs(self):
-    #    return self.Q_s
-
     @property
     def Q_s(self):
         """Linear synchrotron tune for small amplitudes i.e., in the
@@ -280,12 +236,10 @@ class RFBucket:
         """
         hVcosphi = sum([h * self.V[i] * np.cos(
                             self.phi_offset_list[i]
-                          - 2*np.pi*h*(self.z_sfp + self.shift_zeta_list[i])
+                          - 2*np.pi*h*(self.z_sfp
+                                        + self.shift_zeta_list[i])
                             / self.circumference)
                         for i, h in enumerate(self.h)])
-        # if hV == 0:
-        #     ix = np.argmax(self.V)
-        #     hV = self.h[ix] * self.V[ix]
         return np.sqrt(-self.charge_coulomb*self.eta0*hVcosphi /
                        (2*np.pi*self.p0*self.beta*c))
 
@@ -325,9 +279,10 @@ class RFBucket:
     def rf_force(self, acceleration=True):
         def f(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
-            focusing_field = reduce(lambda x, y: x+y, [
+            focusing_field = sum(
                 V_i * np.sin(-h_i*(z + shift_z_i)/self.R + dphi_i)
-                for V_i, h_i, dphi_i, shift_z_i in zip(self.V, self.h, self.dphi, self.shift_zeta_list)])
+                for V_i, h_i, dphi_i, shift_z_i
+                in zip(self.V, self.h, self.dphi, self.shift_zeta_list))
             if not acceleration:
                 accelerating_field = 0
             else:
@@ -366,9 +321,11 @@ class RFBucket:
         '''
         def vf(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
-            focusing_potential = reduce(lambda x, y: x+y, [
-                -self.R/self.h[i] * self.V[i] * np.cos(-self.h[i]*(z + self.shift_zeta_list[i])/self.R + self.dphi[i])
-                for i in range(len(self.V))])
+            focusing_potential = sum(
+                -self.R/self.h[i] * self.V[i] * np.cos(
+                    -self.h[i]*(z + self.shift_zeta_list[i])/self.R
+                    + self.dphi[i])
+                for i in range(len(self.V)))
             return coefficient * focusing_potential
 
         if not acceleration:
