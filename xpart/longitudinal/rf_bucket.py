@@ -110,8 +110,8 @@ class RFBucket:
             ### of the non-accelerated total_force and identify the outermost
             ### separatrix UFPs via their minimal (convexified) potential value
             domain_to_find_bucket_centre = np.linspace(
-                self.shift_zeta - 1.999*zmax,
-                self.shift_zeta + 1.999*zmax,
+                -self.shift_zeta - 1.999*zmax,
+                -self.shift_zeta + 1.999*zmax,
                 self.sampling_points)
             z0 = self.zero_crossings(
                 partial(self.total_force, acceleration=False),
@@ -279,7 +279,7 @@ class RFBucket:
         """
         hVcosphi = sum([h * self.V[i] * np.cos(
                             self.phi_offset_list[i]
-                          - 2*np.pi*h*(self.z_sfp - self.shift_zeta)
+                          - 2*np.pi*h*(self.z_sfp + self.shift_zeta)
                             / self.circumference)
                         for i, h in enumerate(self.h)])
         # if hV == 0:
@@ -324,7 +324,7 @@ class RFBucket:
     def rf_force(self, V, h, dphi, p_increment, acceleration=True):
         def f(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
-            z_rel = z - self.shift_zeta
+            z_rel = z + self.shift_zeta
             focusing_field = reduce(lambda x, y: x+y, [
                 V_i * np.sin(-h_i*z_rel/self.R + dphi_i)
                 for V_i, h_i, dphi_i in zip(V, h, dphi)])
@@ -415,7 +415,7 @@ class RFBucket:
         '''
         def vf(z):
             coefficient = np.abs(self.charge_coulomb)/self.circumference
-            z_rel = z - self.shift_zeta
+            z_rel = z + self.shift_zeta
             focusing_potential = reduce(lambda x, y: x+y, [
                 -self.R/h[i] * V[i] * np.cos(-h[i]*z_rel/self.R + dphi[i])
                 for i in range(len(V))])

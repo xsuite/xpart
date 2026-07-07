@@ -36,6 +36,7 @@ def _characterize_line(line, particle_ref,
     phase_list_rad = []
     voltage_list = []
     h_list = []
+    shift_zeta_list = []
     energy_ref_increment_list = []
     found_nonlinear_longitudinal = False
     found_linear_longitudinal = False
@@ -82,7 +83,9 @@ def _characterize_line(line, particle_ref,
                 # Appendix B, formula B.16 .
                 energy_ref_increment_list.append(
                     eecp.Delta_p0c * particle_ref._xobject.beta0[0])
-
+        elif ee.__class__.__name__ == 'TimeDelay':
+            eecp = ee.copy(_context=xo.ContextCpu())
+            shift_zeta_list.append(eecp.shift_zeta)
 
     found_only_linear_longitudinal = False
     if not found_linear_longitudinal and not found_nonlinear_longitudinal:
@@ -125,9 +128,9 @@ def _characterize_line(line, particle_ref,
     dct['bets0'] = tw['bets0']
     dct['found_only_linear_longitudinal'] = found_only_linear_longitudinal
     dct['energy_ref_increment_list'] = energy_ref_increment_list
+    dct['shift_zeta_list'] = shift_zeta_list
     dct['p0c_increase_from_energy_program'] = p0c_increase_from_energy_program
     dct['energy_loss_from_radiation'] = energy_loss_from_radiation
-    dct['zeta0'] = tw.zeta[0]
     dct['delta0'] = tw.delta[0]
     return dct
 
@@ -157,8 +160,8 @@ def generate_longitudinal_coordinates(
                                     tracker=None,
                                     m=None,
                                     q=None,
-                                    zeta0=None,
                                     delta0=None,
+                                    shift_zeta=None,
                                     _only_bucket=False,
                                     **kwargs # passed to twiss
                                     ):
@@ -253,12 +256,15 @@ def generate_longitudinal_coordinates(
         rf_phase=((np.array(dct['lag_list_deg'])) / 180 * np.pi
                  + np.array(dct['phase_list_rad']))
 
-    if zeta0 is None:
-        zeta0 = dct['zeta0'] if line is not None else 0
-
     if delta0 is None:
         assert line is not None
         delta0 = dct['delta0']
+
+    if shift_zeta is None:
+        assert line is not None
+        shift_zeta = 0.
+        for ss in dct['shift_zeta_list']:
+            shift_zeta += ss
 
     p0c_increase_from_energy_program = 0.
     if energy_ref_increment is None and line is not None:
@@ -295,7 +301,7 @@ def generate_longitudinal_coordinates(
             raise NotImplementedError
         assert line is not None, ('Not yet implemented if line is not provided')
         sigma_dp = sigma_z / np.abs(dct['bets0'])
-        z_particles = zeta0 + sigma_z * np.random.normal(size=num_particles)
+        z_particles = shift_zeta + sigma_z * np.random.normal(size=num_particles)
         delta_particles = delta0 + sigma_dp * np.random.normal(size=num_particles)
         assert energy_ref_increment is None
     elif engine == "pyheadtail":
@@ -325,7 +331,7 @@ def generate_longitudinal_coordinates(
                             voltage_list=np.atleast_1d(rf_voltage),
                             phi_offset_list=np.atleast_1d(rf_phase),
                             p_increment=dp0_si,
-                            zeta0=zeta0,
+                            shift_zeta=shift_zeta,
                             dp0=delta0)
         if _only_bucket:
             return rfbucket
