@@ -83,6 +83,7 @@ def generate_2D_pencil(num_particles, pos_cut_sigmas, dr_sigmas,
 
         if side == '-':
             x_norm = -x_norm
+            theta_points = np.arctan2(px_norm, x_norm)
 
         return x_norm, px_norm, r_points, theta_points
 

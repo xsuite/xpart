@@ -15,6 +15,32 @@ TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 from xobjects.test_helpers import for_all_test_contexts
 
 
+def test_pencil_polar_coordinates():
+    for side in ['+', '-', '+-']:
+        _check_pencil_polar_coordinates(side)
+
+
+def _check_pencil_polar_coordinates(side):
+    x_norm, px_norm, r_points, theta_points = xp.generate_2D_pencil(
+        num_particles=10000,
+        pos_cut_sigmas=6.,
+        dr_sigmas=0.7,
+        side=side)
+
+    if side == '+':
+        assert np.all(x_norm > 6.)
+    elif side == '-':
+        assert np.all(x_norm < -6.)
+    else:
+        assert np.any(x_norm < -6.)
+        assert np.any(x_norm > 6.)
+
+    assert np.allclose(r_points, np.sqrt(x_norm**2 + px_norm**2))
+    assert np.allclose(theta_points, np.arctan2(px_norm, x_norm))
+    assert np.allclose(x_norm, r_points * np.cos(theta_points))
+    assert np.allclose(px_norm, r_points * np.sin(theta_points))
+
+
 @for_all_test_contexts
 def test_pencil(test_context):
     num_particles = 10000
