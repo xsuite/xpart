@@ -87,8 +87,10 @@ class SingleRFHarmonicMatcher:
             # Binomial distribution adds tail to parabolic, see (Joho, 1980) at https://indico.psi.ch/event/3484/attachments/5948/7502/TM-11-14.pdf
             # behaviour is Gaussian for m --> inf
             tau_max = 1.0 # starting value, will be adjusted. Used as benchmarking value with RMS factor for parabola
-            lambda_dist = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5)
-            binomial_2nd = lambda tau, tau_max: (1 - (tau/tau_max)**2)**(m-0.5)*tau**2
+            lambda_dist = lambda tau, tau_max: (
+                np.maximum(1 - (tau/tau_max)**2, 0))**(m-0.5)
+            binomial_2nd = lambda tau, tau_max: lambda_dist(
+                tau, tau_max) * tau**2
             RMS_binomial = np.sqrt(integrate.quad(binomial_2nd, -1, 1, args=(tau_max))[0] / integrate.quad(lambda_dist, -1, 1, args=(tau_max))[0])
             factor_binomial = tau_max / RMS_binomial
             _print(f"RMS factor for binimial is {factor_binomial:.3f}")
@@ -97,7 +99,6 @@ class SingleRFHarmonicMatcher:
             corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
             tau_max = corrected_tau_max
             self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
-            self.tau_distr_y[abs(self.tau_distr_x) > tau_max] = 0
             _print(f"SingleRFHarmonicMatcher: Binomial x_lim parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         else:
             raise NotImplementedError

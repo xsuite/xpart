@@ -172,42 +172,108 @@ def generate_longitudinal_coordinates(
                                     **kwargs # passed to twiss
                                     ):
 
-    '''
-    Generate longitudinal coordinates matched to given RF parameters (non-linar
-    bucket).
+    """
+    Generate longitudinal coordinates matched to an RF bucket.
+
+    The RF and optics parameters can be inferred from `line`, or provided
+    explicitly. With the default engine, linear longitudinal elements use a
+    linear Gaussian match, while nonlinear RF buckets use the PyHEADTAIL-style
+    RF bucket matcher.
 
     Parameters
     ----------
-    line: xline.Line
+    line : xtrack.Line, optional
         Line for which the longitudinal coordinates are generated.
-    num_particles: int
-        Number of particles to be generated.
-    distribution: str
-        Distribution of the particles. Possible values are `gaussian` and
-        `parabolic` and 'binomial'.
-    sigma_z: float
-        RMS bunch length in meters.
-    engine: str
-        Engine to be used for the generation. Possible values are `pyheadtail`
-        and `single-rf-harmonic`.
-    return_matcher: bool
-        If True, the matcher object is returned.
-    m : float
-        binomial parameter if distribution is 'binomial'
-    q : float
-        q-Gaussian parameter if distribution is 'qgaussian'
+    num_particles : int
+        Number of particles to generate.
+    distribution : {'gaussian', 'parabolic', 'binomial', 'qgaussian'}, optional
+        Longitudinal distribution to generate. Non-Gaussian distributions
+        require `engine='single-rf-harmonic'`.
+    sigma_z : float
+        RMS bunch length in m.
+    engine : {'linear', 'pyheadtail', 'single-rf-harmonic'}, optional
+        Matching engine. If not provided, it is selected from the line.
+    return_matcher : bool, optional
+        If True, also return the matcher object.
+    particle_ref : xpart.Particles, optional
+        Reference particle. If not provided, `line.particle_ref` is used.
+    mass0, q0, gamma0 : float, optional
+        Reference-particle properties used when they cannot be inferred from
+        `particle_ref`.
+    circumference : float, optional
+        Ring circumference in m. Required when no `line` is provided.
+    momentum_compaction_factor : float or array_like, optional
+        Momentum compaction factor.
+    rf_harmonic : float or array_like, optional
+        RF harmonic number or numbers.
+    rf_voltage : float or array_like, optional
+        RF voltage or voltages in V.
+    rf_phase : float or array_like, optional
+        RF phase or phases in rad.
+    rf_shift_zeta : float or array_like, optional
+        Longitudinal RF shifts in m.
+    energy_ref_increment : float, optional
+        Reference energy increment in eV.
+    energy_loss_from_radiation : float, optional
+        Energy loss from radiation in eV.
+    tracker : xtrack.Tracker, optional
+        Deprecated. Use `line` instead.
+    m : float, optional
+        Binomial distribution parameter.
+    q : float, optional
+        q-Gaussian distribution parameter.
+    zeta0 : float, optional
+        Reference longitudinal position in m.
+    delta0 : float, optional
+        Reference relative momentum deviation.
+    **kwargs
+        Additional keyword arguments passed to `line.twiss`.
 
     Returns
     -------
-    zeta: np.ndarray
-        Longitudinal position of the generated particles.
-    delta: np.ndarray
-        Longitudinal momentum deviation of the generated particles.
-    matcher: object
-        Matcher object used for the generation. Returned only if
+    zeta : np.ndarray
+        Longitudinal position in m.
+    delta : np.ndarray
+        Relative momentum deviation.
+    matcher : object
+        Matcher object used for the generation. Returned only when
         `return_matcher` is True.
 
-    '''
+    Example
+    -------
+
+    .. code-block:: python
+
+        import numpy as np
+        import xpart as xp
+        import xtrack as xt
+
+        np.random.seed(12345)
+
+        circumference = 26658.883
+        line = xt.Line(elements=[
+            xt.LineSegmentMap(
+                length=circumference,
+                betx=1.0, qx=0.31,
+                bety=1.0, qy=0.32,
+                longitudinal_mode='linear_fixed_rf',
+                voltage_rf=16e6,
+                frequency_rf=400.8e6,
+                phase_rf=np.pi,
+                slippage_length=circumference,
+                momentum_compaction_factor=3.225e-4,
+            )
+        ])
+        line.set_particle_ref('proton', p0c=7e12)
+
+        zeta, delta = xp.generate_longitudinal_coordinates(
+            line=line,
+            num_particles=4,
+            sigma_z=0.08)
+
+        zeta   # [-0.077427, -0.044981, 0.025293, -0.110336]
+        delta  # [5.386640e-05, 1.107963e-05, 1.492215e-04, 9.183090e-05]
+    """
 
     if line is not None and tracker is not None:
         raise ValueError(
