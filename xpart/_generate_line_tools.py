@@ -135,8 +135,21 @@ def _insert_line_for_container_example(doc):
     return doc
 
 
+def _normalize_overindented_docstring(doc):
+    if not re.search(r'(?m)^[^ ].* : .*$\n {8}\S', doc):
+        return doc
+
+    lines = []
+    for line in doc.splitlines():
+        n_spaces = len(line) - len(line.lstrip(' '))
+        if n_spaces >= 8:
+            line = ' ' * (n_spaces // 2) + line[n_spaces:]
+        lines.append(line)
+    return '\n'.join(lines)
+
+
 def _adapt_docstring(function, method_name, use_default_line):
-    doc = inspect.cleandoc(function.__doc__ or '')
+    doc = inspect.cleandoc((function.__doc__ or '').replace('\t', '    '))
     source_name = function.__name__
     for name in {source_name, method_name}:
         doc = doc.replace(f'xp.{name}(', f'line.xpart.{method_name}(')
@@ -177,6 +190,8 @@ def _adapt_docstring(function, method_name, use_default_line):
                 doc[:end]
                 + '    Defaults to the line owning this ``xpart`` container.\n'
                 + doc[end:])
+
+    doc = _normalize_overindented_docstring(doc)
 
     return _insert_line_for_container_example(doc)
 

@@ -575,68 +575,68 @@ class XpartLineAPI:
         Parameters
         ----------
         num_particles : int
-                Number of particles to generate.
+            Number of particles to generate.
         nemitt_x : float, optional
-                Accepted for backward compatibility; not used by this function.
+            Accepted for backward compatibility; not used by this function.
         nemitt_y : float, optional
-                Accepted for backward compatibility; not used by this function.
+            Accepted for backward compatibility; not used by this function.
         sigma_z : float
-                RMS bunch length in m.
+            RMS bunch length in m.
         particle_ref : xpart.Particles
-                Reference particle.
+            Reference particle.
         tracker : xtrack.Tracker, optional
-                Deprecated. Use `line` instead.
+            Deprecated. Use `line` instead.
         line : xtrack.Line
-                Line used to infer the RF and optics parameters. The line must already
-                have a tracker.
+            Line used to infer the RF and optics parameters. The line must already
+            have a tracker.
             Defaults to the line owning this ``xpart`` container.
         return_matcher : bool, optional
-                If True, also return the `SingleRFHarmonicMatcher` object.
+            If True, also return the `SingleRFHarmonicMatcher` object.
         
         Returns
         -------
         zeta : np.ndarray
-                Longitudinal position in m.
+            Longitudinal position in m.
         delta : np.ndarray
-                Relative momentum deviation.
+            Relative momentum deviation.
         matcher : xpart.longitudinal.SingleRFHarmonicMatcher
-                Matcher object used for the generation. Returned only when
-                `return_matcher` is True.
+            Matcher object used for the generation. Returned only when
+            `return_matcher` is True.
         
         Example
         -------
         
         .. code-block:: python
         
-                import numpy as np
-                import xtrack as xt
+            import numpy as np
+            import xtrack as xt
         
-                np.random.seed(12345)
+            np.random.seed(12345)
         
-                circumference = 26658.883
-                line = xt.Line(elements=[
-                        xt.LineSegmentMap(
-                                length=circumference,
-                                betx=1.0, qx=0.31,
-                                bety=1.0, qy=0.32,
-                                longitudinal_mode='linear_fixed_rf',
-                                voltage_rf=16e6,
-                                frequency_rf=400.8e6,
-                                phase_rf=np.pi,
-                                slippage_length=circumference,
-                                momentum_compaction_factor=3.225e-4,
-                        )
-                ])
-                line.set_particle_ref('proton', p0c=7e12)
-                line.build_tracker()
+            circumference = 26658.883
+            line = xt.Line(elements=[
+                xt.LineSegmentMap(
+                    length=circumference,
+                    betx=1.0, qx=0.31,
+                    bety=1.0, qy=0.32,
+                    longitudinal_mode='linear_fixed_rf',
+                    voltage_rf=16e6,
+                    frequency_rf=400.8e6,
+                    phase_rf=np.pi,
+                    slippage_length=circumference,
+                    momentum_compaction_factor=3.225e-4,
+                )
+            ])
+            line.set_particle_ref('proton', p0c=7e12)
+            line.build_tracker()
         
-                zeta, delta = line.xpart.generate_parabolic_longitudinal_coordinates(
-                        num_particles=4,
-                        sigma_z=0.02,
-                        particle_ref=line.particle_ref)
+            zeta, delta = line.xpart.generate_parabolic_longitudinal_coordinates(
+                num_particles=4,
+                sigma_z=0.02,
+                particle_ref=line.particle_ref)
         
-                zeta   # [-0.029114, -0.021342, -0.016575, -0.01217]
-                delta  # [-4.490284e-05, -2.297977e-05, -3.434673e-05, -9.747943e-06]
+            zeta   # [-0.029114, -0.021342, -0.016575, -0.01217]
+            delta  # [-4.490284e-05, -2.297977e-05, -3.434673e-05, -9.747943e-06]
         """
         import xpart as xp
         return xp.generate_parabolic_longitudinal_coordinates(
@@ -659,71 +659,71 @@ class XpartLineAPI:
         Parameters
         ----------
         num_particles : int
-                Number of particles to generate.
+            Number of particles to generate.
         nemitt_x : float, optional
-                Accepted for backward compatibility; not used by this function.
+            Accepted for backward compatibility; not used by this function.
         nemitt_y : float, optional
-                Accepted for backward compatibility; not used by this function.
+            Accepted for backward compatibility; not used by this function.
         sigma_z : float
-                RMS bunch length in m.
+            RMS bunch length in m.
         particle_ref : xpart.Particles
-                Reference particle.
+            Reference particle.
         tracker : xtrack.Tracker, optional
-                Deprecated. Use `line` instead.
+            Deprecated. Use `line` instead.
         line : xtrack.Line
-                Line used to infer the RF and optics parameters. The line must already
-                have a tracker.
+            Line used to infer the RF and optics parameters. The line must already
+            have a tracker.
             Defaults to the line owning this ``xpart`` container.
         return_matcher : bool, optional
-                If True, also return the `SingleRFHarmonicMatcher` object.
+            If True, also return the `SingleRFHarmonicMatcher` object.
         q : float, optional
-                q-Gaussian parameter.
+            q-Gaussian parameter.
         
         Returns
         -------
         zeta : np.ndarray
-                Longitudinal position in m.
+            Longitudinal position in m.
         delta : np.ndarray
-                Relative momentum deviation.
+            Relative momentum deviation.
         matcher : xpart.longitudinal.SingleRFHarmonicMatcher
-                Matcher object used for the generation. Returned only when
-                `return_matcher` is True.
+            Matcher object used for the generation. Returned only when
+            `return_matcher` is True.
         
         Example
         -------
         
         .. code-block:: python
         
-                import numpy as np
-                import xtrack as xt
+            import numpy as np
+            import xtrack as xt
         
-                np.random.seed(12345)
+            np.random.seed(12345)
         
-                circumference = 26658.883
-                line = xt.Line(elements=[
-                        xt.LineSegmentMap(
-                                length=circumference,
-                                betx=1.0, qx=0.31,
-                                bety=1.0, qy=0.32,
-                                longitudinal_mode='linear_fixed_rf',
-                                voltage_rf=16e6,
-                                frequency_rf=400.8e6,
-                                phase_rf=np.pi,
-                                slippage_length=circumference,
-                                momentum_compaction_factor=3.225e-4,
-                        )
-                ])
-                line.set_particle_ref('proton', p0c=7e12)
-                line.build_tracker()
+            circumference = 26658.883
+            line = xt.Line(elements=[
+                xt.LineSegmentMap(
+                    length=circumference,
+                    betx=1.0, qx=0.31,
+                    bety=1.0, qy=0.32,
+                    longitudinal_mode='linear_fixed_rf',
+                    voltage_rf=16e6,
+                    frequency_rf=400.8e6,
+                    phase_rf=np.pi,
+                    slippage_length=circumference,
+                    momentum_compaction_factor=3.225e-4,
+                )
+            ])
+            line.set_particle_ref('proton', p0c=7e12)
+            line.build_tracker()
         
-                zeta, delta = line.xpart.generate_qgaussian_longitudinal_coordinates(
-                        num_particles=4,
-                        sigma_z=0.02,
-                        particle_ref=line.particle_ref,
-                        q=1.1)
+            zeta, delta = line.xpart.generate_qgaussian_longitudinal_coordinates(
+                num_particles=4,
+                sigma_z=0.02,
+                particle_ref=line.particle_ref,
+                q=1.1)
         
-                zeta   # [0.011216, 0.011326, 0.001084, -0.019956]
-                delta  # [-6.535480e-05, 4.544212e-05, 2.620756e-05, 5.983244e-05]
+            zeta   # [0.011216, 0.011326, 0.001084, -0.019956]
+            delta  # [-6.535480e-05, 4.544212e-05, 2.620756e-05, 5.983244e-05]
         """
         import xpart as xp
         return xp.generate_qgaussian_longitudinal_coordinates(
