@@ -43,7 +43,7 @@ def generate_hypersphere(N, D, r=1, rng_seed = 0, surface=False ,unpack = False)
 
     # Sample N radii with exponential distribution (unless points are to be on the surface)
     if not surface:
-        new_radii = np.random.uniform(low=0.0, high=1.0, size=(N, 1)) ** (1 / D)
+        new_radii = rng.uniform(low=0.0, high=1.0, size=(N, 1)) ** (1 / D)
         samples = samples * new_radii
 
     # Scale the samples to the desired radius
@@ -60,25 +60,43 @@ def generate_hypersphere(N, D, r=1, rng_seed = 0, surface=False ,unpack = False)
 
 
 def generate_hypersphere_2D(num_particles,r = 1, rng_seed = 0):
-    '''
-    Generate points uniformly distributed inside a 2-dimensional hypersphere (circle).
+    """
+    Generate points uniformly distributed inside a 2D disk.
+
+    The returned coordinates are normalized coordinates sampled uniformly in
+    area inside a disk of radius `r`.
 
     Parameters
     ----------
     num_particles : int
-        Number of particles to generate.
-    r : float
-        Radius of the circle.
-    rng_seed : int
-        Seed for the random number generator for reproducibility.
+        Number of points to generate.
+    r : float, optional
+        Radius of the disk.
+    rng_seed : int, optional
+        Seed for the random number generator.
 
     Returns
     -------
     x_norm : np.ndarray
-        x-coordinates of the generated points.
+        First normalized coordinate.
     px_norm : np.ndarray
-        y-coordinates of the generated points.
-    '''
+        Second normalized coordinate.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        import xpart as xp
+
+        x_norm, px_norm = xp.generate_hypersphere_2D(
+            num_particles=4,
+            r=2.0,
+            rng_seed=12345)
+
+        x_norm  # [-1.226886, -1.860261, -0.100816, -1.760178]
+        px_norm # [1.088933, -0.553751, -0.991372, 0.835044]
+    """
     x_norm , px_norm  = generate_hypersphere(num_particles,D=2,r=r, rng_seed=rng_seed, surface = False,unpack=True)
 
     return x_norm, px_norm

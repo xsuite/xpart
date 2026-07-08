@@ -9,6 +9,24 @@ from scipy import stats
 import xpart as xp
 
 
+def test_hypersphere_rng_seed_reproducible():
+    args_and_kwargs = [
+        (xp.generate_hypersphere_2D, (10,), {'r': 2.5, 'rng_seed': 12345}),
+        (xp.generate_hypersphere_4D, (10,), {'rx': 2.5, 'ry': 4.2,
+                                             'rng_seed': 12345}),
+        (xp.generate_hypersphere_6D, (10,), {'rx': 2.5, 'ry': 4.2,
+                                             'rzeta': 1.2,
+                                             'rng_seed': 12345}),
+    ]
+
+    for generator, args, kwargs in args_and_kwargs:
+        first = generator(*args, **kwargs)
+        second = generator(*args, **kwargs)
+
+        for first_coord, second_coord in zip(first, second):
+            assert np.allclose(first_coord, second_coord)
+
+
 def test_hypersphere_2D():
     num_particles = int(20e4)
     r = 2.5
