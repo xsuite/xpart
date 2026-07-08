@@ -101,6 +101,45 @@ def generate_matched_gaussian_bunch(num_particles,
     matcher : object
         Longitudinal matcher used for the generation. Returned only when
         `return_matcher` is True.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        import numpy as np
+        import xpart as xp
+        import xtrack as xt
+
+        np.random.seed(12345)
+
+        circumference = 26658.883
+        line = xt.Line(elements=[
+            xt.LineSegmentMap(
+                length=circumference,
+                betx=1.0, qx=0.31,
+                bety=1.0, qy=0.32,
+                longitudinal_mode='linear_fixed_rf',
+                voltage_rf=16e6,
+                frequency_rf=400.8e6,
+                phase_rf=np.pi,
+                slippage_length=circumference,
+                momentum_compaction_factor=3.225e-4,
+            )
+        ])
+        line.set_particle_ref('proton', p0c=7e12)
+
+        particles = xp.generate_matched_gaussian_bunch(
+            num_particles=4,
+            total_intensity_particles=1e11,
+            nemitt_x=2e-6,
+            nemitt_y=2e-6,
+            sigma_z=0.08,
+            line=line)
+
+        len(particles.x)  # 4
+        particles.weight  # [2.5e+10, 2.5e+10, 2.5e+10, 2.5e+10]
+        particles.zeta    # [-0.077427, -0.044981, 0.025293, -0.110336]
     """
 
     if line is not None and tracker is not None:
@@ -315,6 +354,50 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
     -------
     particles : xpart.Particles
         Particles object containing the generated selected bunches.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        import numpy as np
+        import xpart as xp
+        import xtrack as xt
+
+        np.random.seed(12345)
+
+        circumference = 26658.883
+        line = xt.Line(elements=[
+            xt.LineSegmentMap(
+                length=circumference,
+                betx=1.0, qx=0.31,
+                bety=1.0, qy=0.32,
+                longitudinal_mode='linear_fixed_rf',
+                voltage_rf=16e6,
+                frequency_rf=400.8e6,
+                phase_rf=np.pi,
+                slippage_length=circumference,
+                momentum_compaction_factor=3.225e-4,
+            )
+        ])
+        line.set_particle_ref('proton', p0c=7e12)
+
+        filling_scheme = np.zeros(4, dtype=int)
+        filling_scheme[[0, 2]] = 1
+
+        particles = xp.generate_matched_gaussian_multibunch_beam(
+            filling_scheme=filling_scheme,
+            bunch_num_particles=3,
+            bunch_intensity_particles=1e11,
+            nemitt_x=2e-6,
+            nemitt_y=2e-6,
+            sigma_z=0.08,
+            line=line,
+            bucket_length=299792458 / 400.8e6)
+
+        len(particles.x)       # 6
+        particles.weight[:3]   # [3.333333e+10, 3.333333e+10, 3.333333e+10]
+        particles.zeta         # [-0.016377, 0.038315, -0.041555, ...]
     """
 
     if particle_ref is None and line is not None:
