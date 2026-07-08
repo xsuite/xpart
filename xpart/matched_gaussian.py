@@ -32,30 +32,76 @@ def generate_matched_gaussian_bunch(num_particles,
                                     _context=None, _buffer=None, _offset=None,
                                     **kwargs,  # Passed to build_particles
                                     ):
-    '''
+    """
     Generate a matched Gaussian bunch.
+
+    The transverse coordinates are generated from independent Gaussian
+    distributions in normalized phase space and converted to physical
+    coordinates using `build_particles`. The longitudinal coordinates are
+    matched to the RF bucket using `generate_longitudinal_coordinates` with
+    `distribution='gaussian'`.
 
     Parameters
     ----------
-    line : xpart.Line
-        Line for which the bunch is generated.
     num_particles : int
-        Number of particles to be generated.
+        Number of macroparticles to generate.
     nemitt_x : float
-        Normalized emittance in the horizontal plane (in m rad).
+        Normalized horizontal emittance in m rad.
     nemitt_y : float
-        Normalized emittance in the vertical plane (in m rad).
+        Normalized vertical emittance in m rad.
     sigma_z : float
-        RMS bunch length in meters.
-    total_intensity_particles : float
-        Total intensity of the bunch in particles.
+        RMS bunch length in m.
+    total_intensity_particles : float, optional
+        Total bunch intensity in physical particles. If not provided, the
+        particle weights are set to one.
+    particle_on_co : xpart.Particles, optional
+        Particle on the closed orbit used as reference for the generated bunch.
+        Cannot be provided together with `particle_ref`.
+    R_matrix : array_like, optional
+        Linear transfer matrix passed to `build_particles`.
+    circumference : float, optional
+        Ring circumference in m. Required when no `line` is provided.
+    momentum_compaction_factor : float, optional
+        Momentum compaction factor. Required when no `line` is provided.
+    rf_harmonic : float or array_like, optional
+        RF harmonic number or numbers. Required when no `line` is provided.
+    rf_voltage : float or array_like, optional
+        RF voltage or voltages in V. Required when no `line` is provided.
+    rf_phase : float or array_like, optional
+        RF phase or phases in rad. Required when no `line` is provided.
+    energy_ref_increment : float, optional
+        Reference energy increment used for the longitudinal matching.
+    tracker : xtrack.Tracker, optional
+        Deprecated. Use `line` instead.
+    line : xtrack.Line, optional
+        Line for which the bunch is generated. If provided, missing RF and
+        lattice parameters are inferred from the line.
+    particle_ref : xpart.Particles, optional
+        Reference particle. If not provided, `line.particle_ref` is used when
+        available. Cannot be provided together with `particle_on_co`.
+    engine : str, optional
+        Longitudinal matching engine passed to
+        `generate_longitudinal_coordinates`.
+    return_matcher : bool, optional
+        If True, also return the longitudinal matcher object.
+    _context : xobjects.Context, optional
+        Context on which to allocate the returned particles.
+    _buffer : xobjects.Buffer, optional
+        Buffer on which to allocate the returned particles.
+    _offset : int, optional
+        Offset in `_buffer` at which to allocate the returned particles.
+    **kwargs
+        Additional keyword arguments passed to `generate_longitudinal_coordinates`
+        and `build_particles`.
 
     Returns
     -------
-    part : xpart.Particles
-        Particles object containing the generated particles.
-
-    '''
+    particles : xpart.Particles
+        Generated matched Gaussian bunch.
+    matcher : object
+        Longitudinal matcher used for the generation. Returned only when
+        `return_matcher` is True.
+    """
 
     if line is not None and tracker is not None:
         raise ValueError(
@@ -183,6 +229,93 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                                               communicator=None,
                                               **kwargs,  # Passed to build_particles
                                               ):
+    """
+    Generate a matched Gaussian multibunch beam.
+
+    Each selected bunch is generated with `generate_matched_gaussian_bunch` and
+    then shifted in `zeta` according to the filled bucket positions in
+    `filling_scheme`. The returned object contains the selected bunches
+    concatenated in bunch-selection order.
+
+    Parameters
+    ----------
+    filling_scheme : array_like
+        One-dimensional array indicating which RF buckets are filled. Non-zero
+        entries are treated as filled buckets.
+    bunch_num_particles : int
+        Number of macroparticles to generate per bunch.
+    nemitt_x : float
+        Normalized horizontal emittance in m rad.
+    nemitt_y : float
+        Normalized vertical emittance in m rad.
+    sigma_z : float
+        RMS bunch length of each bunch in m.
+    bunch_intensity_particles : float, optional
+        Intensity of each bunch in physical particles.
+    particle_on_co : xpart.Particles, optional
+        Particle on the closed orbit used as reference for the generated
+        bunches. Cannot be provided together with `particle_ref`.
+    R_matrix : array_like, optional
+        Linear transfer matrix passed to `build_particles`.
+    circumference : float, optional
+        Ring circumference in m. If not provided, it is taken from `line`.
+    momentum_compaction_factor : float, optional
+        Momentum compaction factor passed to the longitudinal matching.
+    rf_harmonic : float or array_like, optional
+        RF harmonic number or numbers. Used to infer the bucket length when
+        `bucket_length` is not provided.
+    rf_voltage : float or array_like, optional
+        RF voltage or voltages in V. Used together with `rf_harmonic` for the
+        longitudinal matching and to infer the main harmonic.
+    rf_phase : float or array_like, optional
+        RF phase or phases in rad.
+    bucket_length : float, optional
+        Bucket spacing in m. If provided, `rf_harmonic` and `rf_voltage` must
+        not be provided.
+    energy_ref_increment : float, optional
+        Reference energy increment used for the longitudinal matching.
+    tracker : xtrack.Tracker, optional
+        Deprecated. Use `line` instead.
+    line : xtrack.Line, optional
+        Line for which the beam is generated. If provided, missing RF and
+        lattice parameters are inferred from the line.
+    particle_ref : xpart.Particles, optional
+        Reference particle. If not provided, `line.particle_ref` is used when
+        available.
+    engine : str, optional
+        Longitudinal matching engine passed to
+        `generate_longitudinal_coordinates`.
+    _context : xobjects.Context, optional
+        Context on which to allocate the returned particles.
+    _buffer : xobjects.Buffer, optional
+        Buffer on which to allocate the returned particles.
+    _offset : int, optional
+        Offset in `_buffer` at which to allocate the returned particles.
+    bunch_selection : iterable of int, optional
+        Indices, within the list of filled buckets, of the bunches to generate.
+        If not provided, all filled bunches are generated, unless MPI wake
+        preparation is enabled.
+    bunch_spacing_buckets : int, optional
+        Spacing between consecutive entries of `filling_scheme`, expressed in
+        RF buckets. The physical spacing is
+        `bunch_spacing_buckets * bucket_length`.
+    prepare_line_and_particles_for_mpi_wake_sim : bool, optional
+        If True, split the filled bunches over MPI ranks when `bunch_selection`
+        is not provided and configure the line and particles for wakefield
+        simulations.
+    communicator : mpi4py communicator, optional
+        MPI communicator used when
+        `prepare_line_and_particles_for_mpi_wake_sim` is True. If not provided,
+        `mpi4py.MPI.COMM_WORLD` is used.
+    **kwargs
+        Additional keyword arguments passed to
+        `generate_matched_gaussian_bunch`.
+
+    Returns
+    -------
+    particles : xpart.Particles
+        Particles object containing the generated selected bunches.
+    """
 
     if particle_ref is None and line is not None:
         particle_ref = line.particle_ref

@@ -41,39 +41,70 @@ def generate_2D_polar_grid(
         r_range=None, r_grid=None, dr=None, nr=None,
         theta_range=None, theta_grid=None, dtheta=None, ntheta=None):
 
-    '''
-    Generate a 2D polar grid.
+    """
+    Generate points on a 2D polar grid.
+
+    The radial and angular grids can be provided explicitly with `r_grid` and
+    `theta_grid`, or built from ranges. For each coordinate, provide either an
+    explicit grid, or a range together with either a step size or a number of
+    points. The returned arrays are flattened over all `(r, theta)`
+    combinations.
 
     Parameters
     ----------
-    r_range : tuple
-        Range of the radial coordinate.
-    r_grid : np.ndarray
-        Grid of the radial coordinate.
-    dr : float
-        Step of the radial coordinate.
-    nr : int
-        Number of points of the radial coordinate.
-    theta_range : tuple
-        Range of the angular coordinate.
-    theta_grid : np.ndarray
-        Grid of the angular coordinate.
-    dtheta : float
-        Step of the angular coordinate.
-    ntheta : int
-        Number of points of the angular coordinate.
+    r_range : tuple of float, optional
+        Radial range `(r_min, r_max)`. Required if `r_grid` is not provided.
+    r_grid : array_like, optional
+        Explicit uniformly spaced radial grid. If provided, `r_range`, `dr`,
+        and `nr` must not be provided.
+    dr : float, optional
+        Radial step used with `r_range`. Cannot be provided together with `nr`.
+    nr : int, optional
+        Number of radial points used with `r_range`. Required when `r_grid` and
+        `dr` are not provided.
+    theta_range : tuple of float, optional
+        Angular range `(theta_min, theta_max)` in rad. Required if
+        `theta_grid` is not provided.
+    theta_grid : array_like, optional
+        Explicit uniformly spaced angular grid in rad. If provided,
+        `theta_range`, `dtheta`, and `ntheta` must not be provided.
+    dtheta : float, optional
+        Angular step in rad used with `theta_range`. Cannot be provided
+        together with `ntheta`.
+    ntheta : int, optional
+        Number of angular points used with `theta_range`. Required when
+        `theta_grid` and `dtheta` are not provided.
 
     Returns
     -------
     a1 : np.ndarray
-        First normalized coordinate.
+        First Cartesian normalized coordinate, equal to
+        `r_all * cos(theta_all)`.
     a2 : np.ndarray
-        Second normalized coordinate.
+        Second Cartesian normalized coordinate, equal to
+        `r_all * sin(theta_all)`.
     r_all : np.ndarray
-        Radial coordinate.
+        Radial coordinate for each generated point.
     theta_all : np.ndarray
-        Angular coordinate.
-    '''
+        Angular coordinate in rad for each generated point.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        import numpy as np
+        import xpart as xp
+
+        a1, a2, r, theta = xp.generate_2D_polar_grid(
+            r_range=(1.0, 2.0), nr=2,
+            theta_range=(0.0, np.pi / 2), ntheta=3)
+
+        a1     # [1.0, 0.707107, 0.0, 2.0, 1.414214, 0.0]
+        a2     # [0.0, 0.707107, 1.0, 0.0, 1.414214, 2.0]
+        r      # [1.0, 1.0, 1.0, 2.0, 2.0, 2.0]
+        theta  # [0.0, 0.785398, 1.570796, 0.0, 0.785398, 1.570796]
+    """
 
     _r_grid = _configure_grid('r', r_grid, dr, r_range, nr)
     _theta_grid = _configure_grid('theta', theta_grid, dtheta,
