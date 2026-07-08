@@ -123,32 +123,90 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     nemitt_x=None, nemitt_y=None,
     at_element=None, match_at_s=None, twiss=None, **kwargs):
 
-    '''
-    Generate a 2D pencil beam distribution with an absolute cut.
+    """
+    Generate a 2D pencil distribution with a cut in physical coordinates.
+
+    The requested `absolute_cut` is converted to normalized coordinates at the
+    selected location using the line optics and the provided normalized
+    emittances. A normalized pencil distribution is then generated with
+    `generate_2D_pencil` and converted back to physical coordinates.
 
     Parameters
     ----------
-    line: xtrack.Line
-        Line for which the coordinates are generated.
     num_particles : int
-        Number of particles to be generated.
-    plane : str
-        Plane of the pencil beam. Can be 'x' or 'y'.
+        Number of points to generate.
+    plane : {'x', 'y'}
+        Plane in which to generate the pencil distribution.
     absolute_cut : float
-        Absolute cut in meters.
+        Position cut in m.
     dr_sigmas : float
-        Radius of the pencil beam in sigmas.
-    side : str
-        Side of the pencil beam. Can be '+' or '-'.
+        Radial thickness of the pencil distribution in units of sigma.
+    side : {'+', '-'}, optional
+        Side on which to generate the pencil distribution.
+    tracker : xtrack.Tracker, optional
+        Deprecated. Use `line` instead.
+    line : xtrack.Line
+        Line used to compute the optics and physical coordinates.
+    nemitt_x : float
+        Normalized horizontal emittance in m rad.
+    nemitt_y : float
+        Normalized vertical emittance in m rad.
+    at_element : int or str, optional
+        Element at which the cut is defined. If not provided, the start of the
+        line is used.
+    match_at_s : float, optional
+        Longitudinal position in m at which the cut is defined, downstream of
+        `at_element`. If provided, `at_element` must also be provided.
+    twiss : xtrack.TwissTable or table row, optional
+        Twiss data at the selected location. If not provided, it is computed
+        from `line`.
+    **kwargs
+        Additional keyword arguments passed to `line.twiss` and
+        `line.build_particles`.
 
     Returns
     -------
-    x1 : np.ndarray
-        First normalized coordinate.
-    x2 : np.ndarray
-        Second normalized coordinate.
+    v : np.ndarray
+        Physical coordinate in the selected plane, `x` for `plane='x'` or `y`
+        for `plane='y'`, in m.
+    pv : np.ndarray
+        Conjugate physical coordinate in the selected plane, `px` for
+        `plane='x'` or `py` for `plane='y'`.
 
-    '''
+    Example
+    -------
+
+    .. code-block:: python
+
+        import numpy as np
+        import xpart as xp
+        import xtrack as xt
+
+        np.random.seed(12345)
+
+        line = xt.Line(elements=[
+            xt.LineSegmentMap(
+                length=1.0,
+                betx=2.0, qx=0.31,
+                bety=3.0, qy=0.32,
+            )
+        ])
+        line.set_particle_ref('proton', p0c=7e12)
+
+        x, px = xp.generate_2D_pencil_with_absolute_cut(
+            num_particles=4,
+            plane='x',
+            absolute_cut=2e-3,
+            dr_sigmas=0.2,
+            side='+',
+            line=line,
+            nemitt_x=2e-6,
+            nemitt_y=2e-6,
+            method='4d')
+
+        x   # [0.002001065, 0.002000729, 0.002000124, 0.002001496]
+        px  # [2.005039e-05, 1.110235e-05, 2.871550e-05, -3.370225e-05]
+    """
 
     if line is not None and tracker is not None:
         raise ValueError(
