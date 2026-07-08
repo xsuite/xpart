@@ -36,7 +36,7 @@ delta = 1e-3
 #    - transform to physical coordinates (using 1-turn matrix)
 #    - handle dispersion
 #    - center around the closed orbit
-particles = line.build_particles(
+particles = line.xpart.build_particles(
             zeta=zeta, delta=delta,
             x_norm=x_in_sigmas, px_norm=px_in_sigmas,
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,

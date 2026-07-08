@@ -221,6 +221,19 @@ def _method_block(method_name, function_name, doc, use_default_line):
 '''
 
 
+def _build_particles_method_block():
+    doc = _build_particles_docstring()
+    return f'''
+    def build_particles(self, *args, **kwargs):
+{_docstring_block(doc)}
+        if 'line' in kwargs or 'tracker' in kwargs:
+            import xpart as xp
+            return xp.build_particles(
+                *args, **self._kwargs_with_line(kwargs))
+        return self.line.build_particles(*args, **kwargs)
+'''
+
+
 def _build_particles_docstring():
     return inspect.cleandoc("""
     Build particles using this line by default.
@@ -266,9 +279,7 @@ class XpartLineAPI:
         return kwargs
 '''
 
-    out += _method_block(
-        'build_particles', build_particles.__name__,
-        _build_particles_docstring(), use_default_line=True)
+    out += _build_particles_method_block()
 
     for method_name, function in LINE_BOUND_METHODS:
         out += _method_block(

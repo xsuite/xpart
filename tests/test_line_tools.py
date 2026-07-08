@@ -6,7 +6,6 @@ from xpart.line_tools import XpartLineAPI
 
 
 LINE_BOUND_GENERATORS = [
-    ('build_particles', 'build_particles'),
     ('generate_matched_gaussian_bunch', 'generate_matched_gaussian_bunch'),
     ('generate_matched_gaussian_multibunch_beam',
      'generate_matched_gaussian_multibunch_beam'),
@@ -31,6 +30,42 @@ LINE_FREE_GENERATORS = [
     ('generate_hypersphere_4D', 'generate_hypersphere_4D'),
     ('generate_hypersphere_6D', 'generate_hypersphere_6D'),
 ]
+
+ALL_METHODS = (
+    [('build_particles', 'build_particles')]
+    + LINE_BOUND_GENERATORS + LINE_FREE_GENERATORS
+)
+
+
+def test_line_api_build_particles_delegates_to_line_by_default(monkeypatch):
+    line = xt.Line(elements=[], element_names=[])
+    api = XpartLineAPI(line)
+    calls = []
+
+    def fake_build_particles(self, *args, **kwargs):
+        calls.append((self, args, kwargs))
+        return 'result'
+
+    monkeypatch.setattr(xt.Line, 'build_particles', fake_build_particles)
+
+    assert api.build_particles('arg', option='value') == 'result'
+    assert calls == [(line, ('arg',), {'option': 'value'})]
+
+
+def test_line_api_build_particles_keeps_explicit_tracker(monkeypatch):
+    line = xt.Line(elements=[], element_names=[])
+    api = XpartLineAPI(line)
+    tracker = object()
+    calls = []
+
+    def fake_build_particles(*args, **kwargs):
+        calls.append((args, kwargs))
+        return 'result'
+
+    monkeypatch.setattr(xp, 'build_particles', fake_build_particles)
+
+    assert api.build_particles(tracker=tracker) == 'result'
+    assert calls == [((), {'tracker': tracker})]
 
 
 @pytest.mark.parametrize('method_name,function_name', LINE_BOUND_GENERATORS)
@@ -84,7 +119,7 @@ def test_line_api_keeps_line_free_generators_line_free(
 
 
 @pytest.mark.parametrize(
-    'method_name,function_name', LINE_BOUND_GENERATORS + LINE_FREE_GENERATORS)
+    'method_name,function_name', ALL_METHODS)
 def test_line_api_docstrings_adapt_xpart_functions(method_name, function_name):
     doc = getattr(XpartLineAPI, method_name).__doc__
     source_doc = getattr(xp, function_name).__doc__
@@ -96,7 +131,7 @@ def test_line_api_docstrings_adapt_xpart_functions(method_name, function_name):
         assert f'xp.{function_name}(' not in doc
         assert f'from xpart.longitudinal import {function_name}' not in doc
 
-    if (method_name, function_name) in LINE_BOUND_GENERATORS:
+    if (method_name, function_name) in ALL_METHODS[:1] + LINE_BOUND_GENERATORS:
         assert 'Defaults to the line owning this ``xpart`` container.' in doc
         assert 'line=line' not in doc
 

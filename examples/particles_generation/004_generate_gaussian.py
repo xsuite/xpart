@@ -4,10 +4,7 @@
 # ######################################### #
 
 import numpy as np
-from scipy.constants import e as qe
-from scipy.constants import m_p
 
-import xpart as xp
 import xtrack as xt
 
 bunch_intensity = 1e11
@@ -19,10 +16,9 @@ nemitt_y = 2.5e-6
 line = xt.load('../../../xtrack/test_data/sps_w_spacecharge/line_no_spacecharge_and_particle.json')
 line.set_particle_ref('proton', p0c=26e9)
 
-particles = xp.generate_matched_gaussian_bunch(
+particles = line.xpart.generate_matched_gaussian_bunch(
          num_particles=n_part, total_intensity_particles=bunch_intensity,
-         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
-         line=line)
+         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z)
 
 
 #!end-doc-part

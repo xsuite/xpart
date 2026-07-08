@@ -38,15 +38,14 @@ line.build_tracker(_context=ctx)
 rms_bunch_length=0.25
 distribution = "gaussian"
 n_particles = 100000
-zeta, delta, matcher = xp.generate_longitudinal_coordinates(line=line,
+zeta, delta, matcher = line.xpart.generate_longitudinal_coordinates(
                         num_particles=n_particles,
                         sigma_z=rms_bunch_length, distribution=distribution,
                         engine="single-rf-harmonic", return_matcher=True)
                         #engine="pyheadtail", return_matcher=True)
 
 # Built a set of three particles with different x coordinates
-particles = xp.build_particles(_context=ctx,
-                               line=line,
+particles = line.xpart.build_particles(_context=ctx,
                                zeta=zeta, delta=delta,
                                x_norm=0, # in sigmas
                                px_norm=0, # in sigmas

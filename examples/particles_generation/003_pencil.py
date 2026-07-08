@@ -5,7 +5,6 @@
 
 import numpy as np
 
-import xpart as xp
 import xtrack as xt
 
 num_particles = 10000
@@ -17,28 +16,28 @@ line = xt.load('../../../xtrack/test_data/lhc_no_bb/line_and_particle.json')
 line.set_particle_ref('proton', p0c=7e12)
 
 # Horizontal plane: generate gaussian distribution in normalized coordinates
-x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
+x_in_sigmas, px_in_sigmas = line.xpart.generate_2D_gaussian(num_particles)
 
 # Vertical plane: generate pencil distribution in normalized coordinates
 pencil_cut_sigmas = 6.
 pencil_dr_sigmas = 0.7
-y_in_sigmas, py_in_sigmas, r_points, theta_points = xp.generate_2D_pencil(
+y_in_sigmas, py_in_sigmas, r_points, theta_points = line.xpart.generate_2D_pencil(
                              num_particles=num_particles,
                              pos_cut_sigmas=pencil_cut_sigmas,
                              dr_sigmas=pencil_dr_sigmas,
                              side='+-')
 
 # Longitudinal plane: generate gaussian distribution matched to bucket 
-zeta, delta = xp.generate_longitudinal_coordinates(
+zeta, delta = line.xpart.generate_longitudinal_coordinates(
         num_particles=num_particles, distribution='gaussian',
-        sigma_z=10e-2, line=line)
+        sigma_z=10e-2)
 
 # Build particles:
 #    - scale with given emittances
 #    - transform to physical coordinates (using 1-turn matrix)
 #    - handle dispersion
 #    - center around the closed orbit
-particles = line.build_particles(
+particles = line.xpart.build_particles(
             zeta=zeta, delta=delta,
             x_norm=x_in_sigmas, px_norm=px_in_sigmas,
             y_norm=y_in_sigmas, py_norm=py_in_sigmas,
@@ -87,4 +86,3 @@ ax23.set_ylabel(r'$\delta$ [1e-3]')
 fig1.subplots_adjust(bottom=.08, top=.93, hspace=.33,
                      right=.96, wspace=.33)
 plt.show()
-

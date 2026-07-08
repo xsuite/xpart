@@ -12,9 +12,6 @@ import xpart as xp
 import xtrack as xt
 import xobjects as xo
 
-from xpart import build_particles
-from xpart.longitudinal import generate_binomial_longitudinal_coordinates
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -50,20 +47,20 @@ py_norm = np.random.normal(size=num_particles)
 
 
 # Generate parabolic coordinates
-zeta, delta = generate_binomial_longitudinal_coordinates(num_particles=num_particles,
-                                                     	 nemitt_x=nemitt_x, 
-                                                     	 nemitt_y=nemitt_y, 
-                                                     	 sigma_z=sigma_z,
-                                                     	 particle_ref=p0,
-                                                     	 line=line)
+zeta, delta = line.xpart.generate_binomial_longitudinal_coordinates(
+                 num_particles=num_particles,
+                 nemitt_x=nemitt_x,
+                 nemitt_y=nemitt_y,
+                 sigma_z=sigma_z,
+                 particle_ref=p0)
 				
 # Build particle object
-particles = build_particles(_context=context, particle_ref=p0,
+particles = line.xpart.build_particles(_context=context, particle_ref=p0,
 			zeta=zeta, delta=delta, 
 			x_norm=x_norm, px_norm=px_norm,
 			y_norm=y_norm, py_norm=py_norm,
 			nemitt_x=nemitt_x, nemitt_y=nemitt_y,
-			weight=total_intensity_particles/num_particles, line=line)		
+			weight=total_intensity_particles/num_particles)
 						
 # Make a histogram
 bin_heights, bin_borders = np.histogram(particles.zeta, bins=300)

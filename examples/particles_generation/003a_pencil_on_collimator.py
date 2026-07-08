@@ -5,7 +5,6 @@
 
 import numpy as np
 
-import xpart as xp
 import xtrack as xt
 
 num_particles = 10000
@@ -25,23 +24,23 @@ pencil_dr_sigmas = 3 # width of the pencil
 side = '+' # side of the pencil
 
 # Horizontal plane: generate gaussian distribution in normalized coordinates
-x_in_sigmas, px_in_sigmas = xp.generate_2D_gaussian(num_particles)
+x_in_sigmas, px_in_sigmas = line.xpart.generate_2D_gaussian(num_particles)
 
 # Vertical plane: generate pencil beam in absolute coordinates
-y_absolute, py_absolute = xp.generate_2D_pencil_with_absolute_cut(num_particles,
+y_absolute, py_absolute = line.xpart.generate_2D_pencil_with_absolute_cut(num_particles,
                     plane='y', absolute_cut=y_cut, dr_sigmas=pencil_dr_sigmas,
-                    side=side, line=line,
+                    side=side,
                     nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                     at_element=at_element, match_at_s=at_s)
 
 # Longitudinal plane: generate gaussian distribution matched to bucket
-zeta, delta = xp.generate_longitudinal_coordinates(
+zeta, delta = line.xpart.generate_longitudinal_coordinates(
         num_particles=num_particles, distribution='gaussian',
-        sigma_z=10e-2, line=line)
+        sigma_z=10e-2)
 
 # Combine the three planes
 # (the normalized coordinates in y/py are blurred in order to preserve the geometric ones)
-particles = line.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+particles = line.xpart.build_particles(nemitt_x=nemitt_x, nemitt_y=nemitt_y,
                 y=y_absolute, py=py_absolute,
                 x_norm=x_in_sigmas, px_norm=px_in_sigmas,
                 zeta=zeta, delta=delta,

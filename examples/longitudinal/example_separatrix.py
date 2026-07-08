@@ -9,10 +9,7 @@ import numpy as np
 
 import xobjects as xo
 
-
-import xpart as xp
 import xtrack as xt
-import time
 
 ctx = xo.ContextCpu()
 
@@ -25,14 +22,14 @@ line.build_tracker(_context=ctx)
 rms_bunch_length=0.14
 distribution = "gaussian"
 n_particles = 10000
-zeta, delta, matcher = xp.generate_longitudinal_coordinates(line.line,
+zeta, delta, matcher = line.xpart.generate_longitudinal_coordinates(
                         num_particles=n_particles,
                         sigma_z=rms_bunch_length, distribution=distribution,
                         engine="single-rf-harmonic", return_matcher=True)
                         #engine="pyheadtail", return_matcher=True)
 
 # Built a set of three particles with different x coordinates
-particles = line.build_particles(zeta=0., delta=np.linspace(0,0.0015, 30),
+particles = line.xpart.build_particles(zeta=0., delta=np.linspace(0,0.0015, 30),
                                x_norm=0, # in sigmas
                                px_norm=0, # in sigmas
                                nemitt_x=3e-6, nemitt_y=3e-6,

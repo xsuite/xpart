@@ -39,9 +39,11 @@ class XpartLineAPI:
         Explicit ``line`` or ``tracker`` arguments override the container. See
         ``xtrack.Line.build_particles`` for the full parameter list.
         """
-        import xpart as xp
-        return xp.build_particles(
-            *args, **self._kwargs_with_line(kwargs))
+        if 'line' in kwargs or 'tracker' in kwargs:
+            import xpart as xp
+            return xp.build_particles(
+                *args, **self._kwargs_with_line(kwargs))
+        return self.line.build_particles(*args, **kwargs)
 
     def generate_matched_gaussian_bunch(self, *args, **kwargs):
         """
