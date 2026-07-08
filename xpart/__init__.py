@@ -23,9 +23,13 @@ from .transverse_generators import generate_2D_gaussian
 from .transverse_generators import (generate_hypersphere_2D, generate_hypersphere_4D,
                                     generate_hypersphere_6D)
 
-from .longitudinal import generate_longitudinal_coordinates
+from .longitudinal import (generate_longitudinal_coordinates,
+                           generate_binomial_longitudinal_coordinates,
+                           generate_parabolic_longitudinal_coordinates,
+                           generate_qgaussian_longitudinal_coordinates)
 from .longitudinal.generate_longitudinal import _characterize_line
 
 from .monitors import PhaseMonitor
+from .line_tools import XpartLineAPI
 
 from ._version import __version__
