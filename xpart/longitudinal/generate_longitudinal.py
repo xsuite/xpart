@@ -384,7 +384,6 @@ def generate_longitudinal_coordinates(
     elif engine == "single-rf-harmonic":
         if distribution not in ["parabolic", "gaussian", "binomial", "qgaussian"]:
             raise NotImplementedError
-        beta_z = rfbucket.beta_z
 
         # if fragment
         if particle_ref._xobject.chi[0] != 1.0:
@@ -403,7 +402,7 @@ def generate_longitudinal_coordinates(
                                           length=circumference,
                                           freq=dct['freq_list'][0],
                                           p0c=particle_ref._xobject.p0c[0],
-                                          slip_factor=eta,
+                                          slip_factor=dct['slip_factor'],
                                           beta0=particle_ref._xobject.beta0[0],
                                           rms_bunch_length=sigma_tau,
                                           distribution=distribution, m=m, q=q)

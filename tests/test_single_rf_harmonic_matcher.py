@@ -17,6 +17,45 @@ from xobjects.test_helpers import fix_random_seed
 TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
 
 
+@fix_random_seed(12345)
+def test_single_rf_harmonic_compact_line():
+    circumference = 26658.883
+    momentum_compaction_factor = 3.225e-4
+    sigma_z = 0.02
+    line = xt.Line(elements=[
+        xt.LineSegmentMap(
+            length=circumference,
+            betx=1.0, qx=0.31,
+            bety=1.0, qy=0.32,
+            longitudinal_mode='linear_fixed_rf',
+            voltage_rf=16e6,
+            frequency_rf=400.8e6,
+            phase_rf=np.pi,
+            slippage_length=circumference,
+            momentum_compaction_factor=momentum_compaction_factor,
+        )
+    ])
+    line.set_particle_ref('proton', p0c=7e12)
+
+    zeta, delta, matcher = xp.generate_longitudinal_coordinates(
+        line=line,
+        num_particles=20000,
+        sigma_z=sigma_z,
+        engine='single-rf-harmonic',
+        return_matcher=True)
+
+    assert matcher.__class__.__name__ == 'SingleRFHarmonicMatcher'
+    assert len(zeta) == 20000
+    assert len(delta) == 20000
+    assert np.all(np.isfinite(zeta))
+    assert np.all(np.isfinite(delta))
+
+    tw = line.twiss()
+    assert np.isclose(np.std(zeta), sigma_z, rtol=1e-2, atol=1e-15)
+    assert np.isclose(np.std(delta), sigma_z / abs(tw['bets0']),
+                      rtol=1e-2, atol=1e-15)
+
+
 @pytest.mark.parametrize('scenario', ['psb_injection', 'sps_ions', 'lhc_protons'])
 @pytest.mark.parametrize('distribution', ['gaussian', 'parabolic'])
 @fix_random_seed(46398498)
