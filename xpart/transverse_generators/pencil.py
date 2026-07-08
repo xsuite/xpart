@@ -13,28 +13,58 @@ import xpart as xp
 def generate_2D_pencil(num_particles, pos_cut_sigmas, dr_sigmas,
                        side='+'):
 
-    '''
-    Generate a 2D pencil beam distribution.
+    """
+    Generate a 2D pencil distribution in normalized coordinates.
+
+    The generated points lie outside a position cut and within a radial
+    thickness `dr_sigmas`, expressed in units of the normalized beam size. For
+    `side='+'`, the cut is applied on the positive side of the first
+    coordinate; for `side='-'`, on the negative side. With `side='+-'`, the
+    particles are split between the two sides.
 
     Parameters
     ----------
     num_particles : int
-        Number of particles to be generated.
+        Number of points to generate.
     pos_cut_sigmas : float
-        Position cut in sigmas.
+        Position cut in units of sigma.
     dr_sigmas : float
-        Radius of the pencil beam in sigmas.
-    side : str
-        Side of the pencil beam. Can be '+', '-' or '+-'.
+        Radial thickness of the pencil distribution in units of sigma.
+    side : {'+', '-', '+-'}, optional
+        Side on which to generate the pencil distribution.
 
     Returns
     -------
-    x1 : np.ndarray
+    x_norm : np.ndarray
         First normalized coordinate.
-    x2 : np.ndarray
+    px_norm : np.ndarray
         Second normalized coordinate.
+    r_points : np.ndarray
+        Radial coordinate of the generated points.
+    theta_points : np.ndarray
+        Angular coordinate in rad of the generated points.
 
-    '''
+    Example
+    -------
+
+    .. code-block:: python
+
+        import numpy as np
+        import xpart as xp
+
+        np.random.seed(12345)
+
+        x_norm, px_norm, r, theta = xp.generate_2D_pencil(
+            num_particles=4,
+            pos_cut_sigmas=6.0,
+            dr_sigmas=0.1,
+            side='-')
+
+        x_norm  # [-6.042132, -6.023206, -6.015881, -6.002956]
+        px_norm # [0.785794, 0.322182, 0.178111, 0.46048]
+        r       # [6.093015, 6.031817, 6.018517, 6.020591]
+        theta   # [3.012266, 3.088153, 3.111994, 3.065034]
+    """
 
     assert side == '+' or side == '-' or side == '+-'
 
