@@ -7,6 +7,7 @@ import numpy as np
 import json
 import pathlib
 
+import xobjects as xo
 import xpart as xp
 import xtrack as xt
 
@@ -28,7 +29,9 @@ def test_classical_particle_radius_ions(test_context):
                                           _context=test_context)
     r0_Pb82 = np.float64(4.998617e-17)  # calculated theoretical classical particle radius
 
-    assert np.isclose(particle_ref.get_classical_particle_radius0(), r0_Pb82, atol=1e-5)
+    xo.assert_allclose(
+        particle_ref.get_classical_particle_radius0(), r0_Pb82,
+        rtol=1e-05, atol=1e-5)
 
 
 @for_all_test_contexts
@@ -46,7 +49,9 @@ def test_classical_particle_radius_protons(test_context):
                                           _context=test_context)
     r0_proton = np.float64(1.534698e-18)  # calculated theoretical classical particle radius
 
-    assert np.isclose(particle_ref.get_classical_particle_radius0(), r0_proton, atol=1e-5)
+    xo.assert_allclose(
+        particle_ref.get_classical_particle_radius0(), r0_proton,
+        rtol=1e-05, atol=1e-5)
 
 
 def test_showing():

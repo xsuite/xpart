@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import stats
 
+import xobjects as xo
 import xpart as xp
 
 
@@ -24,7 +25,8 @@ def test_hypersphere_rng_seed_reproducible():
         second = generator(*args, **kwargs)
 
         for first_coord, second_coord in zip(first, second):
-            assert np.allclose(first_coord, second_coord)
+            xo.assert_allclose(first_coord, second_coord,
+                               rtol=1e-05, atol=1e-08)
 
 
 def test_hypersphere_2D():
@@ -47,8 +49,8 @@ def test_hypersphere_2D():
         means.append(np.mean(bincounts))
         stds.append(np.std(bincounts))
 
-    assert np.allclose(np.diff(means)/np.mean(means), 0, rtol=0, atol=1e-2)
-    assert np.allclose(np.array(stds)/np.array(means), 0, rtol=0, atol=0.5)
+    xo.assert_allclose(np.diff(means)/np.mean(means), 0, rtol=0, atol=1e-2)
+    xo.assert_allclose(np.array(stds)/np.array(means), 0, rtol=0, atol=0.5)
 
 
 def test_hypersphere_4D():
@@ -73,8 +75,8 @@ def test_hypersphere_4D():
         means.append(np.mean(bincounts))
         stds.append(np.std(bincounts))
 
-    assert np.allclose(np.diff(means)/np.mean(means), 0, rtol=0, atol=1e-2)
-    assert np.allclose(np.array(stds)/np.array(means), 0, rtol=0, atol=0.5)
+    xo.assert_allclose(np.diff(means)/np.mean(means), 0, rtol=0, atol=1e-2)
+    xo.assert_allclose(np.array(stds)/np.array(means), 0, rtol=0, atol=0.5)
 
 
 def test_hypersphere_6D():
@@ -102,5 +104,5 @@ def test_hypersphere_6D():
         means.append(np.mean(bincounts))
         stds.append(np.std(bincounts))
 
-    assert np.allclose(np.diff(means)/np.mean(means), 0, rtol=0, atol=1e-2)
-    assert np.allclose(np.array(stds)/np.array(means), 0, rtol=0, atol=0.5)
+    xo.assert_allclose(np.diff(means)/np.mean(means), 0, rtol=0, atol=1e-2)
+    xo.assert_allclose(np.array(stds)/np.array(means), 0, rtol=0, atol=0.5)

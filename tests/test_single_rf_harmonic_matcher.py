@@ -51,9 +51,9 @@ def test_single_rf_harmonic_compact_line():
     assert np.all(np.isfinite(delta))
 
     tw = line.twiss()
-    assert np.isclose(np.std(zeta), sigma_z, rtol=1e-2, atol=1e-15)
-    assert np.isclose(np.std(delta), sigma_z / abs(tw['bets0']),
-                      rtol=1e-2, atol=1e-15)
+    xo.assert_allclose(np.std(zeta), sigma_z, rtol=1e-2, atol=1e-15)
+    xo.assert_allclose(np.std(delta), sigma_z / abs(tw['bets0']),
+                       rtol=1e-2, atol=1e-15)
 
 
 @pytest.mark.parametrize('scenario', ['psb_injection', 'sps_ions', 'lhc_protons'])
@@ -114,10 +114,10 @@ def test_single_rf_harmonic_matcher_rms_and_profile_and_tune(
         twiss_tune = line.twiss()['qs']
         theoretical_synchrotron_tune = matcher.get_synchrotron_tune()
 
-        assert np.isclose(theoretical_synchrotron_tune,
-                          twiss_tune, rtol=3.e-3, atol=1.e-15)
+        xo.assert_allclose(theoretical_synchrotron_tune,
+                           twiss_tune, rtol=3.e-3, atol=1.e-15)
 
-        assert np.isclose(rms_bunch_length, np.std(zeta),
-                          rtol=2e-2, atol=1e-15)
+        xo.assert_allclose(rms_bunch_length, np.std(zeta),
+                           rtol=2e-2, atol=1e-15)
 
         xo.assert_allclose(hist, tau_distr_y, atol=3.e-2, rtol=1.e-2)

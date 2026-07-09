@@ -57,13 +57,15 @@ def test_gaussian_bunch_generation(test_context):
     part_on_co.move(_context=xo.ContextCpu())
     gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
     gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
-    assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
-    assert np.isclose(x_rms,
-                      np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
-                      rtol=1e-2, atol=1e-15)
-    assert np.isclose(y_rms,
-                      np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
-                      rtol=1e-2, atol=1e-15)
+    xo.assert_allclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
+    xo.assert_allclose(
+        x_rms,
+        np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
+        rtol=1e-2, atol=1e-15)
+    xo.assert_allclose(
+        y_rms,
+        np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
+        rtol=1e-2, atol=1e-15)
 
 
 @for_all_test_contexts
@@ -100,14 +102,16 @@ def test_short_bunch(test_context):
 
     gemitt_x = nemitt_x/particle_ref.beta0[0]/particle_ref.gamma0[0]
     gemitt_y = nemitt_y/particle_ref.beta0[0]/particle_ref.gamma0[0]
-    assert np.isclose(zeta_rms, sigma_z, rtol=5e-2, atol=1e-15)
-    assert np.isclose(x_rms,
-                      np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
-                      rtol=5e-2, atol=1e-15)
-    assert np.isclose(y_rms,
-                      np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
-                      rtol=5e-2, atol=1e-15)
+    xo.assert_allclose(zeta_rms, sigma_z, rtol=5e-2, atol=1e-15)
+    xo.assert_allclose(
+        x_rms,
+        np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
+        rtol=5e-2, atol=1e-15)
+    xo.assert_allclose(
+        y_rms,
+        np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
+        rtol=5e-2, atol=1e-15)
 
     for iturn in range(100):
         line.track(part)
-        assert np.isclose(zeta_rms, sigma_z, rtol=5e-2, atol=1e-15)
+        xo.assert_allclose(zeta_rms, sigma_z, rtol=5e-2, atol=1e-15)

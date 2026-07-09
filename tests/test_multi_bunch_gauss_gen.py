@@ -108,31 +108,33 @@ def test_multi_bunch_gaussian_generation(test_context):
                     part.zeta[i_bunch*n_part_per_bunch:
                               (i_bunch+1)*n_part_per_bunch]))
 
-            assert np.isclose((zeta_avg+bunch_spacing*filled_slots[bunch_number])/sigma_z, 0.0, atol=1e-2)
-            assert np.isclose(delta_avg/sigma_delta, 0.0, atol=1e-2)
-            assert np.isclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
-            assert np.isclose(delta_rms, sigma_delta, rtol=1e-1, atol=1e-15)
+            xo.assert_allclose(
+                (zeta_avg+bunch_spacing*filled_slots[bunch_number])/sigma_z,
+                0.0, rtol=1e-05, atol=1e-2)
+            xo.assert_allclose(delta_avg/sigma_delta, 0.0,
+                               rtol=1e-05, atol=1e-2)
+            xo.assert_allclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
+            xo.assert_allclose(delta_rms, sigma_delta, rtol=1e-1, atol=1e-15)
 
             part_on_co.move(_context=xo.ContextCpu(omp_num_threads=0))
 
             gemitt_x = nemitt_x/part_on_co.beta0/part_on_co.gamma0
             gemitt_y = nemitt_y/part_on_co.beta0/part_on_co.gamma0
-            assert np.isclose(
+            xo.assert_allclose(
                 x_rms,
                 np.sqrt(tw['betx'][0]*gemitt_x + tw['dx'][0]**2*delta_rms**2),
                 rtol=1e-2, atol=1e-15
             )
-            assert np.isclose(
+            xo.assert_allclose(
                 y_rms,
                 np.sqrt(tw['bety'][0]*gemitt_y + tw['dy'][0]**2*delta_rms**2),
                 rtol=1e-2, atol=1e-15
             )
 
-            assert np.isclose(
+            xo.assert_allclose(
                 np.sum(test_context.nparray_from_context_array(
                 part.weight[i_bunch*n_part_per_bunch:
                        (i_bunch+1)*n_part_per_bunch])),
                 bunch_intensity,
                 rtol=1e-2, atol=1e-15
             )
-

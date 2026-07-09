@@ -102,12 +102,15 @@ def test_pencil_with_absolute_cut(test_context):
         sigma_v = np.sqrt(betv*nemitt_v
             /particles._xobject.beta0[0]/particles._xobject.gamma0[0])
 
-        assert(np.isclose(np.min(np.abs(v)), abs(absolute_cut), atol=1e-7))
-        assert(np.isclose(np.max(np.abs(v)), abs(absolute_cut) + sigma_v*pencil_dr_sigmas,
-            rtol=1e-3, atol=0))
+        xo.assert_allclose(
+            np.min(np.abs(v)), abs(absolute_cut), rtol=1e-05, atol=1e-7)
+        xo.assert_allclose(
+            np.max(np.abs(v)), abs(absolute_cut) + sigma_v*pencil_dr_sigmas,
+            rtol=1e-3, atol=0)
 
         i_tip = np.argmax(np.abs(v))
-        assert np.isclose(pv[i_tip]/v[i_tip], -alfv/betv, atol=5e-4)
+        xo.assert_allclose(
+            pv[i_tip]/v[i_tip], -alfv/betv, rtol=1e-05, atol=5e-4)
 
         if side == '+':
             assert np.all(v >= 0)

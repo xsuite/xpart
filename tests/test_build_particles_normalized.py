@@ -41,8 +41,9 @@ def test_build_particles_normalized(test_context):
     dct = particles.to_dict() # transfers it to cpu
     xo.assert_allclose(dct['x'], [-0.0003883 , -0.0006076 , -0.00082689],
                        rtol=0, atol=1e-7)
-    assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
-    assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
+    xo.assert_allclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
+    xo.assert_allclose(
+        1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
     assert np.all(dct['p0c'] == 7e12)
 
     # Same as before with R matrix provided as input
@@ -59,8 +60,9 @@ def test_build_particles_normalized(test_context):
     dct = particles.to_dict() # transfers it to cpu
     xo.assert_allclose(dct['x'], [-0.0003883, -0.0006076, -0.00082689],
                        rtol=0, atol=1e-7)
-    assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
-    assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
+    xo.assert_allclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
+    xo.assert_allclose(
+        1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
     assert np.all(dct['p0c'] == 7e12)
 
     # Test the 4d mode
@@ -79,8 +81,9 @@ def test_build_particles_normalized(test_context):
     dct = particles.to_dict() # transfers it to cpu
     xo.assert_allclose(dct['x'], [-0.00038813 , -0.00060738 , -0.00082664],
                        rtol=0, atol=1e-7)
-    assert np.isclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
-    assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
+    xo.assert_allclose(dct['ptau'][1], 1e-3, rtol=0, atol=1e-9)
+    xo.assert_allclose(
+        1/(dct['rpp'][1]) - 1, 1e-3, rtol=0, atol=1e-10)
     assert np.all(dct['p0c'] == 7e12)
 
 
@@ -104,8 +107,9 @@ def test_build_particles_normalized_ions(test_context):
     dct = particles.to_dict() # transfers it to cpu
     xo.assert_allclose(dct['x'], [6.5404e-3, 1.21e-5, -6.5163e-3],
                        rtol=0, atol=1e-7)
-    assert np.isclose(dct['ptau'][1], 9.906e-6, rtol=0, atol=1e-9)
-    assert np.isclose(1/(dct['rpp'][1]) - 1, 1e-5, rtol=0, atol=1e-10)
+    xo.assert_allclose(dct['ptau'][1], 9.906e-6, rtol=0, atol=1e-9)
+    xo.assert_allclose(
+        1/(dct['rpp'][1]) - 1, 1e-5, rtol=0, atol=1e-10)
     xo.assert_allclose(dct['p0c'], 1.4024063e+12, rtol=0, atol=1e3)
 
 

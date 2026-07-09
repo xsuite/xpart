@@ -7,6 +7,7 @@ import json
 import pathlib
 import numpy as np
 
+import xobjects as xo
 import xpart as xp
 import xtrack as xt
 
@@ -35,10 +36,14 @@ def _check_pencil_polar_coordinates(side):
         assert np.any(x_norm < -6.)
         assert np.any(x_norm > 6.)
 
-    assert np.allclose(r_points, np.sqrt(x_norm**2 + px_norm**2))
-    assert np.allclose(theta_points, np.arctan2(px_norm, x_norm))
-    assert np.allclose(x_norm, r_points * np.cos(theta_points))
-    assert np.allclose(px_norm, r_points * np.sin(theta_points))
+    xo.assert_allclose(r_points, np.sqrt(x_norm**2 + px_norm**2),
+                       rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(theta_points, np.arctan2(px_norm, x_norm),
+                       rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(x_norm, r_points * np.cos(theta_points),
+                       rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(px_norm, r_points * np.sin(theta_points),
+                       rtol=1e-05, atol=1e-08)
 
 
 @for_all_test_contexts

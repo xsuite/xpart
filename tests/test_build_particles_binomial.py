@@ -58,4 +58,4 @@ def test_build_particles_binomial(test_context):
                 bins=len(tau_distr_x))
     hist = hist / sum(hist) * sum(tau_distr_y)
 
-    assert np.all(np.isclose(hist, tau_distr_y, atol=5.e-2, rtol=1.e-2))
+    xo.assert_allclose(hist, tau_distr_y, atol=5.e-2, rtol=1.e-2)

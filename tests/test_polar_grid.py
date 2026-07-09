@@ -5,6 +5,7 @@
 
 import numpy as np
 
+import xobjects as xo
 import xpart as xp
 
 
@@ -14,12 +15,13 @@ def test_generate_2D_polar_grid():
 
     assert len(x_norm) == len(px_norm) == len(r_points) == len(theta_points) == 80
 
-    assert np.isclose(np.max(x_norm), 10)
-    assert np.isclose(np.max(px_norm), 10)
-    assert np.isclose(np.min(np.sqrt(x_norm**2 + px_norm**2)), 0.1)
+    xo.assert_allclose(np.max(x_norm), 10, rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(np.max(px_norm), 10, rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(
+        np.min(np.sqrt(x_norm**2 + px_norm**2)), 0.1,
+        rtol=1e-05, atol=1e-08)
 
-    assert np.isclose(np.min(theta_points), 0)
-    assert np.isclose(np.max(theta_points), np.pi/2)
-    assert np.isclose(np.min(r_points), 0.1)
-    assert np.isclose(np.max(r_points), 10)
-
+    xo.assert_allclose(np.min(theta_points), 0, rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(np.max(theta_points), np.pi/2, rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(np.min(r_points), 0.1, rtol=1e-05, atol=1e-08)
+    xo.assert_allclose(np.max(r_points), 10, rtol=1e-05, atol=1e-08)
