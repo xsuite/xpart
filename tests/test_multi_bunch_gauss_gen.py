@@ -111,7 +111,7 @@ def test_multi_bunch_gaussian_generation(test_context):
             xo.assert_allclose(
                 (zeta_avg+bunch_spacing*filled_slots[bunch_number])/sigma_z,
                 0.0, rtol=1e-05, atol=1e-2)
-            xo.assert_allclose(delta_avg/sigma_delta, 0.0,
+            xo.assert_allclose((delta_avg-tw.delta[0])/sigma_delta, 0.0,
                                rtol=1e-05, atol=1e-2)
             xo.assert_allclose(zeta_rms, sigma_z, rtol=1e-2, atol=1e-15)
             xo.assert_allclose(delta_rms, sigma_delta, rtol=1e-1, atol=1e-15)
