@@ -16,7 +16,8 @@ def test_build_particles_shift(test_context):
     for ctx_ref in [test_context, None]:
         # Build a reference particle
         p0 = xp.Particles(mass0=xp.PROTON_MASS_EV, q0=1, p0c=7e12, x=1, y=3,
-                          delta=[1e-4], _context=ctx_ref)
+                          delta=[1e-4], charge_ratio=0.8, mass_ratio=1.2,
+                          _context=ctx_ref)
 
 
         # Built a set of three particles with different x coordinates
@@ -30,3 +31,6 @@ def test_build_particles_shift(test_context):
         assert np.all(dct['p0c'] == 7e12)
         assert dct['x'][1] == 1.0
         assert dct['y'][1] == 5.0
+        xo.assert_allclose(dct['chi'], 0.8 / 1.2, rtol=0, atol=1e-14)
+        xo.assert_allclose(dct['charge_ratio'], 0.8, rtol=0, atol=1e-14)
+        xo.assert_allclose(particles.mass_ratio, 1.2, rtol=0, atol=1e-14)
