@@ -173,6 +173,12 @@ class XpartLineAPI:
             One-dimensional binary array indicating which RF buckets are filled.
             The legacy ``filling_scheme`` keyword is accepted as a compatibility
             alias.
+        filled_slots : array_like, optional
+            Sparse list of filled physical slots. Mutually exclusive with
+            `filling_pattern`.
+        num_slots : int, optional
+            Total number of slots represented by `filled_slots`. If omitted,
+            it is inferred and then padded to the number of slots in the ring.
         bunch_num_particles : int
             Number of macroparticles to generate per bunch.
         nemitt_x : float
@@ -1111,4 +1117,3 @@ class XpartLineAPI:
         """
         import xpart as xp
         return xp.generate_hypersphere_6D(*args, **kwargs)
-

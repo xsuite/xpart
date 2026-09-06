@@ -6,6 +6,7 @@
 import functools
 
 import numpy as np
+from xtrack._filling_pattern import _FillingPattern
 
 from .general import _print
 
@@ -216,8 +217,8 @@ def generate_matched_gaussian_bunch(num_particles,
         return part
 
 
-def _accept_filling_scheme(func):
-    """Accept the legacy filling keyword without obscuring the new signature."""
+def _accept_filling_inputs(func):
+    """Accept legacy and sparse filling keywords with the canonical signature."""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if 'filling_scheme' in kwargs:
@@ -226,27 +227,31 @@ def _accept_filling_scheme(func):
                     'Only one of `filling_pattern` and `filling_scheme` can '
                     'be provided.')
             kwargs['filling_pattern'] = kwargs.pop('filling_scheme')
+        if ('filled_slots' in kwargs and 'filling_pattern' not in kwargs
+                and len(args) == 0):
+            # The wrapped multibunch generator retains its historically
+            # required first positional argument for signature compatibility.
+            kwargs['filling_pattern'] = None
         return func(*args, **kwargs)
     return wrapper
 
 
-def _validate_filling_pattern(filling_pattern):
-    filling_pattern = np.asarray(filling_pattern)
-    if filling_pattern.ndim != 1:
-        raise ValueError('`filling_pattern` must be one-dimensional.')
-    if not np.all((filling_pattern == 0) | (filling_pattern == 1)):
-        raise ValueError('`filling_pattern` can contain only zero and one.')
-    return filling_pattern.astype(np.int64, copy=False)
-
-
-@_accept_filling_scheme
-def split_filling_pattern(filling_pattern, n_chunk=1):
+def split_filling_pattern(filling_pattern=None, n_chunk=1, *,
+                          filled_slots=None, num_slots=None,
+                          filling_scheme=None):
     """
     Distribute the filling pattern between the processes, i.e. assign to each
-    processor its bunches. The legacy ``filling_scheme`` keyword is accepted
-    as a compatibility alias.
+    processor its bunches. A sparse ``filled_slots`` list can be provided
+    instead. The legacy ``filling_scheme`` keyword is accepted as a
+    compatibility alias.
     """
-    filling_pattern = _validate_filling_pattern(filling_pattern)
+    filling = _FillingPattern.from_inputs(
+        filling_pattern=filling_pattern,
+        filled_slots=filled_slots,
+        filling_scheme=filling_scheme,
+        num_slots=num_slots,
+        allow_none=False)
+    filling_pattern = filling.filling_pattern
     total_n_bunches = len(filling_pattern.nonzero()[0])
     if n_chunk > 1:
 
@@ -277,7 +282,7 @@ def split_scheme(filling_scheme, n_chunk=1):
     return split_filling_pattern(filling_scheme, n_chunk=n_chunk)
 
 
-@_accept_filling_scheme
+@_accept_filling_inputs
 def generate_matched_gaussian_multibunch_beam(filling_pattern,
                                               bunch_num_particles,
                                               nemitt_x, nemitt_y, sigma_z,
@@ -300,6 +305,8 @@ def generate_matched_gaussian_multibunch_beam(filling_pattern,
                                               bunch_spacing_buckets=1,
                                               prepare_line_and_particles_for_mpi_wake_sim=False,
                                               communicator=None,
+                                              filled_slots=None,
+                                              num_slots=None,
                                               **kwargs,  # Passed to build_particles
                                               ):
     """
@@ -316,6 +323,13 @@ def generate_matched_gaussian_multibunch_beam(filling_pattern,
         One-dimensional binary array indicating which RF buckets are filled.
         The legacy ``filling_scheme`` keyword is accepted as a compatibility
         alias.
+    filled_slots : array_like, optional
+        Sparse list of filled physical slots. Mutually exclusive with
+        `filling_pattern`.
+    num_slots : int, optional
+        Total number of slots represented by `filled_slots`. If omitted, it is
+        inferred from the largest filled slot and the pattern is subsequently
+        padded to the number of slots in the ring.
     bunch_num_particles : int
         Number of macroparticles to generate per bunch.
     nemitt_x : float
@@ -435,7 +449,12 @@ def generate_matched_gaussian_multibunch_beam(filling_pattern,
         particles.zeta         # [-0.016377, 0.038315, -0.041555, ...]
     """
 
-    filling_pattern = _validate_filling_pattern(filling_pattern)
+    filling = _FillingPattern.from_inputs(
+        filling_pattern=filling_pattern,
+        filled_slots=filled_slots,
+        num_slots=num_slots,
+        allow_none=False)
+    filling_pattern = filling.filling_pattern
 
     if particle_ref is None and line is not None:
         particle_ref = line.particle_ref
@@ -483,8 +502,7 @@ def generate_matched_gaussian_multibunch_beam(filling_pattern,
             n_chunk=int(communicator.Get_size()))
         bunch_selection = bunch_selection_rank[communicator.Get_rank()]
 
-    if bunch_selection is None:
-        bunch_selection = range(len(filling_pattern.nonzero()[0]))
+    bunch_selection = filling.normalize_bunch_selection(bunch_selection)
 
     macro_bunch = generate_matched_gaussian_bunch(
         num_particles=bunch_num_particles * len(bunch_selection),

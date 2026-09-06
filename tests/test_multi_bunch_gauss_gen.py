@@ -34,6 +34,15 @@ def test_filling_scheme_compatibility_alias():
     with pytest.raises(ValueError, match='only zero and one'):
         xp.split_filling_pattern([1, 0, 2])
 
+    sparse = xp.split_filling_pattern(
+        filled_slots=[0, 2, 3], num_slots=4, n_chunk=2)
+    for actual, reference in zip(sparse, expected):
+        assert np.array_equal(actual, reference)
+
+    with pytest.raises(ValueError, match='Only one'):
+        xp.split_filling_pattern(
+            filling_pattern=filling_pattern, filled_slots=[0, 2, 3])
+
 
 @for_all_test_contexts
 @fix_random_seed(6453645)
@@ -88,9 +97,11 @@ def test_multi_bunch_gaussian_generation(test_context):
         xo.assert_allclose(bunch_selection_per_rank[rank],
                            expected_bunch_selection_per_rank[rank],
                            atol=0, rtol=1e-15)
-        filling_argument = (
-            {'filling_scheme': filling_pattern} if rank == 0
-            else {'filling_pattern': filling_pattern})
+        filling_argument = [
+            {'filling_scheme': filling_pattern},
+            {'filling_pattern': filling_pattern},
+            {'filled_slots': filled_slots},
+        ][rank]
         part = xp.generate_matched_gaussian_multibunch_beam(
             _context=test_context,
             bunch_num_particles=n_part_per_bunch,
