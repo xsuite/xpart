@@ -7,6 +7,7 @@ import json
 import pathlib
 
 import numpy as np
+import pytest
 
 import xobjects as xo
 import xpart as xp
@@ -15,6 +16,24 @@ import xtrack as xt
 from xobjects.test_helpers import for_all_test_contexts, fix_random_seed
 
 TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
+
+
+def test_filling_scheme_compatibility_alias():
+    filling_pattern = np.array([1, 0, 1, 1])
+    expected = xp.split_filling_pattern(filling_pattern, n_chunk=2)
+    legacy = xp.matched_gaussian.split_scheme(
+        filling_scheme=filling_pattern, n_chunk=2)
+    for actual, reference in zip(legacy, expected):
+        assert np.array_equal(actual, reference)
+
+    with pytest.raises(ValueError, match='Only one'):
+        xp.split_filling_pattern(
+            filling_pattern=filling_pattern,
+            filling_scheme=filling_pattern)
+
+    with pytest.raises(ValueError, match='only zero and one'):
+        xp.split_filling_pattern([1, 0, 2])
+
 
 @for_all_test_contexts
 @fix_random_seed(6453645)
@@ -45,17 +64,17 @@ def test_multi_bunch_gaussian_generation(test_context):
     bunch_spacing_in_buckets = 10
     bucket_length = circumference/h_list[0]
     bunch_spacing = bunch_spacing_in_buckets * bucket_length
-    filling_scheme = np.zeros(int(np.amin(h_list)/bunch_spacing_in_buckets))
-    # build a dummy filling scheme
+    filling_pattern = np.zeros(int(np.amin(h_list)/bunch_spacing_in_buckets))
+    # build a dummy filling pattern
     n_bunches_tot = 10
-    filling_scheme[0:int(n_bunches_tot/2)] = 1
-    filling_scheme[n_bunches_tot:int(3*n_bunches_tot/2)] = 1
-    filled_slots = filling_scheme.nonzero()[0]
+    filling_pattern[0:int(n_bunches_tot/2)] = 1
+    filling_pattern[n_bunches_tot:int(3*n_bunches_tot/2)] = 1
+    filled_slots = filling_pattern.nonzero()[0]
 
     # make a test faking 3 procs sharing the bunches
     n_procs = 3
 
-    bunch_selection_per_rank = xp.matched_gaussian.split_scheme(filling_scheme=filling_scheme,
+    bunch_selection_per_rank = xp.split_filling_pattern(filling_pattern=filling_pattern,
                                             n_chunk=n_procs)
 
 
@@ -69,15 +88,18 @@ def test_multi_bunch_gaussian_generation(test_context):
         xo.assert_allclose(bunch_selection_per_rank[rank],
                            expected_bunch_selection_per_rank[rank],
                            atol=0, rtol=1e-15)
+        filling_argument = (
+            {'filling_scheme': filling_pattern} if rank == 0
+            else {'filling_pattern': filling_pattern})
         part = xp.generate_matched_gaussian_multibunch_beam(
             _context=test_context,
-            filling_scheme=filling_scheme,
             bunch_num_particles=n_part_per_bunch,
             bunch_intensity_particles=bunch_intensity,
             nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
             line=line, bunch_spacing_buckets=bunch_spacing_in_buckets,
             bunch_selection=bunch_selection_per_rank[rank],
-            particle_ref=line.particle_ref
+            particle_ref=line.particle_ref,
+            **filling_argument,
         )
 
         assert len(part.x) == n_part_per_bunch*len(bunch_selection_per_rank[rank])

@@ -3,6 +3,8 @@
 # Copyright (c) CERN, 2021.                 #
 # ######################################### #
 
+import functools
+
 import numpy as np
 
 from .general import _print
@@ -214,12 +216,38 @@ def generate_matched_gaussian_bunch(num_particles,
         return part
 
 
-def split_scheme(filling_scheme, n_chunk=1):
+def _accept_filling_scheme(func):
+    """Accept the legacy filling keyword without obscuring the new signature."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if 'filling_scheme' in kwargs:
+            if 'filling_pattern' in kwargs:
+                raise ValueError(
+                    'Only one of `filling_pattern` and `filling_scheme` can '
+                    'be provided.')
+            kwargs['filling_pattern'] = kwargs.pop('filling_scheme')
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def _validate_filling_pattern(filling_pattern):
+    filling_pattern = np.asarray(filling_pattern)
+    if filling_pattern.ndim != 1:
+        raise ValueError('`filling_pattern` must be one-dimensional.')
+    if not np.all((filling_pattern == 0) | (filling_pattern == 1)):
+        raise ValueError('`filling_pattern` can contain only zero and one.')
+    return filling_pattern.astype(np.int64, copy=False)
+
+
+@_accept_filling_scheme
+def split_filling_pattern(filling_pattern, n_chunk=1):
     """
-    Distribute the filling scheme between the processes, i.e. assign to each
-    processor its bunches
+    Distribute the filling pattern between the processes, i.e. assign to each
+    processor its bunches. The legacy ``filling_scheme`` keyword is accepted
+    as a compatibility alias.
     """
-    total_n_bunches = len(filling_scheme.nonzero()[0])
+    filling_pattern = _validate_filling_pattern(filling_pattern)
+    total_n_bunches = len(filling_pattern.nonzero()[0])
     if n_chunk > 1:
 
         # create the array containing the id of the bunches on each rank
@@ -230,7 +258,7 @@ def split_scheme(filling_scheme, n_chunk=1):
                              for i in range(n_chunk)]
         n_tasks_cumsum = np.insert(np.cumsum(n_bunches_on_rank), 0, 0)
         total_bunch_ids = np.unique(
-            np.cumsum(filling_scheme == 1)) - 1
+            np.cumsum(filling_pattern == 1)) - 1
         bunches_per_rank = [total_bunch_ids[n_tasks_cumsum[i]:
                                             n_tasks_cumsum[i + 1]]
                             for i in range(n_chunk)]
@@ -244,7 +272,13 @@ def split_scheme(filling_scheme, n_chunk=1):
     return bunches_per_rank
 
 
-def generate_matched_gaussian_multibunch_beam(filling_scheme,
+def split_scheme(filling_scheme, n_chunk=1):
+    """Compatibility alias for :func:`split_filling_pattern`."""
+    return split_filling_pattern(filling_scheme, n_chunk=n_chunk)
+
+
+@_accept_filling_scheme
+def generate_matched_gaussian_multibunch_beam(filling_pattern,
                                               bunch_num_particles,
                                               nemitt_x, nemitt_y, sigma_z,
                                               bunch_intensity_particles=None,
@@ -273,14 +307,15 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
 
     Each selected bunch is generated with `generate_matched_gaussian_bunch` and
     then shifted in `zeta` according to the filled bucket positions in
-    `filling_scheme`. The returned object contains the selected bunches
+    `filling_pattern`. The returned object contains the selected bunches
     concatenated in bunch-selection order.
 
     Parameters
     ----------
-    filling_scheme : array_like
-        One-dimensional array indicating which RF buckets are filled. Non-zero
-        entries are treated as filled buckets.
+    filling_pattern : array_like
+        One-dimensional binary array indicating which RF buckets are filled.
+        The legacy ``filling_scheme`` keyword is accepted as a compatibility
+        alias.
     bunch_num_particles : int
         Number of macroparticles to generate per bunch.
     nemitt_x : float
@@ -335,7 +370,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         If not provided, all filled bunches are generated, unless MPI wake
         preparation is enabled.
     bunch_spacing_buckets : int, optional
-        Spacing between consecutive entries of `filling_scheme`, expressed in
+        Spacing between consecutive entries of `filling_pattern`, expressed in
         RF buckets. The physical spacing is
         `bunch_spacing_buckets * bucket_length`.
     prepare_line_and_particles_for_mpi_wake_sim : bool, optional
@@ -382,11 +417,11 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         ])
         line.set_particle_ref('proton', p0c=7e12)
 
-        filling_scheme = np.zeros(4, dtype=int)
-        filling_scheme[[0, 2]] = 1
+        filling_pattern = np.zeros(4, dtype=int)
+        filling_pattern[[0, 2]] = 1
 
         particles = xp.generate_matched_gaussian_multibunch_beam(
-            filling_scheme=filling_scheme,
+            filling_pattern=filling_pattern,
             bunch_num_particles=3,
             bunch_intensity_particles=1e11,
             nemitt_x=2e-6,
@@ -399,6 +434,8 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         particles.weight[:3]   # [3.333333e+10, 3.333333e+10, 3.333333e+10]
         particles.zeta         # [-0.016377, 0.038315, -0.041555, ...]
     """
+
+    filling_pattern = _validate_filling_pattern(filling_pattern)
 
     if particle_ref is None and line is not None:
         particle_ref = line.particle_ref
@@ -424,13 +461,13 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
                         dct_line['h_list'][np.argmax(dct_line['voltage_list'])]+0.5))
         bucket_length = circumference/main_harmonic_number
     bunch_spacing = bunch_spacing_buckets * bucket_length
-    assert filling_scheme is not None
-    assert len(filling_scheme) <= np.floor(circumference/bunch_spacing+0.5)
+    assert filling_pattern is not None
+    assert len(filling_pattern) <= np.floor(circumference/bunch_spacing+0.5)
 
-    if len(filling_scheme) < np.floor(circumference/bunch_spacing+0.5):
-        filling_scheme = np.concatenate(
-            (filling_scheme,
-            np.zeros(int(np.floor(circumference/bunch_spacing+0.5) - len(filling_scheme)),
+    if len(filling_pattern) < np.floor(circumference/bunch_spacing+0.5):
+        filling_pattern = np.concatenate(
+            (filling_pattern,
+            np.zeros(int(np.floor(circumference/bunch_spacing+0.5) - len(filling_pattern)),
                     dtype=np.int64)))
 
     if prepare_line_and_particles_for_mpi_wake_sim and bunch_selection is None:
@@ -441,12 +478,13 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         if communicator.Get_size() <= 1:
             raise ValueError('when `prepare_line_and_particles_for_mpi_wake_sim` is True, '
                              'MPI communicator must have more than one rank')
-        bunch_selection_rank = split_scheme(filling_scheme=filling_scheme,
-                                             n_chunk=int(communicator.Get_size()))
+        bunch_selection_rank = split_filling_pattern(
+            filling_pattern=filling_pattern,
+            n_chunk=int(communicator.Get_size()))
         bunch_selection = bunch_selection_rank[communicator.Get_rank()]
 
     if bunch_selection is None:
-        bunch_selection = range(len(filling_scheme.nonzero()[0]))
+        bunch_selection = range(len(filling_pattern.nonzero()[0]))
 
     macro_bunch = generate_matched_gaussian_bunch(
         num_particles=bunch_num_particles * len(bunch_selection),
@@ -468,7 +506,7 @@ def generate_matched_gaussian_multibunch_beam(filling_scheme,
         **kwargs,  # They are passed to build_particles
     )
 
-    filled_buckets = filling_scheme.nonzero()[0]
+    filled_buckets = filling_pattern.nonzero()[0]
     count = 0
     for bunch_number in bunch_selection:
         bucket_n = filled_buckets[bunch_number]

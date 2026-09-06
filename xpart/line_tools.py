@@ -164,14 +164,15 @@ class XpartLineAPI:
         
         Each selected bunch is generated with `generate_matched_gaussian_bunch` and
         then shifted in `zeta` according to the filled bucket positions in
-        `filling_scheme`. The returned object contains the selected bunches
+        `filling_pattern`. The returned object contains the selected bunches
         concatenated in bunch-selection order.
         
         Parameters
         ----------
-        filling_scheme : array_like
-            One-dimensional array indicating which RF buckets are filled. Non-zero
-            entries are treated as filled buckets.
+        filling_pattern : array_like
+            One-dimensional binary array indicating which RF buckets are filled.
+            The legacy ``filling_scheme`` keyword is accepted as a compatibility
+            alias.
         bunch_num_particles : int
             Number of macroparticles to generate per bunch.
         nemitt_x : float
@@ -227,7 +228,7 @@ class XpartLineAPI:
             If not provided, all filled bunches are generated, unless MPI wake
             preparation is enabled.
         bunch_spacing_buckets : int, optional
-            Spacing between consecutive entries of `filling_scheme`, expressed in
+            Spacing between consecutive entries of `filling_pattern`, expressed in
             RF buckets. The physical spacing is
             `bunch_spacing_buckets * bucket_length`.
         prepare_line_and_particles_for_mpi_wake_sim : bool, optional
@@ -273,11 +274,11 @@ class XpartLineAPI:
             ])
             line.set_particle_ref('proton', p0c=7e12)
         
-            filling_scheme = np.zeros(4, dtype=int)
-            filling_scheme[[0, 2]] = 1
+            filling_pattern = np.zeros(4, dtype=int)
+            filling_pattern[[0, 2]] = 1
         
             particles = line.xpart.generate_matched_gaussian_multibunch_beam(
-                filling_scheme=filling_scheme,
+                filling_pattern=filling_pattern,
                 bunch_num_particles=3,
                 bunch_intensity_particles=1e11,
                 nemitt_x=2e-6,
