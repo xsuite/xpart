@@ -30,9 +30,11 @@ def test_to_from_dict(test_context):
 
 
 def test_to_dict_pyheadtail_interface():
-    xp.enable_pyheadtail_interface()
+    with pytest.warns(FutureWarning, match='PyHEADTAIL interface'):
+        xp.enable_pyheadtail_interface()
     assert xp.Particles.__name__ == 'PyHtXtParticles'
-    xp.disable_pyheadtail_interface()
+    with pytest.warns(FutureWarning, match='PyHEADTAIL interface'):
+        xp.disable_pyheadtail_interface()
     assert xp.Particles.__name__ == 'Particles'
 
     p = xp.pyheadtail_interface.pyhtxtparticles.PyHtXtParticles(x=[1, 2, 3])
