@@ -21,7 +21,7 @@ def test_to_from_dict_longitudinal_consistency(test_context):
     part2 = xp.Particles(_context=test_context, **part.to_dict())
 
     tocpu = test_context.nparray_from_context_array
-    for nn in 'x px y py zeta delta ptau rpp rvv gamma0 p0c'.split():
+    for nn in 'x px y py zeta delta pzeta rpp rvv gamma0 p0c'.split():
         assert np.all(tocpu(getattr(part, nn)) == tocpu(getattr(part2, nn)))
 
 
@@ -36,5 +36,5 @@ def test_to_from_pandas_longitudinal_consistency(test_context):
     part2 = xp.Particles.from_pandas(df, _context=test_context)
 
     tocpu = test_context.nparray_from_context_array
-    for nn in 'x px y py zeta delta ptau rpp rvv gamma0 p0c'.split():
+    for nn in 'x px y py zeta delta pzeta rpp rvv gamma0 p0c'.split():
         assert np.all(tocpu(getattr(part, nn)) == tocpu(getattr(part2, nn)))

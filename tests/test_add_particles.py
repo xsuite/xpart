@@ -41,7 +41,7 @@ def test_add_particles(test_context):
 
     tocpu = test_context.nparray_from_context_array
     # Check parameters that need to be updated
-    for nn in 'x px y py zeta delta ptau rpp rvv gamma0 p0c'.split():
+    for nn in 'x px y py zeta delta pzeta rpp rvv gamma0 p0c'.split():
         assert np.all(tocpu(getattr(p1, nn)[0:3]) ==
                       p_base.to_dict()[nn][0:3])
         assert np.all(tocpu(getattr(p1, nn)[3:5]) ==

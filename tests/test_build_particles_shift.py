@@ -25,7 +25,7 @@ def test_build_particles_shift(test_context):
                                        _context=test_context)
 
         dct = particles.to_dict() # transfers it to cpu
-        xo.assert_allclose(dct['ptau'][1], 1e-4, rtol=0, atol=1e-9)
+        xo.assert_allclose(dct['pzeta'][1] * dct['beta0'][1], 1e-4, rtol=0, atol=1e-9)
         xo.assert_allclose(
             1/(dct['rpp'][1]) - 1, 1e-4, rtol=0, atol=1e-14)
         assert np.all(dct['p0c'] == 7e12)
