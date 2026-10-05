@@ -92,10 +92,14 @@ def _prepare_particle_species(*, particle_ref, mode, num_particles, coordinates,
             'cannot be used '
             'together with ``particle_on_co`` or ``co_guess``. Set the '
             'species ratios directly on the supplied particle instead.')
+    if particle_ref.q0 == 0:
+        raise ValueError('Species overrides require a nonzero reference charge.')
     if pdg_id is not None:
         from xtrack.particles.pdg import (
             get_properties_from_pdg_id, get_mass_from_pdg_id)
         charge, _, _, _ = get_properties_from_pdg_id(pdg_id)
+        if np.any(np.asarray(charge) == 0):
+            raise ValueError('Neutral species are not supported by build_particles.')
         pdg_mass_ratio = get_mass_from_pdg_id(pdg_id) / particle_ref.mass0
         pdg_charge_ratio = charge / particle_ref.q0
         for name, given, computed in (
@@ -120,6 +124,17 @@ def _prepare_particle_species(*, particle_ref, mode, num_particles, coordinates,
             species_ratios['mass_ratio'] = particle_ref.mass_ratio[0]
         else:
             species_ratios['charge_ratio'] = particle_ref.charge_ratio[0]
+
+    for name in ('chi', 'charge_ratio'):
+        if name in species_ratios and np.any(np.asarray(species_ratios[name]) == 0):
+            raise ValueError(
+                f'Zero ``{name}`` is not supported by build_particles; '
+                'neutral species cannot be represented.')
+    if len(species_ratios) == 3 and not np.all(np.isclose(
+            chi * mass_ratio, charge_ratio, atol=0)):
+        raise ValueError(
+            'Inconsistent species ratios: ``chi * mass_ratio`` must equal '
+            '``charge_ratio`` for every particle.')
 
     return num_particles, species_ratios, pdg_id
 

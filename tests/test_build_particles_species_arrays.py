@@ -141,6 +141,89 @@ def test_pdg_arrays_and_ratios_elementwise_consistency():
                                **(ratios | {name: inconsistent}))
 
 
+@pytest.mark.parametrize('use_line', [False, True])
+@pytest.mark.parametrize('mode', ['set', 'shift', 'normalized_transverse'])
+@pytest.mark.parametrize('ratios', [
+    dict(mass_ratio=2., charge_ratio=1., chi=1.),
+    dict(mass_ratio=[2., 2.], charge_ratio=1., chi=[1., 1.]),
+    dict(mass_ratio=2., charge_ratio=1e-12, chi=1e-12),
+])
+def test_inconsistent_ratio_triples(use_line, mode, ratios, monkeypatch):
+    ref = xt.Particles(p0c=1e9)
+    line = xt.Line(elements=[xt.Drift(length=1.)], particle_ref=ref)
+    line.build_tracker(compile=False)
+
+    def unexpected_twiss(*args, **kwargs):
+        pytest.fail('Inconsistent ratios must be rejected before Twiss')
+
+    monkeypatch.setattr(line, 'twiss', unexpected_twiss)
+    with pytest.raises(ValueError, match='Inconsistent species ratios'):
+        if use_line:
+            line.build_particles(mode=mode, **ratios)
+        else:
+            xp.build_particles(line=line, mode=mode, **ratios)
+    np.testing.assert_array_equal(ref.mass_ratio, [1.])
+    np.testing.assert_array_equal(ref.charge_ratio, [1.])
+
+
+@pytest.mark.parametrize('mode', ['set', 'shift'])
+def test_ratio_triples_checked_for_every_particle(mode):
+    with pytest.raises(ValueError, match='Inconsistent species ratios'):
+        xp.build_particles(particle_ref=xt.Particles(p0c=1e9), mode=mode,
+                           mass_ratio=[1., 2.], charge_ratio=[1., 1.], chi=[1., 1.])
+
+
+@pytest.mark.parametrize('ratios', [
+    dict(mass_ratio=[1., 2.], charge_ratio=[1., -1.], chi=[1., -.5]),
+    dict(mass_ratio=np.float32(3.), charge_ratio=np.float32(1.),
+         chi=np.float32(1. / 3.)),
+    dict(mass_ratio=2., charge_ratio=1e-12, chi=5e-13),
+])
+def test_consistent_ratio_triples(ratios):
+    p = xp.build_particles(particle_ref=xt.Particles(p0c=1e9), **ratios)
+    for name, expected in ratios.items():
+        np.testing.assert_allclose(getattr(p, name), expected, rtol=1e-6, atol=0)
+
+
+@pytest.mark.parametrize('use_line', [False, True])
+@pytest.mark.parametrize('mode', ['set', 'shift', 'normalized_transverse'])
+@pytest.mark.parametrize('species', [
+    dict(pdg_id=2112), dict(pdg_id='neutron'), dict(pdg_id=22),
+    dict(pdg_id=['neutron', 2112]),
+    dict(charge_ratio=0.), dict(chi=0.),
+    dict(mass_ratio=2., charge_ratio=[0., 0.]),
+    dict(mass_ratio=2., chi=[0., 0.]),
+])
+def test_neutral_species_rejected(use_line, mode, species):
+    ref = xt.Particles(p0c=1e9)
+    line = xt.Line(elements=[xt.Drift(length=1.)], particle_ref=ref)
+    line.build_tracker(compile=False)
+    # Reject unsupported species before attempting divisions that produce NaNs.
+    with np.errstate(divide='raise', invalid='raise'):
+        with pytest.raises(ValueError, match='[Nn]eutral species'):
+            if use_line:
+                line.build_particles(mode=mode, **species)
+            else:
+                xp.build_particles(line=line, mode=mode, **species)
+
+
+@pytest.mark.parametrize('species', [
+    dict(pdg_id=[2212, 2112]),
+    dict(mass_ratio=[1., 2.], charge_ratio=[1., 0.]),
+    dict(chi=[1., 0.]),
+])
+def test_neutral_particle_in_mixed_beam_rejected(species):
+    with np.errstate(divide='raise', invalid='raise'):
+        with pytest.raises(ValueError, match='[Nn]eutral species'):
+            xp.build_particles(particle_ref=xt.Particles(p0c=1e9), **species)
+
+
+def test_species_override_requires_charged_reference():
+    with np.errstate(divide='raise', invalid='raise'):
+        with pytest.raises(ValueError, match='nonzero reference charge'):
+            xp.build_particles(particle_ref=xt.Particles(p0c=1e9, q0=0), pdg_id=2212)
+
+
 @pytest.mark.parametrize('name', ['chi', 'charge_ratio', 'mass_ratio', 'pdg_id'])
 @pytest.mark.parametrize('value', [[], [[1., 2.]]])
 def test_invalid_species_shapes(name, value):
