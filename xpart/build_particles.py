@@ -15,6 +15,11 @@ import xtrack as xt
 logger = logging.getLogger(__name__)
 
 def _check_lengths(**kwargs):
+    """Return the common array length, checking consistency with num_particles.
+
+    Scalars are ignored; if no arrays are given, use num_particles or default
+    to one. Raise ValueError for inconsistent lengths.
+    """
     length = None
     for nn, xx in kwargs.items():
         if hasattr(xx, "__iter__"):
@@ -36,6 +41,88 @@ def _check_lengths(**kwargs):
     if length is None:
         length = 1
     return length
+
+
+def _prepare_particle_species(*, particle_ref, mode, num_particles, coordinates,
+                              chi, charge_ratio, mass_ratio, pdg_id,
+                              particle_on_co, co_guess):
+    """Validate species inputs and prepare them for particle construction.
+
+    Resolve PDG names and ratios, check array lengths against coordinates, and
+    require one species for normalized coordinates. Return the particle count,
+    constructor ratios, and resolved PDG ID. The reference particle is only
+    read to determine species properties and defaults.
+    """
+    species = {}
+    for name, value in dict(chi=chi, charge_ratio=charge_ratio,
+                            mass_ratio=mass_ratio, pdg_id=pdg_id).items():
+        if value is None:
+            continue
+        value = np.asarray(value.get() if hasattr(value, 'get') else value,
+                           dtype=object if name == 'pdg_id' else None)
+        if value.ndim > 1 or value.size == 0:
+            raise ValueError(
+                f'``{name}`` must be a scalar or a non-empty 1D array.')
+        if name == 'pdg_id':
+            from xtrack.particles.pdg import get_pdg_id_from_name
+            value = np.asarray(get_pdg_id_from_name(
+                value.item() if value.ndim == 0 else value))
+        species[name] = value.item() if value.size == 1 else value
+
+    num_particles = _check_lengths(
+        num_particles=num_particles, **coordinates, **species)
+    if mode == 'normalized_transverse':
+        for name, value in species.items():
+            if np.ndim(value) == 0:
+                continue
+            if not np.all(value == value[0]):
+                raise ValueError(
+                    'Normalized coordinates require a single species per '
+                    f'call; ``{name}`` contains different values. Build each '
+                    'species separately and combine with ``xt.Particles.merge()``.')
+            species[name] = value[0].item()
+    chi = species.get('chi')
+    charge_ratio = species.get('charge_ratio')
+    mass_ratio = species.get('mass_ratio')
+    pdg_id = species.get('pdg_id')
+
+    if particle_on_co is not None or co_guess is not None:
+        raise ValueError(
+            '``chi``, ``charge_ratio``, ``mass_ratio``, and ``pdg_id`` '
+            'cannot be used '
+            'together with ``particle_on_co`` or ``co_guess``. Set the '
+            'species ratios directly on the supplied particle instead.')
+    if pdg_id is not None:
+        from xtrack.particles.pdg import (
+            get_properties_from_pdg_id, get_mass_from_pdg_id)
+        charge, _, _, _ = get_properties_from_pdg_id(pdg_id)
+        pdg_mass_ratio = get_mass_from_pdg_id(pdg_id) / particle_ref.mass0
+        pdg_charge_ratio = charge / particle_ref.q0
+        for name, given, computed in (
+                ('mass_ratio', mass_ratio, pdg_mass_ratio),
+                ('charge_ratio', charge_ratio, pdg_charge_ratio),
+                ('chi', chi, pdg_charge_ratio / pdg_mass_ratio)):
+            if given is not None and not np.all(np.isclose(given, computed)):
+                raise ValueError(
+                    f'``{name}``={given} is inconsistent with '
+                    f'``pdg_id``={pdg_id} (expected {computed}).')
+        if mass_ratio is None:
+            mass_ratio = pdg_mass_ratio
+        if charge_ratio is None:
+            charge_ratio = pdg_charge_ratio
+    # If only one parameter is supplied, keep the reference mass ratio for
+    # charge_ratio overrides, and the reference charge ratio otherwise.
+    species_ratios = {name: value for name, value in dict(
+        chi=chi, charge_ratio=charge_ratio, mass_ratio=mass_ratio).items()
+        if value is not None}
+    if len(species_ratios) == 1:
+        if charge_ratio is not None:
+            species_ratios['mass_ratio'] = particle_ref.mass_ratio[0]
+        else:
+            species_ratios['charge_ratio'] = particle_ref.charge_ratio[0]
+
+    return num_particles, species_ratios, pdg_id
+
 
 def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     mode=None,
@@ -88,6 +175,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         tt = line.tracker._tracker_data_base._line_table
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
+    if any(value is not None for value in (
+            x_norm, px_norm, y_norm, py_norm, zeta_norm, pzeta_norm)):
+        assert mode in (None, 'normalized_transverse')
+        mode = 'normalized_transverse'
+    if mode is None:
+        mode = 'set'
+
     Particles = xt.Particles  # To get the right Particles class depending on pyheatail interface state
 
     assert 'at_s' not in kwargs, "at_s is not a valid argument for this function"
@@ -114,43 +208,18 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     if not isinstance(particle_ref._buffer.context, xo.ContextCpu):
         particle_ref = particle_ref.copy(_context=xo.ContextCpu())
 
+    species_ratios = {}
     if any(value is not None for value in (chi, charge_ratio, mass_ratio, pdg_id)):
-        if particle_on_co is not None or kwargs.get('co_guess') is not None:
-            raise ValueError(
-                '``chi``, ``charge_ratio``, ``mass_ratio``, and ``pdg_id`` '
-                'cannot be used '
-                'together with ``particle_on_co`` or ``co_guess``. Set the '
-                'species ratios directly on the supplied particle instead.')
-        if pdg_id is not None:
-            from xtrack.particles.pdg import (
-                get_pdg_id_from_name, get_properties_from_pdg_id,
-                get_mass_from_pdg_id)
-            pdg_id = np.asarray(pdg_id.get() if hasattr(pdg_id, 'get') else pdg_id)
-            if pdg_id.size != 1:
-                raise ValueError('``pdg_id`` must identify a single species.')
-            pdg_id = get_pdg_id_from_name(pdg_id.item())
-            charge, _, _, _ = get_properties_from_pdg_id(pdg_id)
-            pdg_mass_ratio = get_mass_from_pdg_id(pdg_id) / particle_ref.mass0
-            pdg_charge_ratio = charge / particle_ref.q0
-            for name, given, computed in (
-                    ('mass_ratio', mass_ratio, pdg_mass_ratio),
-                    ('charge_ratio', charge_ratio, pdg_charge_ratio),
-                    ('chi', chi, pdg_charge_ratio / pdg_mass_ratio)):
-                if given is not None and not np.isclose(given, computed):
-                    raise ValueError(
-                        f'``{name}``={given} is inconsistent with '
-                        f'``pdg_id``={pdg_id} (expected {computed}).')
-            if mass_ratio is None:
-                mass_ratio = pdg_mass_ratio
-            if charge_ratio is None:
-                charge_ratio = pdg_charge_ratio
-        from xtrack.twiss.twiss_defaults_and_input_preparation import (
-            _copy_particle_with_species_ratios)
-        particle_ref = _copy_particle_with_species_ratios(
-            particle=particle_ref, chi=chi,
-            charge_ratio=charge_ratio, mass_ratio=mass_ratio)
-        if pdg_id is not None:
-            particle_ref.pdg_id = pdg_id
+        num_particles, species_ratios, pdg_id = _prepare_particle_species(
+            particle_ref=particle_ref, mode=mode, num_particles=num_particles,
+            coordinates=dict(
+                x=x, px=px, y=y, py=py, zeta=zeta, delta=delta,
+                pzeta=pzeta, ptau=ptau, x_norm=x_norm, px_norm=px_norm,
+                y_norm=y_norm, py_norm=py_norm,
+                zeta_norm=zeta_norm, pzeta_norm=pzeta_norm),
+            chi=chi, charge_ratio=charge_ratio, mass_ratio=mass_ratio,
+            pdg_id=pdg_id, particle_on_co=particle_on_co,
+            co_guess=kwargs.get('co_guess'))
 
     # Move other input parameters to cpu if needed
     # Generated by:
@@ -195,18 +264,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             ptau = np.array(ptau)
         pzeta = ptau / particle_ref._xobject.beta0[0]
 
-    if (x_norm is not None or px_norm is not None
-            or y_norm is not None or py_norm is not None
-            or zeta_norm is not None or pzeta_norm is not None):
-
-        if mode is None:
-            mode = 'normalized_transverse'
-        else:
-            assert mode == 'normalized_transverse'
-
-    if mode is None:
-        mode = 'set'
-
     assert particle_ref._capacity == 1
     ref_dict = {
         'q0': particle_ref.q0,
@@ -221,6 +278,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         'anomalous_magnetic_moment': particle_ref.anomalous_magnetic_moment[0],
     }
     part_dict = ref_dict.copy()
+    if species_ratios:
+        del part_dict['chi'], part_dict['charge_ratio']
+        part_dict.update(species_ratios)
+    if pdg_id is not None:
+        part_dict['pdg_id'] = pdg_id
 
     if at_element is not None or match_at_s is not None:
         # Only this case is covered if not starting at element 0
@@ -230,6 +292,14 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         s_at_element = tt['s', at_element]
 
     if mode == 'normalized_transverse':
+
+        if species_ratios:
+            from xtrack.twiss.twiss_defaults_and_input_preparation import (
+                _copy_particle_with_species_ratios)
+            particle_ref = _copy_particle_with_species_ratios(
+                particle=particle_ref, **species_ratios)
+            if pdg_id is not None:
+                particle_ref.pdg_id = pdg_id
 
         if match_at_s is not None:
 

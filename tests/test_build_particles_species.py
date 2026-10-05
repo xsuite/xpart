@@ -107,9 +107,9 @@ def test_build_particles_pdg_id(mode, use_line, pdg_id, expected_id, mass, charg
     xo.assert_allclose(particle_ref.charge_ratio, 1.2, rtol=0, atol=1e-14)
 
 
-@pytest.mark.parametrize('pdg_id', [[], [11, -11]])
-def test_build_particles_pdg_id_requires_single_species(pdg_id):
-    with pytest.raises(ValueError, match='must identify a single species'):
+@pytest.mark.parametrize('pdg_id', [[], [[11, -11]]])
+def test_build_particles_pdg_id_requires_scalar_or_1d_array(pdg_id):
+    with pytest.raises(ValueError, match='scalar or a non-empty 1D array'):
         xp.build_particles(particle_ref=xt.Particles(p0c=1e9), pdg_id=pdg_id)
 
 
