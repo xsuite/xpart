@@ -20,6 +20,36 @@ from ..general import _print
 
 logger = logging.getLogger(__name__)
 
+
+def _energy_program_bucket_parameters(line, particle_ref, tw):
+    program = line.energy_program
+    t_start = line['t_turn_s']
+    frozen_dp0c = program.get_p0c_increase_per_turn_at_t_s(t_start)
+    if not hasattr(getattr(line.tracker, 'track_flags', None),
+                   'XS_FLAG_USE_TIME_BASED_ZETA_UPDATE'):
+        # Older Xtrack versions use the conventional turn clock.
+        return frozen_dp0c, 0.
+
+    turn = program.get_turn_at_t_s(t_start)
+    t_end = program.get_t_s_at_turn(turn + 1)
+    dp0c = program.get_p0c_at_t_s(t_end) - program.get_p0c_at_t_s(t_start)
+    p0c = float(particle_ref._xobject.p0c[0])
+    beta0 = float(particle_ref._xobject.beta0[0])
+    circumference = line.get_length()
+
+    # The frozen closed-orbit map advances the reference momentum before
+    # tracking. Its incoming physical momentum, expressed relative to that
+    # updated reference, gives the start-of-turn delta for the tracking map.
+    delta0 = (tw.delta[0] * p0c - frozen_dp0c) / (p0c + frozen_dp0c)
+
+    # Tracking uses the integrated reference-turn duration. Balance its extra
+    # end-turn zeta shift against -eta*C*delta, to the same first order in the
+    # momentum deviation as the RF bucket Hamiltonian.
+    clock_zeta_shift = beta0 * clight * (t_end - t_start) - circumference
+    delta0 += clock_zeta_shift / (tw.slip_factor * circumference)
+    return dp0c, delta0
+
+
 def _characterize_line(line, particle_ref,
                           **kwargs # passed to twiss
                           ):
@@ -112,9 +142,11 @@ def _characterize_line(line, particle_ref,
         assert len(freq_list) > 0
 
     p0c_increase_from_energy_program = None
+    bucket_delta0_from_energy_program = None
     if line.energy_program is not None:
-        p0c_increase_from_energy_program = line.energy_program.get_p0c_increase_per_turn_at_t_s(
-                                                        line['t_turn_s'])
+        (p0c_increase_from_energy_program,
+         bucket_delta0_from_energy_program) = _energy_program_bucket_parameters(
+             line, particle_ref, tw)
     energy_loss_from_radiation = 0.
     if radiation_active:
         energy_loss_from_radiation = tw.energy_loss
@@ -135,6 +167,7 @@ def _characterize_line(line, particle_ref,
     dct['shift_zeta_list'] = shift_zeta_list
     dct['zeta0'] = tw.zeta[0]
     dct['p0c_increase_from_energy_program'] = p0c_increase_from_energy_program
+    dct['bucket_delta0_from_energy_program'] = bucket_delta0_from_energy_program
     dct['energy_loss_from_radiation'] = energy_loss_from_radiation
     dct['delta0'] = tw.delta[0]
     return dct
@@ -225,7 +258,10 @@ def generate_longitudinal_coordinates(
     zeta0 : float, optional
         Reference longitudinal position in m.
     delta0 : float, optional
-        Reference relative momentum deviation.
+        Reference relative momentum deviation. With the RF bucket matcher,
+        this sets the bucket's momentum centre. When omitted for an EnergyProgram,
+        the centre accounts for the reference-update timing and integrated
+        turn clock, to first order in the momentum deviation.
     **kwargs
         Additional keyword arguments passed to `line.twiss`.
 
@@ -328,6 +364,7 @@ def generate_longitudinal_coordinates(
         rf_phase=((np.array(dct['lag_list_deg'])) / 180 * np.pi
                  + np.array(dct['phase_list_rad']))
 
+    delta0_provided = delta0 is not None
     if delta0 is None:
         assert line is not None
         delta0 = dct['delta0']
@@ -353,9 +390,11 @@ def generate_longitudinal_coordinates(
         if energy_ref_increment_list:
             energy_ref_increment = np.sum(energy_ref_increment_list)
         p0c_increase_from_energy_program = dct['p0c_increase_from_energy_program']
-        if (energy_ref_increment is not None
+        if not delta0_provided and (energy_ref_increment is not None
                 or p0c_increase_from_energy_program is not None):
             bucket_delta0 = 0.
+            if dct['bucket_delta0_from_energy_program'] is not None:
+                bucket_delta0 = dct['bucket_delta0_from_energy_program']
 
     energy_loss_from_radiation = 0.
     if line is not None and energy_loss_from_radiation is not None:
@@ -439,7 +478,7 @@ def generate_longitudinal_coordinates(
             beta_z = rfbucket.beta_z
             sigma_dp = sigma_z / beta_z
             z_particles = zeta0 + sigma_z * np.random.normal(size=num_particles)
-            delta_particles = delta0 + sigma_dp * np.random.normal(size=num_particles)
+            delta_particles = rfbucket.dp0 + sigma_dp * np.random.normal(size=num_particles)
         else:
             matcher = RFBucketMatcher(rfbucket=rfbucket,
                 distribution_type=ThermalDistribution,
