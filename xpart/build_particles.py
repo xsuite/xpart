@@ -161,6 +161,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     s_tol=1e-6,
                     include_collective=False,
                     *, chi=None, charge_ratio=None, mass_ratio=None, pdg_id=None,
+                    gemitt_x=None, gemitt_y=None, gemitt_zeta=None,
                     **kwargs, # They are passed to the twiss
                     ):
 
@@ -206,6 +207,18 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         _print('Warning! '
             "scale_with_transverse_norm_emitt is deprecated. Use "
             "nemitt_x and nemitt_y instead.")
+        assert len(scale_with_transverse_norm_emitt) == 2
+        assert nemitt_x is None and nemitt_y is None, (
+            "If `scale_with_transverse_norm_emitt` is provided, "
+            "`nemitt_x` and `nemitt_y` should not be provided.")
+        nemitt_x, nemitt_y = scale_with_transverse_norm_emitt
+
+    for plane, nemitt, gemitt in (
+            ('x', nemitt_x, gemitt_x), ('y', nemitt_y, gemitt_y),
+            ('zeta', nemitt_zeta, gemitt_zeta)):
+        if nemitt is not None and gemitt is not None:
+            raise ValueError(
+                f'Cannot provide both nemitt_{plane} and gemitt_{plane}.')
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"
@@ -371,32 +384,23 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             y_norm=y_norm, py_norm=py_norm,
             zeta_norm=zeta_norm, pzeta_norm=pzeta_norm)
 
-        if scale_with_transverse_norm_emitt is not None:
-            assert len(scale_with_transverse_norm_emitt) == 2
-            assert nemitt_x is None and nemitt_y is None, (
-                "If `scale_with_transverse_norm_emitt` is provided, "
-                "`nemitt_x` and `nemitt_y` should not be provided.")
-
-            nemitt_x = scale_with_transverse_norm_emitt[0]
-            nemitt_y = scale_with_transverse_norm_emitt[1]
-
-        if nemitt_x is None:
-            gemitt_x = 1
-        else:
+        if nemitt_x is not None:
             gemitt_x = (nemitt_x / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
+        elif gemitt_x is None:
+            gemitt_x = 1
 
-        if nemitt_y is None:
-            gemitt_y = 1
-        else:
+        if nemitt_y is not None:
             gemitt_y = (nemitt_y / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
+        elif gemitt_y is None:
+            gemitt_y = 1
 
-        if nemitt_zeta is None:
-            gemitt_zeta = 1
-        else:
+        if nemitt_zeta is not None:
             gemitt_zeta = (nemitt_zeta / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
+        elif gemitt_zeta is None:
+            gemitt_zeta = 1
 
 
         n_constraints = sum([vv is not None for vv in [x, x_norm, px, px_norm,
