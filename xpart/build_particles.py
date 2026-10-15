@@ -168,6 +168,12 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     """
     Same as `xtrack.Line.build_particles`. See there for documentation.
 
+    When using normalized coordinates, each plane independently defaults
+    to unit geometric emittance if both its `nemitt_*` and `gemitt_*`
+    arguments are omitted or `None`. In that plane, no emittance scaling
+    is applied before transforming the normalized coordinates to physical
+    coordinates. This also applies to the longitudinal (`zeta`) plane.
+
     """
 
     if match_at_s is not None:
