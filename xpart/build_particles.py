@@ -15,6 +15,11 @@ import xtrack as xt
 logger = logging.getLogger(__name__)
 
 def _check_lengths(**kwargs):
+    """Return the common array length, checking consistency with num_particles.
+
+    Scalars are ignored; if no arrays are given, use num_particles or default
+    to one. Raise ValueError for inconsistent lengths.
+    """
     length = None
     for nn, xx in kwargs.items():
         if hasattr(xx, "__iter__"):
@@ -37,6 +42,103 @@ def _check_lengths(**kwargs):
         length = 1
     return length
 
+
+def _prepare_particle_species(*, particle_ref, mode, num_particles, coordinates,
+                              chi, charge_ratio, mass_ratio, pdg_id,
+                              particle_on_co, co_guess):
+    """Validate species inputs and prepare them for particle construction.
+
+    Resolve PDG names and ratios, check array lengths against coordinates, and
+    require one species for normalized coordinates. Return the particle count,
+    constructor ratios, and resolved PDG ID. The reference particle is only
+    read to determine species properties and defaults.
+    """
+    species = {}
+    for name, value in dict(chi=chi, charge_ratio=charge_ratio,
+                            mass_ratio=mass_ratio, pdg_id=pdg_id).items():
+        if value is None:
+            continue
+        value = np.asarray(value.get() if hasattr(value, 'get') else value,
+                           dtype=object if name == 'pdg_id' else None)
+        if value.ndim > 1 or value.size == 0:
+            raise ValueError(
+                f'``{name}`` must be a scalar or a non-empty 1D array.')
+        if name == 'pdg_id':
+            from xtrack.particles.pdg import get_pdg_id_from_name
+            value = np.asarray(get_pdg_id_from_name(
+                value.item() if value.ndim == 0 else value))
+        species[name] = value.item() if value.size == 1 else value
+
+    num_particles = _check_lengths(
+        num_particles=num_particles, **coordinates, **species)
+    if mode == 'normalized_transverse':
+        for name, value in species.items():
+            if np.ndim(value) == 0:
+                continue
+            if not np.all(value == value[0]):
+                raise ValueError(
+                    'Normalized coordinates require a single species per '
+                    f'call; ``{name}`` contains different values. Build each '
+                    'species separately and combine with ``xt.Particles.merge()``.')
+            species[name] = value[0].item()
+    chi = species.get('chi')
+    charge_ratio = species.get('charge_ratio')
+    mass_ratio = species.get('mass_ratio')
+    pdg_id = species.get('pdg_id')
+
+    if particle_on_co is not None or co_guess is not None:
+        raise ValueError(
+            '``chi``, ``charge_ratio``, ``mass_ratio``, and ``pdg_id`` '
+            'cannot be used '
+            'together with ``particle_on_co`` or ``co_guess``. Set the '
+            'species ratios directly on the supplied particle instead.')
+    if particle_ref.q0 == 0:
+        raise ValueError('Species overrides require a nonzero reference charge.')
+    if pdg_id is not None:
+        from xtrack.particles.pdg import (
+            get_properties_from_pdg_id, get_mass_from_pdg_id)
+        charge, _, _, _ = get_properties_from_pdg_id(pdg_id)
+        if np.any(np.asarray(charge) == 0):
+            raise ValueError('Neutral species are not supported by build_particles.')
+        pdg_mass_ratio = get_mass_from_pdg_id(pdg_id) / particle_ref.mass0
+        pdg_charge_ratio = charge / particle_ref.q0
+        for name, given, computed in (
+                ('mass_ratio', mass_ratio, pdg_mass_ratio),
+                ('charge_ratio', charge_ratio, pdg_charge_ratio),
+                ('chi', chi, pdg_charge_ratio / pdg_mass_ratio)):
+            if given is not None and not np.all(np.isclose(given, computed)):
+                raise ValueError(
+                    f'``{name}``={given} is inconsistent with '
+                    f'``pdg_id``={pdg_id} (expected {computed}).')
+        if mass_ratio is None:
+            mass_ratio = pdg_mass_ratio
+        if charge_ratio is None:
+            charge_ratio = pdg_charge_ratio
+    # If only one parameter is supplied, keep the reference mass ratio for
+    # charge_ratio overrides, and the reference charge ratio otherwise.
+    species_ratios = {name: value for name, value in dict(
+        chi=chi, charge_ratio=charge_ratio, mass_ratio=mass_ratio).items()
+        if value is not None}
+    if len(species_ratios) == 1:
+        if charge_ratio is not None:
+            species_ratios['mass_ratio'] = particle_ref.mass_ratio[0]
+        else:
+            species_ratios['charge_ratio'] = particle_ref.charge_ratio[0]
+
+    for name in ('chi', 'charge_ratio'):
+        if name in species_ratios and np.any(np.asarray(species_ratios[name]) == 0):
+            raise ValueError(
+                f'Zero ``{name}`` is not supported by build_particles; '
+                'neutral species cannot be represented.')
+    if len(species_ratios) == 3 and not np.all(np.isclose(
+            chi * mass_ratio, charge_ratio, atol=0)):
+        raise ValueError(
+            'Inconsistent species ratios: ``chi * mass_ratio`` must equal '
+            '``charge_ratio`` for every particle.')
+
+    return num_particles, species_ratios, pdg_id
+
+
 def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     mode=None,
                     particle_ref=None,
@@ -58,11 +160,19 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     weight=None,
                     s_tol=1e-6,
                     include_collective=False,
+                    *, chi=None, charge_ratio=None, mass_ratio=None, pdg_id=None,
+                    gemitt_x=None, gemitt_y=None, gemitt_zeta=None,
                     **kwargs, # They are passed to the twiss
                     ):
 
     """
     Same as `xtrack.Line.build_particles`. See there for documentation.
+
+    When using normalized coordinates, each plane independently defaults
+    to unit geometric emittance if both its `nemitt_*` and `gemitt_*`
+    arguments are omitted or `None`. In that plane, no emittance scaling
+    is applied before transforming the normalized coordinates to physical
+    coordinates. This also applies to the longitudinal (`zeta`) plane.
 
     """
 
@@ -87,6 +197,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         tt = line.tracker._tracker_data_base._line_table
 
     assert mode in [None, 'set', 'shift', 'normalized_transverse']
+    if any(value is not None for value in (
+            x_norm, px_norm, y_norm, py_norm, zeta_norm, pzeta_norm)):
+        assert mode in (None, 'normalized_transverse')
+        mode = 'normalized_transverse'
+    if mode is None:
+        mode = 'set'
+
     Particles = xt.Particles  # To get the right Particles class depending on pyheatail interface state
 
     assert 'at_s' not in kwargs, "at_s is not a valid argument for this function"
@@ -96,6 +213,18 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         _print('Warning! '
             "scale_with_transverse_norm_emitt is deprecated. Use "
             "nemitt_x and nemitt_y instead.")
+        assert len(scale_with_transverse_norm_emitt) == 2
+        assert nemitt_x is None and nemitt_y is None, (
+            "If `scale_with_transverse_norm_emitt` is provided, "
+            "`nemitt_x` and `nemitt_y` should not be provided.")
+        nemitt_x, nemitt_y = scale_with_transverse_norm_emitt
+
+    for plane, nemitt, gemitt in (
+            ('x', nemitt_x, gemitt_x), ('y', nemitt_y, gemitt_y),
+            ('zeta', nemitt_zeta, gemitt_zeta)):
+        if nemitt is not None and gemitt is not None:
+            raise ValueError(
+                f'Cannot provide both nemitt_{plane} and gemitt_{plane}.')
 
     if (particle_ref is not None and particle_on_co is not None):
         raise ValueError("`particle_ref` and `particle_on_co`"
@@ -112,6 +241,19 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
 
     if not isinstance(particle_ref._buffer.context, xo.ContextCpu):
         particle_ref = particle_ref.copy(_context=xo.ContextCpu())
+
+    species_ratios = {}
+    if any(value is not None for value in (chi, charge_ratio, mass_ratio, pdg_id)):
+        num_particles, species_ratios, pdg_id = _prepare_particle_species(
+            particle_ref=particle_ref, mode=mode, num_particles=num_particles,
+            coordinates=dict(
+                x=x, px=px, y=y, py=py, zeta=zeta, delta=delta,
+                pzeta=pzeta, ptau=ptau, x_norm=x_norm, px_norm=px_norm,
+                y_norm=y_norm, py_norm=py_norm,
+                zeta_norm=zeta_norm, pzeta_norm=pzeta_norm),
+            chi=chi, charge_ratio=charge_ratio, mass_ratio=mass_ratio,
+            pdg_id=pdg_id, particle_on_co=particle_on_co,
+            co_guess=kwargs.get('co_guess'))
 
     # Move other input parameters to cpu if needed
     # Generated by:
@@ -156,18 +298,6 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             ptau = np.array(ptau)
         pzeta = ptau / particle_ref._xobject.beta0[0]
 
-    if (x_norm is not None or px_norm is not None
-            or y_norm is not None or py_norm is not None
-            or zeta_norm is not None or pzeta_norm is not None):
-
-        if mode is None:
-            mode = 'normalized_transverse'
-        else:
-            assert mode == 'normalized_transverse'
-
-    if mode is None:
-        mode = 'set'
-
     assert particle_ref._capacity == 1
     ref_dict = {
         'q0': particle_ref.q0,
@@ -182,6 +312,11 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         'anomalous_magnetic_moment': particle_ref.anomalous_magnetic_moment[0],
     }
     part_dict = ref_dict.copy()
+    if species_ratios:
+        del part_dict['chi'], part_dict['charge_ratio']
+        part_dict.update(species_ratios)
+    if pdg_id is not None:
+        part_dict['pdg_id'] = pdg_id
 
     if at_element is not None or match_at_s is not None:
         # Only this case is covered if not starting at element 0
@@ -191,6 +326,14 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         s_at_element = tt['s', at_element]
 
     if mode == 'normalized_transverse':
+
+        if species_ratios:
+            from xtrack.twiss.twiss_defaults_and_input_preparation import (
+                _copy_particle_with_species_ratios)
+            particle_ref = _copy_particle_with_species_ratios(
+                particle=particle_ref, **species_ratios)
+            if pdg_id is not None:
+                particle_ref.pdg_id = pdg_id
 
         if match_at_s is not None:
 
@@ -247,32 +390,23 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
             y_norm=y_norm, py_norm=py_norm,
             zeta_norm=zeta_norm, pzeta_norm=pzeta_norm)
 
-        if scale_with_transverse_norm_emitt is not None:
-            assert len(scale_with_transverse_norm_emitt) == 2
-            assert nemitt_x is None and nemitt_y is None, (
-                "If `scale_with_transverse_norm_emitt` is provided, "
-                "`nemitt_x` and `nemitt_y` should not be provided.")
-
-            nemitt_x = scale_with_transverse_norm_emitt[0]
-            nemitt_y = scale_with_transverse_norm_emitt[1]
-
-        if nemitt_x is None:
-            gemitt_x = 1
-        else:
+        if nemitt_x is not None:
             gemitt_x = (nemitt_x / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
+        elif gemitt_x is None:
+            gemitt_x = 1
 
-        if nemitt_y is None:
-            gemitt_y = 1
-        else:
+        if nemitt_y is not None:
             gemitt_y = (nemitt_y / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
+        elif gemitt_y is None:
+            gemitt_y = 1
 
-        if nemitt_zeta is None:
-            gemitt_zeta = 1
-        else:
+        if nemitt_zeta is not None:
             gemitt_zeta = (nemitt_zeta / particle_ref._xobject.beta0[0]
                         / particle_ref._xobject.gamma0[0])
+        elif gemitt_zeta is None:
+            gemitt_zeta = 1
 
 
         n_constraints = sum([vv is not None for vv in [x, x_norm, px, px_norm,
@@ -339,7 +473,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         BB[2, :] = particle_on_co._xobject.y[0]
         BB[3, :] = particle_on_co._xobject.py[0]
         BB[4, :] = particle_on_co._xobject.zeta[0]
-        BB[5, :] = particle_on_co._xobject.ptau[0] / particle_on_co._xobject.beta0[0]
+        BB[5, :] = particle_on_co._xobject.pzeta[0]
 
         # The next 6 equations fix either X or X_norm
         i_fill = 6
@@ -408,7 +542,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
         XX[2, :] = y + particle_ref.y
         XX[3, :] = py + particle_ref.py
         XX[4, :] = zeta + particle_ref.zeta
-        XX[5, :] = pzeta + particle_ref.ptau / particle_ref._xobject.beta0[0]
+        XX[5, :] = pzeta + particle_ref._xobject.pzeta[0]
     else:
         raise ValueError('What?!')
 
@@ -417,7 +551,7 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
     part_dict['y'] = XX[2, :]
     part_dict['py'] = XX[3, :]
     part_dict['zeta'] = XX[4, :]
-    part_dict['ptau'] = XX[5, :] * particle_ref._xobject.beta0[0]
+    part_dict['pzeta'] = XX[5, :]
 
     part_dict['weight'] = np.ones(num_particles, dtype=np.float64)
 

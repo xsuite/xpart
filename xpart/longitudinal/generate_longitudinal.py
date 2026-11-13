@@ -113,7 +113,7 @@ def _characterize_line(line, particle_ref,
 
     p0c_increase_from_energy_program = None
     if line.energy_program is not None:
-        p0c_increase_from_energy_program = line.energy_program.get_p0c_increse_per_turn_at_t_s(
+        p0c_increase_from_energy_program = line.energy_program.get_p0c_increase_per_turn_at_t_s(
                                                         line['t_turn_s'])
     energy_loss_from_radiation = 0.
     if radiation_active:

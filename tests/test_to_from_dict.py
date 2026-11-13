@@ -24,15 +24,17 @@ def test_to_from_dict(test_context):
 
     #!end-doc-part
     dct = part.to_dict()
-    for nn in 'x px y py zeta delta ptau rpp rvv gamma0 p0c'.split():
+    for nn in 'x px y py zeta delta pzeta rpp rvv gamma0 p0c'.split():
         assert isinstance(dct[nn], np.ndarray)
         assert isinstance(getattr(part_from_dict, nn), test_context.nplike_array_type)
 
 
 def test_to_dict_pyheadtail_interface():
-    xp.enable_pyheadtail_interface()
+    with pytest.warns(FutureWarning, match='PyHEADTAIL interface'):
+        xp.enable_pyheadtail_interface()
     assert xp.Particles.__name__ == 'PyHtXtParticles'
-    xp.disable_pyheadtail_interface()
+    with pytest.warns(FutureWarning, match='PyHEADTAIL interface'):
+        xp.disable_pyheadtail_interface()
     assert xp.Particles.__name__ == 'Particles'
 
     p = xp.pyheadtail_interface.pyhtxtparticles.PyHtXtParticles(x=[1, 2, 3])
@@ -69,7 +71,7 @@ def test_to_pandas(test_context, compact):
     assert np.all([nn.startswith('_rng') for nn in ltest])
 
     for nn in ['_rng_s1', '_rng_s2', '_rng_s3', '_rng_s4',
-                'beta0', 'gamma0', 'ptau', 'rpp', 'rvv']:
+                'beta0', 'gamma0', 'pzeta', 'rpp', 'rvv']:
         if compact:
             assert nn not in df_part.keys()
         else:
@@ -79,5 +81,5 @@ def test_to_pandas(test_context, compact):
         part = part.remove_unused_space()
 
     part_test = xp.Particles.from_pandas(df_part)
-    for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'ptau', 'gamma0']:
+    for kk in ['x', 'px', 'y', 'py', 'zeta', 'delta', 'pzeta', 'gamma0']:
         assert np.all(part.to_dict()[kk] == part_test.to_dict()[kk])
