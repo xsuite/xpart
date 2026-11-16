@@ -121,7 +121,8 @@ def generate_2D_pencil(num_particles, pos_cut_sigmas, dr_sigmas,
 def generate_2D_pencil_with_absolute_cut(num_particles,
     plane, absolute_cut, dr_sigmas, side='+', tracker=None, line=None,
     nemitt_x=None, nemitt_y=None,
-    at_element=None, match_at_s=None, twiss=None, **kwargs):
+    at_element=None, match_at_s=None, twiss=None, *,
+    gemitt_x=None, gemitt_y=None, **kwargs):
 
     """
     Generate a 2D pencil distribution with a cut in physical coordinates.
@@ -147,6 +148,9 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         Deprecated. Use `line` instead.
     line : xtrack.Line
         Line used to compute the optics and physical coordinates.
+    gemitt_x, gemitt_y : float, optional
+        Geometric transverse emittances, as alternatives to ``nemitt_x`` and
+        ``nemitt_y``. Provide only one form per plane.
     nemitt_x : float
         Normalized horizontal emittance in m rad.
     nemitt_y : float
@@ -258,6 +262,7 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     # Generate a particle exactly on the jaw with no amplitude in other eigenvectors
     p_on_cut_at_element = line.build_particles(
         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+        gemitt_x=gemitt_x, gemitt_y=gemitt_y,
         x={'x': absolute_cut, 'y': None}[plane],
         y={'x': None, 'y': absolute_cut}[plane],
         x_norm={'x': None, 'y': 0}[plane],
@@ -272,8 +277,14 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
         p_on_cut_at_s = p_on_cut_at_element
 
     # Get cut in (accurate) sigmas
+    geometric_emittances = {}
+    if gemitt_x is not None:
+        geometric_emittances['gemitt_x'] = gemitt_x
+    if gemitt_y is not None:
+        geometric_emittances['gemitt_y'] = gemitt_y
     p_on_cut_norm = twiss.get_normalized_coordinates(p_on_cut_at_s,
                                         nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+                                        **geometric_emittances,
                                         _force_at_element=0 # the twiss has only this element
                                         )
     if plane == 'x':
@@ -292,6 +303,7 @@ def generate_2D_pencil_with_absolute_cut(num_particles,
     # (by construction y_cut is preserved)
     p_pencil_at_element = line.build_particles(
                     nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+                    gemitt_x=gemitt_x, gemitt_y=gemitt_y,
                     x_norm={'x': w_in_sigmas, 'y': None}[plane],
                     px_norm={'x': pw_in_sigmas, 'y': None}[plane],
                     y_norm={'x': None, 'y': w_in_sigmas}[plane],
