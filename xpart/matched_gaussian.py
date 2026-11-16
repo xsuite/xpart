@@ -17,7 +17,8 @@ from .build_particles import build_particles
 import xpart as xp
 
 def generate_matched_gaussian_bunch(num_particles,
-                                    nemitt_x=None, nemitt_y=None, sigma_z=None,
+                                    nemitt_x=None, nemitt_y=None, gemitt_x=None, gemitt_y=None,
+                                    sigma_z=None,
                                     total_intensity_particles=None,
                                     particle_on_co=None,
                                     R_matrix=None,
@@ -33,7 +34,6 @@ def generate_matched_gaussian_bunch(num_particles,
                                     engine=None,
                                     return_matcher=False,
                                     _context=None, _buffer=None, _offset=None,
-                                    gemitt_x=None, gemitt_y=None,
                                     **kwargs,  # Passed to build_particles
                                     ):
     """
@@ -299,7 +299,8 @@ def split_scheme(filling_scheme, n_chunk=1):
 @_accept_filling_inputs
 def generate_matched_gaussian_multibunch_beam(filling_pattern,
                                               bunch_num_particles,
-                                              nemitt_x=None, nemitt_y=None, sigma_z=None,
+                                              nemitt_x=None, nemitt_y=None, gemitt_x=None, gemitt_y=None,
+                                              sigma_z=None,
                                               bunch_intensity_particles=None,
                                               particle_on_co=None,
                                               R_matrix=None,
@@ -321,7 +322,6 @@ def generate_matched_gaussian_multibunch_beam(filling_pattern,
                                               communicator=None,
                                               filled_slots=None,
                                               num_slots=None,
-                                              gemitt_x=None, gemitt_y=None,
                                               **kwargs,  # Passed to build_particles
                                               ):
     """
