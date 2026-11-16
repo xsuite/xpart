@@ -155,13 +155,13 @@ def build_particles(_context=None, _buffer=None, _offset=None, _capacity=None,
                     R_matrix=None,
                     W_matrix=None,
                     method=None,
-                    nemitt_x=None, nemitt_y=None,nemitt_zeta = None,
+                    nemitt_x=None, nemitt_y=None, gemitt_x=None, gemitt_y=None,
+                    nemitt_zeta=None, gemitt_zeta=None,
                     scale_with_transverse_norm_emitt=None,
                     weight=None,
                     s_tol=1e-6,
                     include_collective=False,
                     *, chi=None, charge_ratio=None, mass_ratio=None, pdg_id=None,
-                    gemitt_x=None, gemitt_y=None, gemitt_zeta=None,
                     **kwargs, # They are passed to the twiss
                     ):
 

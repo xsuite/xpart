@@ -17,7 +17,8 @@ from .build_particles import build_particles
 import xpart as xp
 
 def generate_matched_gaussian_bunch(num_particles,
-                                    nemitt_x, nemitt_y, sigma_z,
+                                    nemitt_x=None, nemitt_y=None, gemitt_x=None, gemitt_y=None,
+                                    sigma_z=None,
                                     total_intensity_particles=None,
                                     particle_on_co=None,
                                     R_matrix=None,
@@ -48,6 +49,9 @@ def generate_matched_gaussian_bunch(num_particles,
     ----------
     num_particles : int
         Number of macroparticles to generate.
+    gemitt_x, gemitt_y : float, optional
+        Geometric transverse emittances, as alternatives to ``nemitt_x`` and
+        ``nemitt_y``. Provide only one form per plane.
     nemitt_x : float
         Normalized horizontal emittance in m rad.
     nemitt_y : float
@@ -145,6 +149,15 @@ def generate_matched_gaussian_bunch(num_particles,
         particles.zeta    # [-0.077427, -0.044981, 0.025293, -0.110336]
     """
 
+    for plane, nemitt, gemitt in (('x', nemitt_x, gemitt_x),
+                                 ('y', nemitt_y, gemitt_y)):
+        if nemitt is not None and gemitt is not None:
+            raise ValueError(f'Cannot provide both nemitt_{plane} and gemitt_{plane}.')
+        if nemitt is None and gemitt is None:
+            raise ValueError(f'nemitt_{plane} or gemitt_{plane} must be provided.')
+    if sigma_z is None:
+        raise ValueError('sigma_z must be provided.')
+
     if line is not None and tracker is not None:
         raise ValueError(
             'line and tracker cannot be provided at the same time.')
@@ -209,6 +222,7 @@ def generate_matched_gaussian_bunch(num_particles,
                       x_norm=x_norm, px_norm=px_norm,
                       y_norm=y_norm, py_norm=py_norm,
                       nemitt_x=nemitt_x, nemitt_y=nemitt_y,
+                      gemitt_x=gemitt_x, gemitt_y=gemitt_y,
                       weight=total_intensity_particles/num_particles,
                       **kwargs)
     if return_matcher:
@@ -285,7 +299,8 @@ def split_scheme(filling_scheme, n_chunk=1):
 @_accept_filling_inputs
 def generate_matched_gaussian_multibunch_beam(filling_pattern,
                                               bunch_num_particles,
-                                              nemitt_x, nemitt_y, sigma_z,
+                                              nemitt_x=None, nemitt_y=None, gemitt_x=None, gemitt_y=None,
+                                              sigma_z=None,
                                               bunch_intensity_particles=None,
                                               particle_on_co=None,
                                               R_matrix=None,
@@ -332,6 +347,9 @@ def generate_matched_gaussian_multibunch_beam(filling_pattern,
         padded to the number of slots in the ring.
     bunch_num_particles : int
         Number of macroparticles to generate per bunch.
+    gemitt_x, gemitt_y : float, optional
+        Geometric transverse emittances, as alternatives to ``nemitt_x`` and
+        ``nemitt_y``. Provide only one form per plane.
     nemitt_x : float
         Normalized horizontal emittance in m rad.
     nemitt_y : float
@@ -507,6 +525,7 @@ def generate_matched_gaussian_multibunch_beam(filling_pattern,
     macro_bunch = generate_matched_gaussian_bunch(
         num_particles=bunch_num_particles * len(bunch_selection),
         nemitt_x=nemitt_x, nemitt_y=nemitt_y, sigma_z=sigma_z,
+        gemitt_x=gemitt_x, gemitt_y=gemitt_y,
         total_intensity_particles=bunch_intensity_particles * len(bunch_selection),
         particle_on_co=particle_on_co,
         R_matrix=R_matrix,
