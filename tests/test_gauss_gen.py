@@ -7,6 +7,7 @@ import json
 import pathlib
 
 import numpy as np
+import pytest
 
 import xobjects as xo
 import xpart as xp
@@ -15,6 +16,44 @@ import xtrack as xt
 from xobjects.test_helpers import for_all_test_contexts
 
 TEST_DATA_FOLDER = pathlib.Path(__file__).parent / '../../xtrack/test_data'
+
+
+@for_all_test_contexts
+@pytest.mark.parametrize('capacity', [None, 16, 32])
+@pytest.mark.parametrize('return_matcher', [False, True])
+def test_gaussian_bunch_capacity(test_context, capacity, return_matcher):
+    num_particles = 16
+    bunch_intensity = 1e11
+    circumference = 26658.883
+    line = xt.Line(elements=[xt.LineSegmentMap(
+        length=circumference,
+        betx=1.0, qx=0.31,
+        bety=1.0, qy=0.32,
+        longitudinal_mode='linear_fixed_rf',
+        voltage_rf=16e6,
+        frequency_rf=400.8e6,
+        phase_rf=np.pi,
+        slippage_length=circumference,
+        momentum_compaction_factor=3.225e-4,
+    )])
+    line.particle_ref = xp.Particles(p0c=7e12)
+    line.build_tracker(_context=test_context)
+
+    result = xp.generate_matched_gaussian_bunch(
+        num_particles=num_particles,
+        total_intensity_particles=bunch_intensity,
+        nemitt_x=2e-6, nemitt_y=2.5e-6, sigma_z=0.08,
+        line=line, _context=test_context, _capacity=capacity,
+        return_matcher=return_matcher)
+    particles = result[0] if return_matcher else result
+
+    assert particles._capacity == (num_particles if capacity is None else capacity)
+    state = test_context.nparray_from_context_array(particles.state)
+    weight = test_context.nparray_from_context_array(particles.weight)
+    assert np.count_nonzero(state > 0) == num_particles
+    assert np.all(state[num_particles:] < 0)
+    xo.assert_allclose(weight[:num_particles], bunch_intensity / num_particles)
+
 
 @for_all_test_contexts
 def test_gaussian_bunch_generation(test_context):
