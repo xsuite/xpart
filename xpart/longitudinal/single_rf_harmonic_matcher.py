@@ -6,6 +6,7 @@
 import numpy as np
 from scipy.constants import c
 import scipy.special
+import scipy.optimize
 import scipy.integrate as integrate
 from scipy.special import gamma as Gamma
 
@@ -43,7 +44,12 @@ class SingleRFHarmonicMatcher:
         dtau = 0.01*tau_ufp # don't get too close to the separatrix
         tau_lim = tau_ufp - dtau
         self.tau_distr_x = np.linspace(- tau_lim, tau_lim, n_points_in_distribution)
+        # tau = zeta / beta0. The expressions below are longitudinal line
+        # densities, up to normalization, restricted to |tau| <= tau_lim.
+        # Matching adjusts their width parameters for this bucket truncation.
         if distribution == "parabolic":
+            # lambda(tau) ~ max(1 - (tau/tau_max)**2, 0).
+            # Without truncation: sigma_tau = tau_max / sqrt(5).
             tau_max = np.sqrt(5)*rms_bunch_length
             lambda_dist = lambda tau, tau_max: 1 - (tau/tau_max)**2
             # correct bunch length (due to truncation at separatrix)
@@ -59,6 +65,8 @@ class SingleRFHarmonicMatcher:
 
             _print(f"SingleRFHarmonicMatcher: Parabolic parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         elif distribution == "gaussian":
+            # lambda(tau) ~ exp(-tau**2 / (2*s**2)).
+            # Without truncation: sigma_tau = s.
             lambda_dist = lambda tau, rms: np.exp(-tau**2/2./rms**2)
 
             # correct bunch length (due to truncation at separatrix)
@@ -69,6 +77,10 @@ class SingleRFHarmonicMatcher:
 
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_rms)
         elif distribution == "qgaussian":
+            # lambda(tau) ~ [1 - (1-q)*beta*tau**2]**(1/(1-q))
+            # where the bracket is positive, zero otherwise. At q=1 this
+            # becomes exp(-beta*tau**2). beta is a width parameter, not beta0.
+            # Without truncation, for q < 5/3: sigma_tau**2 = 1/(beta*(5-3*q)).
             # Q-Gaussian from Eq. (2.1) in (Umarov, Tsallis, Steinberg, 2008) 
             #available at https://link.springer.com/article/10.1007/s00032-008-0087-y
             if q>5./3.:
@@ -84,20 +96,38 @@ class SingleRFHarmonicMatcher:
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_beta)
 
         elif distribution == "binomial":
+            # lambda(tau) ~ max(1 - (tau/tau_max)**2, 0)**(m-1/2).
+            # Without truncation: sigma_tau = tau_max / sqrt(2*m+2).
+            # m=3/2 is parabolic; m -> infinity at fixed RMS is Gaussian.
             # Binomial distribution adds tail to parabolic, see (Joho, 1980) at https://indico.psi.ch/event/3484/attachments/5948/7502/TM-11-14.pdf
             # behaviour is Gaussian for m --> inf
-            tau_max = 1.0 # starting value, will be adjusted. Used as benchmarking value with RMS factor for parabola
+            if not np.isfinite(m) or m <= 0.5:
+                raise ValueError('m must be finite and greater than 0.5 for a '
+                                 'binomial distribution.')
+            if (not np.isfinite(rms_bunch_length)
+                    or not 0 < rms_bunch_length < tau_lim / np.sqrt(3)):
+                raise ValueError('rms_bunch_length must be positive and smaller '
+                                 'than tau_lim / sqrt(3) for a binomial distribution.')
+
             lambda_dist = lambda tau, tau_max: (
                 np.maximum(1 - (tau/tau_max)**2, 0))**(m-0.5)
-            binomial_2nd = lambda tau, tau_max: lambda_dist(
-                tau, tau_max) * tau**2
-            RMS_binomial = np.sqrt(integrate.quad(binomial_2nd, -1, 1, args=(tau_max))[0] / integrate.quad(lambda_dist, -1, 1, args=(tau_max))[0])
-            factor_binomial = tau_max / RMS_binomial
-            _print(f"RMS factor for binimial is {factor_binomial:.3f}")
-            tau_max = factor_binomial*rms_bunch_length
-            func_to_solve = lambda new_tau_max: (scipy.integrate.quad(lambda x: (x**2 - rms_bunch_length**2)*lambda_dist(x, new_tau_max[0]), -tau_lim, tau_lim))[0]
-            corrected_tau_max = scipy.optimize.fsolve(func_to_solve, x0=tau_max)[0]
-            tau_max = corrected_tau_max
+            # Exact RMS relation for the untruncated binomial profile.
+            tau_max = np.sqrt(2 * m + 2) * rms_bunch_length
+            if tau_max > tau_lim:
+                # Fit r = (tau_lim / tau_max)**2 on a finite bracket. At r=0
+                # the profile is uniform, with the maximum variance 1/3.
+                target_variance = (rms_bunch_length / tau_lim)**2
+
+                def variance_error(r):
+                    density = lambda u: np.exp((m - 0.5) * np.log1p(-r * u**2))
+                    norm = integrate.quad(density, 0, 1)[0]
+                    second = integrate.quad(lambda u: u**2 * density(u), 0, 1)[0]
+                    return second / norm - target_variance
+
+                r = scipy.optimize.brentq(
+                    variance_error, 0., (tau_lim / tau_max)**2,
+                    xtol=np.finfo(float).tiny)
+                tau_max = tau_lim / np.sqrt(r)
             self.tau_distr_y = lambda_dist(self.tau_distr_x, tau_max)
             _print(f"SingleRFHarmonicMatcher: Binomial x_lim parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         else:
@@ -175,6 +205,16 @@ class SingleRFHarmonicMatcher:
         return tau, ptau
 
     def sample_tau_ptau(self, n_particles=20000):
+        if (len(self.m_distr_x) < 2
+                or len(self.m_distr_y) != len(self.m_distr_x)
+                or not np.all(np.isfinite(self.m_distr_x))
+                or not np.all(np.isfinite(self.m_distr_y))
+                or not 0 < max(self.m_distr_x) < 1
+                or not np.any(np.asarray(self.m_distr_y) > 0)):
+            raise ValueError('Cannot sample an empty or invalid matched distribution. '
+                             'Check the bunch length and distribution parameters; '
+                             'a very short bunch may require more points in the '
+                             'distribution grid.')
         max_m = max(self.m_distr_x)
         tau_new = []
         ptau_new = []
