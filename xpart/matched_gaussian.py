@@ -33,6 +33,7 @@ def generate_matched_gaussian_bunch(num_particles,
                                     engine=None,
                                     return_matcher=False,
                                     _context=None, _buffer=None, _offset=None,
+                                    _capacity=None,
                                     **kwargs,  # Passed to build_particles
                                     ):
     """
@@ -93,6 +94,9 @@ def generate_matched_gaussian_bunch(num_particles,
         Buffer on which to allocate the returned particles.
     _offset : int, optional
         Offset in `_buffer` at which to allocate the returned particles.
+    _capacity : int, optional
+        Capacity of the returned particles object. If not provided, it defaults
+        to `num_particles`. Must be at least `num_particles`.
     **kwargs
         Additional keyword arguments passed to `generate_longitudinal_coordinates`
         and `build_particles`.
@@ -200,6 +204,7 @@ def generate_matched_gaussian_bunch(num_particles,
         total_intensity_particles = num_particles
 
     part = build_particles(_context=_context, _buffer=_buffer, _offset=_offset,
+                      _capacity=_capacity,
                       R_matrix=R_matrix,
                       particle_on_co=particle_on_co,
                       particle_ref=(
