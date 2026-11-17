@@ -239,6 +239,33 @@ def generate_longitudinal_coordinates(
         Matcher object used for the generation. Returned only when
         `return_matcher` is True.
 
+    Notes
+    -----
+    For ``engine='single-rf-harmonic'``, the longitudinal line densities,
+    up to normalization, are::
+
+        gaussian:  lambda(tau) ~ exp(-tau**2 / (2*s**2))
+        parabolic: lambda(tau) ~ max(1 - (tau/tau_max)**2, 0)
+        binomial:  lambda(tau) ~ max(1 - (tau/tau_max)**2, 0)**(m - 1/2)
+        qgaussian: lambda(tau) ~ [1 - (1-q)*beta*tau**2]**(1/(1-q))
+
+    Here ``tau = zeta / beta0`` and ``sigma_tau = sigma_z / beta0``.
+    The q-Gaussian expression applies where its bracket is positive and is
+    zero otherwise; at ``q=1`` it becomes ``exp(-beta*tau**2)``. Its width
+    parameter ``beta`` is distinct from the reference velocity ``beta0``.
+
+    Without bucket truncation, the width parameters satisfy::
+
+        gaussian:  s = sigma_tau
+        parabolic: tau_max = sqrt(5) * sigma_tau
+        binomial:  tau_max = sqrt(2*m + 2) * sigma_tau
+        qgaussian: beta = 1 / ((5 - 3*q) * sigma_tau**2)  (q < 5/3)
+
+    The matcher restricts these profiles to just inside the RF bucket's
+    unstable fixed points and adjusts the widths to obtain the requested
+    RMS length. Binomial ``m=1.5`` gives the parabolic profile; increasing
+    ``m`` at fixed RMS length approaches a Gaussian.
+
     Example
     -------
 

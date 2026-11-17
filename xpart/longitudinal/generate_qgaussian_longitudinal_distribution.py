@@ -18,13 +18,19 @@ def generate_qgaussian_longitudinal_coordinates(num_particles=None,
 
 	This is a convenience wrapper around `generate_longitudinal_coordinates`
 	using `distribution='qgaussian'` and `engine='single-rf-harmonic'`. The
-	longitudinal line density is proportional to
+	longitudinal line density, up to normalization, is::
 
-	    [1 - (1 - q) beta tau**2]**(1 / (1 - q))
+	    lambda(tau) ~ [1 - (1-q)*beta*tau**2]**(1/(1-q))
 
-	where `tau = zeta / beta0`. In the limit `q -> 1`, this becomes a
-	Gaussian. Values below 1 give compact, lighter-tailed profiles; values
-	above 1 give heavier-tailed profiles.
+	Here ``tau = zeta / beta0``. The expression applies where its bracket
+	is positive and is zero otherwise. At ``q=1`` it becomes the Gaussian
+	``exp(-beta*tau**2)``. Values below 1 give compact, lighter-tailed
+	profiles; values above 1 give heavier-tailed profiles.
+
+	The width parameter ``beta`` is distinct from the reference velocity
+	``beta0``. Without bucket truncation, for ``q < 5/3``, it satisfies
+	``beta = 1 / ((5 - 3*q) * (sigma_z / beta0)**2)``. The matcher adjusts
+	``beta`` to account for truncation by the RF bucket.
 
 	Parameters
 	----------

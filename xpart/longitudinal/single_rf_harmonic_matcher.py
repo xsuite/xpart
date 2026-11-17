@@ -44,7 +44,12 @@ class SingleRFHarmonicMatcher:
         dtau = 0.01*tau_ufp # don't get too close to the separatrix
         tau_lim = tau_ufp - dtau
         self.tau_distr_x = np.linspace(- tau_lim, tau_lim, n_points_in_distribution)
+        # tau = zeta / beta0. The expressions below are longitudinal line
+        # densities, up to normalization, restricted to |tau| <= tau_lim.
+        # Matching adjusts their width parameters for this bucket truncation.
         if distribution == "parabolic":
+            # lambda(tau) ~ max(1 - (tau/tau_max)**2, 0).
+            # Without truncation: sigma_tau = tau_max / sqrt(5).
             tau_max = np.sqrt(5)*rms_bunch_length
             lambda_dist = lambda tau, tau_max: 1 - (tau/tau_max)**2
             # correct bunch length (due to truncation at separatrix)
@@ -60,6 +65,8 @@ class SingleRFHarmonicMatcher:
 
             _print(f"SingleRFHarmonicMatcher: Parabolic parameter is equal to {tau_max:.3f}m to achieve target RMS bunch length ({rms_bunch_length:.3f}m).")
         elif distribution == "gaussian":
+            # lambda(tau) ~ exp(-tau**2 / (2*s**2)).
+            # Without truncation: sigma_tau = s.
             lambda_dist = lambda tau, rms: np.exp(-tau**2/2./rms**2)
 
             # correct bunch length (due to truncation at separatrix)
@@ -70,6 +77,10 @@ class SingleRFHarmonicMatcher:
 
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_rms)
         elif distribution == "qgaussian":
+            # lambda(tau) ~ [1 - (1-q)*beta*tau**2]**(1/(1-q))
+            # where the bracket is positive, zero otherwise. At q=1 this
+            # becomes exp(-beta*tau**2). beta is a width parameter, not beta0.
+            # Without truncation, for q < 5/3: sigma_tau**2 = 1/(beta*(5-3*q)).
             # Q-Gaussian from Eq. (2.1) in (Umarov, Tsallis, Steinberg, 2008) 
             #available at https://link.springer.com/article/10.1007/s00032-008-0087-y
             if q>5./3.:
@@ -85,6 +96,9 @@ class SingleRFHarmonicMatcher:
             self.tau_distr_y = lambda_dist(self.tau_distr_x, corrected_beta)
 
         elif distribution == "binomial":
+            # lambda(tau) ~ max(1 - (tau/tau_max)**2, 0)**(m-1/2).
+            # Without truncation: sigma_tau = tau_max / sqrt(2*m+2).
+            # m=3/2 is parabolic; m -> infinity at fixed RMS is Gaussian.
             # Binomial distribution adds tail to parabolic, see (Joho, 1980) at https://indico.psi.ch/event/3484/attachments/5948/7502/TM-11-14.pdf
             # behaviour is Gaussian for m --> inf
             if not np.isfinite(m) or m <= 0.5:

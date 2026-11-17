@@ -19,6 +19,16 @@ def generate_binomial_longitudinal_coordinates(num_particles=None,
     This is a convenience wrapper around `generate_longitudinal_coordinates`
     using `distribution='binomial'` and `engine='single-rf-harmonic'`.
 
+    The longitudinal line density, up to normalization, is::
+
+        lambda(tau) ~ max(1 - (tau/tau_max)**2, 0)**(m - 1/2)
+
+    Here ``tau = zeta / beta0``. Without bucket truncation,
+    ``tau_max = sqrt(2*m + 2) * sigma_z / beta0``. The matcher adjusts
+    ``tau_max`` if the profile is truncated by the RF bucket.
+    ``m=1.5`` gives a parabolic profile; increasing ``m`` at fixed RMS
+    length approaches a Gaussian.
+
     Parameters
     ----------
     num_particles : int
