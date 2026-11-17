@@ -437,7 +437,7 @@ class XpartLineAPI:
         tracker : xtrack.Tracker, optional
             Deprecated. Use `line` instead.
         m : float, optional
-            Binomial distribution parameter.
+            Binomial distribution parameter. Must be finite and greater than 0.5.
         q : float, optional
             q-Gaussian distribution parameter.
         zeta0 : float, optional
@@ -523,6 +523,7 @@ class XpartLineAPI:
             If True, also return the `SingleRFHarmonicMatcher` object.
         m : float, optional
             Binomial distribution parameter. Larger values give lighter tails.
+            Must be finite and greater than 0.5.
         
         Returns
         -------

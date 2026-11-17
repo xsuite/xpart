@@ -219,7 +219,7 @@ def generate_longitudinal_coordinates(
     tracker : xtrack.Tracker, optional
         Deprecated. Use `line` instead.
     m : float, optional
-        Binomial distribution parameter.
+        Binomial distribution parameter. Must be finite and greater than 0.5.
     q : float, optional
         q-Gaussian distribution parameter.
     zeta0 : float, optional

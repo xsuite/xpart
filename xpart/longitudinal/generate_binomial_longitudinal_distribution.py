@@ -40,6 +40,7 @@ def generate_binomial_longitudinal_coordinates(num_particles=None,
         If True, also return the `SingleRFHarmonicMatcher` object.
     m : float, optional
         Binomial distribution parameter. Larger values give lighter tails.
+        Must be finite and greater than 0.5.
 
     Returns
     -------
